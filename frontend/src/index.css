@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Wellness Theme Variables */
+:root {
+  /* Light theme colors */
+  --wellness-light-bg: #f8fafc;
+  --wellness-light-card: #ffffff;
+  --wellness-light-elevated: #f1f5f9;
+  --wellness-light-border: #e2e8f0;
+  --wellness-light-text: #1e293b;
+  --wellness-light-textSecondary: #475569;
+  --wellness-light-textMuted: #64748b;
+}
+
+.dark {
+  /* Dark theme colors */
+  --wellness-light-bg: #0f172a;
+  --wellness-light-card: #1e293b;
+  --wellness-light-elevated: #334155;
+  --wellness-light-border: #475569;
+  --wellness-light-text: #f1f5f9;
+  --wellness-light-textSecondary: #cbd5e1;
+  --wellness-light-textMuted: #94a3b8;
+}
+
+/* Apply theme colors */
+.bg-wellness-light-bg {
+  background-color: var(--wellness-light-bg);
+}
+
+.bg-wellness-light-card {
+  background-color: var(--wellness-light-card);
+}
+
+.bg-wellness-light-elevated {
+  background-color: var(--wellness-light-elevated);
+}
+
+.border-wellness-light-border {
+  border-color: var(--wellness-light-border);
+}
+
+.text-wellness-light-text {
+  color: var(--wellness-light-text);
+}
+
+.text-wellness-light-textSecondary {
+  color: var(--wellness-light-textSecondary);
+}
+
+.text-wellness-light-textMuted {
+  color: var(--wellness-light-textMuted);
+}
+
+.placeholder-wellness-light-textMuted::placeholder {
+  color: var(--wellness-light-textMuted);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

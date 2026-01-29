@@ -1,0 +1,154 @@
+"""
+Database connection and session management for WellnessWay Diet Planner
+"""
+
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
+from sqlalchemy.pool import StaticPool, QueuePool
+from typing import Generator
+import logging
+import time
+
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Database engine configuration
+engine_kwargs = {
+    "pool_size": settings.database.pool_size,
+    "max_overflow": settings.database.max_overflow,
+    "pool_timeout": settings.database.pool_timeout,
+    "pool_recycle": settings.database.pool_recycle,
+    "pool_pre_ping": True,  # Verify connections before use
+    "echo": settings.database.echo,  # Log SQL queries when enabled
+}
+
+# Use QueuePool for production, StaticPool for testing
+if settings.is_testing:
+    engine_kwargs["poolclass"] = StaticPool
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs["poolclass"] = QueuePool
+
+# Create SQLAlchemy engine
+engine = create_engine(
+    settings.get_database_url(),
+    **engine_kwargs
+)
+
+# Add connection event listeners for monitoring
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Set SQLite pragmas for better performance (if using SQLite)"""
+    if "sqlite" in settings.get_database_url():
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+
+@event.listens_for(engine, "checkout")
+def receive_checkout(dbapi_connection, connection_record, connection_proxy):
+    """Log database connection checkout"""
+    if settings.logging.level == "DEBUG":
+        logger.debug("Database connection checked out")
+
+
+@event.listens_for(engine, "checkin")
+def receive_checkin(dbapi_connection, connection_record):
+    """Log database connection checkin"""
+    if settings.logging.level == "DEBUG":
+        logger.debug("Database connection checked in")
+
+
+# Create SessionLocal class
+SessionLocal = sessionmaker(
+    autocommit=False, 
+    autoflush=False, 
+    bind=engine,
+    expire_on_commit=False  # Keep objects accessible after commit
+)
+
+# Create Base class for ORM models
+Base = declarative_base()
+
+
+class DatabaseManager:
+    """Database management utilities"""
+    
+    @staticmethod
+    def get_db() -> Generator[Session, None, None]:
+        """
+        Dependency function to get database session.
+        Used with FastAPI's dependency injection system.
+        """
+        db = SessionLocal()
+        start_time = time.time()
+        
+        try:
+            yield db
+        except Exception as e:
+            logger.error(f"Database session error: {e}")
+            db.rollback()
+            raise
+        finally:
+            duration = time.time() - start_time
+            if duration > 1.0:  # Log slow queries
+                logger.warning(f"Slow database session: {duration:.2f}s")
+            db.close()
+    
+    @staticmethod
+    def create_tables():
+        """Create all tables in the database"""
+        logger.info("Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+    
+    @staticmethod
+    def drop_tables():
+        """Drop all tables in the database (for testing)"""
+        logger.warning("Dropping all database tables...")
+        Base.metadata.drop_all(bind=engine)
+        logger.info("Database tables dropped successfully")
+    
+    @staticmethod
+    def check_connection() -> bool:
+        """Check if database connection is working"""
+        try:
+            with engine.connect() as connection:
+                connection.execute("SELECT 1")
+            return True
+        except Exception as e:
+            logger.error(f"Database connection check failed: {e}")
+            return False
+    
+    @staticmethod
+    def get_connection_info() -> dict:
+        """Get database connection information"""
+        return {
+            "url": settings.get_database_url().split("@")[-1] if "@" in settings.get_database_url() else "hidden",
+            "pool_size": settings.database.pool_size,
+            "max_overflow": settings.database.max_overflow,
+            "pool_timeout": settings.database.pool_timeout,
+            "pool_recycle": settings.database.pool_recycle,
+            "echo": settings.database.echo
+        }
+
+
+# Convenience functions for backward compatibility
+def get_db() -> Generator[Session, None, None]:
+    """Get database session (backward compatibility)"""
+    yield from DatabaseManager.get_db()
+
+
+def create_tables():
+    """Create all tables (backward compatibility)"""
+    return DatabaseManager.create_tables()
+
+
+def drop_tables():
+    """Drop all tables (backward compatibility)"""
+    return DatabaseManager.drop_tables()
+
+
+# Initialize database manager
+db_manager = DatabaseManager()

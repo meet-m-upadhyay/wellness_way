@@ -1,0 +1,130 @@
+name: Dependency Updates and Security Monitoring
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  # Update Python dependencies
+  update-python-deps:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install pip-tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-tools
+
+    - name: Update Python dependencies
+      working-directory: ./backend
+      run: |
+        # Create requirements.in if it doesn't exist
+        if [ ! -f requirements.in ]; then
+          cp requirements.txt requirements.in
+        fi
+        
+        # Update dependencies
+        pip-compile --upgrade requirements.in
+        
+        # Check for security vulnerabilities
+        pip install safety
+        safety check -r requirements.txt || true
+
+    - name: Create Pull Request for Python dependencies
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update Python dependencies'
+        title: 'chore: update Python dependencies'
+        body: |
+          This PR updates Python dependencies to their latest versions.
+          
+          Please review the changes and ensure all tests pass before merging.
+        branch: update-python-deps
+        delete-branch: true
+
+  # Update Node.js dependencies
+  update-node-deps:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Update Node.js dependencies
+      working-directory: ./frontend
+      run: |
+        # Update dependencies
+        npx npm-check-updates -u
+        npm install
+        
+        # Run security audit
+        npm audit --audit-level=moderate || true
+
+    - name: Create Pull Request for Node.js dependencies
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update Node.js dependencies'
+        title: 'chore: update Node.js dependencies'
+        body: |
+          This PR updates Node.js dependencies to their latest versions.
+          
+          Please review the changes and ensure all tests pass before merging.
+        branch: update-node-deps
+        delete-branch: true
+
+  # Security monitoring
+  security-monitoring:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run comprehensive security scan
+      uses: securecodewarrior/github-action-add-sarif@v1
+      with:
+        sarif-file: 'security-scan-results.sarif'
+
+    - name: Check for secrets in code
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+
+    - name: Docker image security scan
+      run: |
+        # Install Trivy
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy
+        
+        # Scan Docker images
+        trivy image --exit-code 1 --severity HIGH,CRITICAL python:3.11-slim
+        trivy image --exit-code 1 --severity HIGH,CRITICAL node:18-alpine
+        trivy image --exit-code 1 --severity HIGH,CRITICAL postgres:15-alpine
+        trivy image --exit-code 1 --severity HIGH,CRITICAL redis:7-alpine
