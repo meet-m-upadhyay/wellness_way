@@ -48,11 +48,125 @@ wellnessway-diet-planner/
 
 ### Prerequisites
 
+**For Supabase Cloud (Recommended):**
+- Supabase account (free tier at [supabase.com](https://supabase.com))
+- Node.js 18+ (for local frontend development)
+- Python 3.11+ (for local backend development)
+
+**For Local Docker Development:**
 - Docker and Docker Compose
 - Node.js 18+ (for local frontend development)
 - Python 3.11+ (for local backend development)
 
-### Local Development Setup
+---
+
+## Setup Option 1: Supabase Cloud (Recommended ⭐)
+
+**Benefits:**
+- ✅ Work from multiple laptops/machines
+- ✅ No Docker required
+- ✅ Cloud-hosted PostgreSQL database
+- ✅ Managed backups and monitoring
+- ✅ Free tier available
+
+### Supabase Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd wellnessway-diet-planner
+   ```
+
+2. **Create Supabase project**
+   - Go to [supabase.com](https://supabase.com)
+   - Create a new account or sign in
+   - Click "New Project" and follow the prompts
+   - Save your database password
+
+3. **Configure environment variables**
+   ```bash
+   cp .env.supabase.example .env.supabase
+   # Edit .env.supabase with your Supabase credentials:
+   # DATABASE_URL=postgresql+psycopg://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
+   # OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+4. **Copy Supabase configuration to active environment**
+   ```bash
+   cp .env.supabase .env
+   ```
+
+5. **Test database connection**
+   ```bash
+   cd backend
+   
+   # Windows PowerShell:
+   .\venv\Scripts\python.exe setup_supabase.py --test-connection
+   
+   # macOS/Linux:
+   python setup_supabase.py --test-connection
+   ```
+
+6. **Run database migrations**
+   ```bash
+   cd backend
+   
+   # Windows PowerShell:
+   .\venv\Scripts\python.exe -m alembic upgrade head
+   
+   # macOS/Linux:
+   python -m alembic upgrade head
+   ```
+
+7. **Verify schema creation**
+   ```bash
+   cd backend
+   
+   # Windows PowerShell:
+   .\venv\Scripts\python.exe setup_supabase.py --verify-tables
+   
+   # macOS/Linux:
+   python setup_supabase.py --verify-tables
+   ```
+
+8. **Start services**
+   
+   Terminal 1 - Backend:
+   ```bash
+   cd backend
+   
+   # Windows PowerShell:
+   .\venv\Scripts\python.exe start_backend.py
+   
+   # macOS/Linux:
+   python start_backend.py
+   ```
+   
+   Terminal 2 - Frontend:
+   ```bash
+   cd frontend
+   npm install
+   npm start
+   ```
+
+9. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
+
+**For detailed Supabase migration guide, see:** [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
+
+---
+
+## Setup Option 2: Local Docker Development
+
+**Benefits:**
+- ✅ Completely local development
+- ✅ No internet required (after initial setup)
+- ✅ Full control over database
+- ✅ Easiest for single-machine development
+
+### Local Docker Setup
 
 1. **Clone the repository**
    ```bash
@@ -98,9 +212,9 @@ wellnessway-diet-planner/
    - API Documentation: http://localhost:8000/docs
    - Database: localhost:5432 (wellnessway_db, user: wellnessway, password: password)
 
-### Database Access
+### Database Access (Docker Option)
 
-You can connect to the PostgreSQL database using:
+You can connect to the local PostgreSQL database using:
 
 **Connection Details:**
 - Host: localhost
@@ -113,6 +227,90 @@ You can connect to the PostgreSQL database using:
 ```bash
 docker exec -it wellnessway-db psql -U wellnessway -d wellnessway_db
 ```
+
+---
+
+## Switching Between Setups
+
+### From Docker to Supabase
+
+If you want to switch from local Docker to Supabase cloud:
+
+```bash
+# 1. Create your Supabase project and get credentials
+# 2. Create .env.supabase with your credentials
+cp .env.supabase.example .env.supabase
+# Edit with your Supabase credentials
+
+# 3. Switch to Supabase configuration
+cp .env.supabase .env
+
+# 4. Test the connection
+cd backend
+python setup_supabase.py --test-connection
+
+# 5. Run migrations (only if Supabase database is empty)
+python -m alembic upgrade head
+
+# 6. Start the application
+python start_backend.py
+```
+
+### From Supabase to Docker
+
+If you want to switch back to local Docker:
+
+```bash
+# 1. Start Docker containers
+docker-compose up -d
+
+# 2. Switch back to Docker configuration
+# Edit .env to use: DATABASE_URL=postgresql+psycopg://wellnessway:password@localhost:5432/wellnessway_db
+
+# 3. Run migrations if needed
+cd backend
+python -m alembic upgrade head
+
+# 4. Start the application
+python start_backend.py
+```
+
+### Important Notes
+
+- Both setups use the **same database schema** and **Alembic migrations**
+- No code changes required to switch between setups
+- Your data stays in the respective database (local or cloud)
+- Always verify connection before starting the application
+- For team development, recommend using Supabase for consistency
+
+---
+
+## Multi-Device Development
+
+With Supabase, you can work on multiple laptops/machines:
+
+1. **Setup on Machine 1:**
+   ```bash
+   git clone <repository-url>
+   cp .env.supabase.example .env.supabase
+   # Add your Supabase credentials
+   cp .env.supabase .env
+   python setup_supabase.py --test-connection
+   ```
+
+2. **Setup on Machine 2:**
+   ```bash
+   git clone <repository-url>
+   cp .env.supabase.example .env.supabase
+   # Use the SAME Supabase credentials
+   cp .env.supabase .env
+   python setup_supabase.py --test-connection
+   ```
+
+3. **Share credentials securely:**
+   - Use a password manager or secure file sharing
+   - Never commit .env files to git
+   - Each team member gets their own .env (not committed)
 
 **Using database tools:**
 - SQLTools (VS Code/Kiro extension)
