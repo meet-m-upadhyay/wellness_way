@@ -177,7 +177,7 @@ export const DietPlans: React.FC = () => {
     }
   };
 
-  const handleRegenerateMeal = async (dayIndex: number | undefined, mealType: string) => {
+  const handleRegenerateMeal = async (dayIndex: number | undefined, mealType: string, useML: boolean = false) => {
     if (!currentPlan || !currentUserId) return;
 
     // Convert mealType to mealIndex
@@ -200,7 +200,7 @@ export const DietPlans: React.FC = () => {
     setSafetyViolation(null);
 
     try {
-      const response = await apiClient.regenerateMeal(currentPlan.id!, actualDayIndex, mealIndex, currentUserId);
+      const response = await apiClient.regenerateMeal(currentPlan.id!, actualDayIndex, mealIndex, currentUserId, useML);
       
       if (response.error) {
         // Check if this is a safety violation
@@ -212,7 +212,10 @@ export const DietPlans: React.FC = () => {
       }
 
       if (response.data) {
-        setCurrentPlan(response.data);
+        console.log('Meal regenerated successfully, updating plan:', response.data.id);
+        console.log('New plan content:', JSON.stringify(response.data.content).substring(0, 200));
+        // Force a new object reference to trigger React re-render
+        setCurrentPlan({ ...response.data });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate meal');
@@ -221,7 +224,7 @@ export const DietPlans: React.FC = () => {
     }
   };
 
-  const handleRegenerateDay = async (dayIndex: number) => {
+  const handleRegenerateDay = async (dayIndex: number, useML: boolean = false) => {
     if (!currentPlan || !currentUserId) return;
 
     setRegeneratingDay(dayIndex);
@@ -229,7 +232,7 @@ export const DietPlans: React.FC = () => {
     setSafetyViolation(null);
 
     try {
-      const response = await apiClient.regenerateDay(currentPlan.id!, dayIndex, currentUserId);
+      const response = await apiClient.regenerateDay(currentPlan.id!, dayIndex, currentUserId, useML);
       
       if (response.error) {
         // Check if this is a safety violation
@@ -241,7 +244,9 @@ export const DietPlans: React.FC = () => {
       }
 
       if (response.data) {
-        setCurrentPlan(response.data);
+        console.log('Day regenerated successfully, updating plan:', response.data.id);
+        // Force a new object reference to trigger React re-render
+        setCurrentPlan({ ...response.data });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate day');
@@ -250,7 +255,7 @@ export const DietPlans: React.FC = () => {
     }
   };
 
-  const handleRegenerateWeek = async () => {
+  const handleRegenerateWeek = async (useML: boolean = false) => {
     if (!currentPlan || !currentUserId) return;
 
     setIsRegeneratingWeek(true);
@@ -258,7 +263,7 @@ export const DietPlans: React.FC = () => {
     setSafetyViolation(null);
 
     try {
-      const response = await apiClient.regenerateFullPlan(currentPlan.id!, currentUserId);
+      const response = await apiClient.regenerateFullPlan(currentPlan.id!, currentUserId, useML);
       
       if (response.error) {
         // Check if this is a safety violation
@@ -270,7 +275,9 @@ export const DietPlans: React.FC = () => {
       }
 
       if (response.data) {
-        setCurrentPlan(response.data);
+        console.log('Week regenerated successfully, updating plan:', response.data.id);
+        // Force a new object reference to trigger React re-render
+        setCurrentPlan({ ...response.data });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate week');
@@ -417,15 +424,15 @@ export const DietPlans: React.FC = () => {
             {currentPlan.plan_type === 'daily' ? (
               <DailyPlanView
                 plan={adaptDailyPlanToLegacy(currentPlan.content as DailyPlanContent)}
-                onRegenerateMeal={(mealType) => handleRegenerateMeal(undefined, mealType)}
-                onRegenerateDay={() => handleRegenerateDay(0)}
+                onRegenerateMeal={(mealType, useML) => handleRegenerateMeal(undefined, mealType, useML)}
+                onRegenerateDay={(useML) => handleRegenerateDay(0, useML)}
                 regeneratingMeal={regeneratingMeal?.mealType || null}
                 isRegeneratingDay={regeneratingDay === 0}
               />
             ) : (
               <WeeklyPlanView
                 plan={adaptWeeklyPlanToLegacy(currentPlan.content as WeeklyPlanContent)}
-                onRegenerateMeal={(dayIndex, mealType) => handleRegenerateMeal(dayIndex, mealType)}
+                onRegenerateMeal={handleRegenerateMeal}
                 onRegenerateDay={handleRegenerateDay}
                 onRegenerateWeek={handleRegenerateWeek}
                 regeneratingMeal={regeneratingMeal}

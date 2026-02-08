@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 interface PlanTypeSelectorProps {
   selectedType: 'daily' | 'weekly' | null;
   onSelect: (type: 'daily' | 'weekly') => void;
-  onGenerate: (options?: { targetDate?: string; startDate?: string }) => void;
+  onGenerate: (options?: { targetDate?: string; startDate?: string; useML?: boolean }) => void;
   isLoading?: boolean;
 }
 
@@ -30,8 +30,8 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
     return date.toISOString().split('T')[0];
   };
 
-  const handleGenerate = () => {
-    const options: { targetDate?: string; startDate?: string } = {};
+  const handleGenerate = (useML: boolean = false) => {
+    const options: { targetDate?: string; startDate?: string; useML?: boolean } = { useML };
     
     if (selectedType === 'daily' && targetDate) {
       options.targetDate = targetDate;
@@ -183,26 +183,64 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
           </div>
         </div>
 
-        {/* Generation Button */}
-        <div className="text-center">
-          <Button
-            onClick={handleGenerate}
-            disabled={!selectedType || isLoading}
-            size="lg"
-            className="px-8 py-3"
-          >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Generating {selectedType} plan...
-              </>
-            ) : (
-              `Generate ${selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : ''} Plan`
-            )}
-          </Button>
+        {/* Generation Buttons */}
+        <div className="text-center space-y-4">
+          {/* GenAI Button (Existing) Disabled for now*/}
+          {/* <div>
+            <Button
+              onClick={() => handleGenerate(false)}
+              disabled={!selectedType || isLoading}
+              size="lg"
+              className="px-8 py-3"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating {selectedType} plan...
+                </>
+              ) : (
+                <>
+                  🤖 Generate {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : ''} Plan (AI)
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Uses GenAI for creative meal generation
+            </p>
+          </div> */}
+
+          {/* ML Button (NEW) */}
+          <div>
+            <Button
+              onClick={() => handleGenerate(true)}
+              disabled={!selectedType || isLoading}
+              size="lg"
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating {selectedType} plan with ML...
+                </>
+              ) : (
+                <>
+                  🧠 Generate {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : ''} Plan (ML)
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                NEW
+              </span>
+              {' '}Uses ML templates + deterministic nutrition
+            </p>
+          </div>
           
           {selectedType && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">

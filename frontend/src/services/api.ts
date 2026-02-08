@@ -580,9 +580,11 @@ class ApiClient {
   async generateDietPlan(
     userId: string,
     planType: 'daily' | 'weekly',
-    options?: { regenerate?: boolean; startDate?: string; targetDate?: string }
+    options?: { regenerate?: boolean; startDate?: string; targetDate?: string; useML?: boolean }
   ): Promise<ApiResponse<DietPlan>> {
-    const endpoint = planType === 'weekly' ? '/diet-plans/weekly' : '/diet-plans/daily';
+    // Choose endpoint based on useML flag
+    const baseEndpoint = options?.useML ? '/diet-plans-ml' : '/diet-plans';
+    const endpoint = planType === 'weekly' ? `${baseEndpoint}/weekly` : `${baseEndpoint}/daily`;
     
     // Prepare request body based on plan type
     let body: any = {};
@@ -634,9 +636,14 @@ class ApiClient {
     planId: string,
     dayIndex: number,
     mealIndex: number,
-    userId: string
+    userId: string,
+    useML?: boolean
   ): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}/regenerate-meal`, {
+    const endpoint = useML 
+      ? `/diet-plans-ml/${planId}/regenerate-meal-ml`
+      : `/diet-plans/${planId}/regenerate-meal`;
+    
+    return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
@@ -648,8 +655,17 @@ class ApiClient {
     });
   }
 
-  async regenerateDay(planId: string, dayIndex: number, userId: string): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}/regenerate-day`, {
+  async regenerateDay(
+    planId: string, 
+    dayIndex: number, 
+    userId: string,
+    useML?: boolean
+  ): Promise<ApiResponse<DietPlan>> {
+    const endpoint = useML
+      ? `/diet-plans-ml/${planId}/regenerate-day-ml`
+      : `/diet-plans/${planId}/regenerate-day`;
+    
+    return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
@@ -658,8 +674,16 @@ class ApiClient {
     });
   }
 
-  async regenerateFullPlan(planId: string, userId: string): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}/regenerate`, {
+  async regenerateFullPlan(
+    planId: string, 
+    userId: string,
+    useML?: boolean
+  ): Promise<ApiResponse<DietPlan>> {
+    const endpoint = useML
+      ? `/diet-plans-ml/${planId}/regenerate-ml`
+      : `/diet-plans/${planId}/regenerate`;
+    
+    return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
