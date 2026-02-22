@@ -300,3 +300,8 @@ test-results.xml
 secrets/
 .kiro/secrets/
 **/.env
+
+# Secret files for Notion (DO NOT COMMIT)
+ENVIRONMENT_SECRETS_GUIDE.md
+NOTION_SECRETS_TEMPLATE.md
+SECRETS_ONLY.txt
