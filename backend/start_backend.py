@@ -4,17 +4,29 @@ Start FastAPI backend with explicit environment configuration
 """
 import os
 import sys
+from dotenv import load_dotenv
 
 def start_backend():
-    # Set environment variables before importing anything
-    os.environ["DATABASE_URL"] = "postgresql+psycopg://wellnessway:password@localhost:5432/wellnessway_db"
-    os.environ["REDIS_URL"] = "redis://localhost:6379/0"
-    os.environ["ENVIRONMENT"] = "development"
-    os.environ["DEBUG"] = "true"
+    # Load .env file first
+    load_dotenv()
+    
+    # Get DATABASE_URL from .env (don't override it)
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        print("❌ DATABASE_URL not found in .env file!")
+        sys.exit(1)
+    
+    # Set other environment variables
+    os.environ["REDIS_URL"] = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    os.environ["ENVIRONMENT"] = os.getenv("ENVIRONMENT", "development")
+    os.environ["DEBUG"] = os.getenv("DEBUG", "true")
+    
+    # Mask password for display
+    display_url = db_url.split('@')[0].split(':')[0] + ":***@" + db_url.split('@')[1] if '@' in db_url else db_url
     
     print("🚀 Starting WellnessWay Backend...")
-    print(f"Database URL: {os.environ['DATABASE_URL']}")
-    print(f"Redis URL: {os.environ['REDIS_URL']}")
+    print(f"📍 Database: {display_url}")
+    print(f"🔴 Redis: {os.environ['REDIS_URL']}")
     
     # Now import and start uvicorn
     import uvicorn
