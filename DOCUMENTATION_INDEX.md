@@ -1,315 +1,252 @@
-# 📚 Supabase Migration Documentation Index
+# WellnessWay Documentation Index
 
-Welcome! This index helps you find the right documentation for your needs.
+**Last Updated**: February 22, 2026
+
+This is your central hub for all project documentation. Everything you need is organized here.
 
 ---
 
-## 🎯 Quick Navigation
+## 📖 Essential Reading
 
-### ⚡ I need to get started immediately
-👉 **5-minute setup**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-- Supabase setup in 5 minutes
-- Docker setup in 5 minutes  
-- Common issues and quick fixes
+### Start Here
+1. **[README.md](README.md)** - Project overview and introduction
+2. **[QUICK_START.md](QUICK_START.md)** - Get the app running in 5 minutes
+3. **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete consolidated documentation
 
-### 📖 I need comprehensive instructions
-👉 **Complete guide**: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-- Step-by-step Supabase setup
+### For New Developers
+- [docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md) - Development environment setup
+- [spec.md](spec.md) - Project specification and requirements
+- [NOTIFICATION_SYSTEM_ARCHITECTURE.md](NOTIFICATION_SYSTEM_ARCHITECTURE.md) - System architecture
+
+---
+
+## 🗄️ Database & Infrastructure
+
+### Setup & Migration
+- **[SUPABASE_MIGRATION_SUCCESS.md](SUPABASE_MIGRATION_SUCCESS.md)** - Supabase setup guide (CURRENT)
+- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md) - Detailed migration guide
+- [backend/DATABASE_SETUP.md](backend/DATABASE_SETUP.md) - Database configuration
+- [database_management_commands.md](database_management_commands.md) - Common DB commands
+
+### Migrations
+- [backend/ALEMBIC_MIGRATION_SYSTEM.md](backend/ALEMBIC_MIGRATION_SYSTEM.md) - Alembic migration system
+
+---
+
+## 🤖 ML & AI Features
+
+### ML Pipeline
+- **[ML_MODELS_USED.md](ML_MODELS_USED.md)** - ML models and architecture
+- [docs/PROJECT_DOCUMENTATION.md#ml-pipeline](docs/PROJECT_DOCUMENTATION.md#ml-pipeline) - ML pipeline details
+
+### Features
+- Diet plan generation (ML-based)
+- Meal regeneration
+- Ingredient canonicalization
+- Nutrition calculations
+
+---
+
+## 🔐 Authentication & Security
+
+### Setup
+- **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)** - Google OAuth configuration
+- **[SECURITY_REMINDER.md](SECURITY_REMINDER.md)** - Security best practices
+
+### Features
+- JWT authentication
+- Google OAuth integration
+- Admin access control
+- User approval workflow
+
+---
+
+## 🚀 Deployment & CI/CD
+
+- [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md) - Deployment and CI/CD setup
 - Environment configuration
-- Database migration
-- Troubleshooting (17 issues covered)
-- Performance tuning
-
-### 👥 I'm managing a team migration
-👉 **Team checklist**: [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-- Pre-migration planning
-- Individual setup steps for each developer
-- Team lead tasks
-- Security checklist
-- Post-migration verification
-
-### 🔧 I need to understand the implementation
-👉 **Technical details**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-- What was created and why
-- Backward compatibility details
-- How everything works together
-- Performance considerations
-- Verification checklist
-
-### 📝 I need a file list
-👉 **Files overview**: [FILES_CREATED_SUMMARY.md](FILES_CREATED_SUMMARY.md)
-- All new files created
-- All modified files
-- File purposes and usage
-- Statistics and metrics
+- Production best practices
 
 ---
 
-## 📋 All Documentation Files
+## 🧪 Testing
 
-### Setup Guides
+### Test Organization
+- `backend/tests/` - Organized unit tests (KEEP)
+- `backend/test_supabase_connection.py` - Connection testing utility
+- `backend/test_ml_pipeline.py` - ML pipeline tests
+- `backend/test_admin_system.py` - Admin system tests
 
-| File | Purpose | Best For | Time |
-|------|---------|----------|------|
-| [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md) | Fast setup reference | Quick starters | 5 min |
-| [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md) | Complete setup guide | Detailed reference | 30 min |
-| [README.md](README.md) | Project overview | General reference | 15 min |
-
-### Team Management
-
-| File | Purpose | Best For | Time |
-|------|---------|----------|------|
-| [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md) | Team coordination | Team leads | 1 hour |
-
-### Technical Reference
-
-| File | Purpose | Best For | Time |
-|------|---------|----------|------|
-| [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md) | Implementation details | Architects, reviewers | 20 min |
-| [FILES_CREATED_SUMMARY.md](FILES_CREATED_SUMMARY.md) | File descriptions | Project understanding | 15 min |
-
-### Configuration Templates
-
-| File | Purpose | Usage |
-|------|---------|-------|
-| [.env.supabase.example](.env.supabase.example) | Supabase config template | `cp .env.supabase.example .env.supabase` |
-| [.env.example](.env.example) | Docker config template | `cp .env.example .env` (unchanged) |
-
-### Automation Scripts
-
-| File | Purpose | Usage |
-|------|---------|-------|
-| [backend/setup_supabase.py](backend/setup_supabase.py) | Setup verification | `python setup_supabase.py --help` |
+### Running Tests
+```bash
+cd backend
+pytest                          # Run all tests
+pytest tests/                   # Run organized tests only
+pytest test_ml_pipeline.py      # Run specific test
+```
 
 ---
 
-## 🗺️ Reading Path by Role
+## 📚 API Documentation
 
-### 👨‍💻 Individual Developer
+### Interactive Docs
+When backend is running:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
-1. **Start here**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-   - Pick your setup (Supabase or Docker)
-   - Follow 5-minute instructions
-   
-2. **Need details?**: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-   - Understand each step
-   - Learn troubleshooting
-
-3. **Need help?**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-common-issues)
-   - Quick issue resolution
-
----
-
-### 👔 Team Lead / Manager
-
-1. **Start here**: [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-   - Plan migration
-   - Manage team setup
-   - Track progress
-
-2. **Technical review**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-   - Understand what was done
-   - Verify compatibility
-
-3. **Documentation update**: [README.md](README.md)
-   - Share with team
-   - Reference documentation
+### Endpoints
+- `/api/v1/auth/*` - Authentication
+- `/api/v1/users/*` - User management
+- `/api/v1/diet-plans/*` - AI diet plans (disabled)
+- `/api/v1/diet-plans-ml/*` - ML diet plans (active)
+- `/api/v1/health-context/*` - Health profiles
+- `/api/v1/admin/*` - Admin functions
 
 ---
 
-### 🏗️ Architect / Technical Lead
+## 🛠️ Development Guide
 
-1. **Implementation review**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-   - Verify architecture
-   - Check compatibility
-   - Review security
+### Code Organization
+```
+wellness_way/
+├── backend/
+│   ├── app/
+│   │   ├── api/endpoints/     # API routes
+│   │   ├── services/          # Business logic
+│   │   │   └── ml_diet_pipeline/  # ML pipeline
+│   │   ├── models/            # Database models
+│   │   └── schemas/           # Pydantic schemas
+│   └── tests/                 # Unit tests
+├── frontend/
+│   └── src/
+│       ├── components/        # React components
+│       ├── pages/             # Page components
+│       └── services/          # API client
+└── docs/                      # Documentation
+```
 
-2. **File overview**: [FILES_CREATED_SUMMARY.md](FILES_CREATED_SUMMARY.md)
-   - Understand all changes
-   - Review structure
-
-3. **Source code**: 
-   - [backend/setup_supabase.py](backend/setup_supabase.py) - Setup script
-   - [.env.supabase.example](.env.supabase.example) - Configuration
-
----
-
-### 🔧 DevOps / Infrastructure
-
-1. **Implementation**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-   - Understand setup
-   - Performance tuning
-
-2. **Configuration**: [.env.supabase.example](.env.supabase.example)
-   - Environment variables
-   - Connection pooling
-
-3. **Automation**: [backend/setup_supabase.py](backend/setup_supabase.py)
-   - Setup verification
-   - Diagnostics
+### Key Files
+- `backend/start_backend.py` - Start backend server
+- `backend/run_migrations.py` - Run database migrations
+- `backend/test_supabase_connection.py` - Test DB connection
+- `cleanup_project.py` - Clean up unnecessary files
 
 ---
 
-### 🚀 First-Time User
+## 🧹 Project Maintenance
 
-1. **Quick start**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-   - 5-minute setup guide
-   - Choose your path
+### Cleanup
+- **[docs/CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md)** - What files can be deleted
+- Run `python cleanup_project.py` to clean up automatically
 
-2. **Detailed guide**: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-   - In-depth instructions
-   - Step-by-step process
-
-3. **Troubleshooting**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-common-issues)
-   - Quick fixes
-   - Issue resolution
+### What Was Cleaned
+- ~85 ad-hoc test files removed
+- ~35 redundant documentation files consolidated
+- ~15 debug scripts removed
+- All essential functionality preserved
 
 ---
 
-## 📚 Documentation by Topic
+## 🆘 Troubleshooting
 
-### Getting Started
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md) - Fast setup
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md) - Complete guide
-- [README.md](README.md) - Project overview
+### Common Issues
 
-### Supabase Setup
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#supabase-project-setup)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-choose-your-setup)
-- [.env.supabase.example](.env.supabase.example)
+**Backend won't start**
+- Check `backend/.env` has correct DATABASE_URL
+- Verify Supabase project is active
+- Run: `python backend/test_supabase_connection.py`
 
-### Environment Configuration
-- [.env.supabase.example](.env.supabase.example)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#environment-configuration)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
+**Frontend can't connect**
+- Ensure backend is running on port 8000
+- Check `frontend/.env` has correct REACT_APP_API_URL
+- Verify CORS settings
 
-### Database Migration
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#database-migration)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-quick-start---supabase-5-minutes)
-- [backend/setup_supabase.py](backend/setup_supabase.py)
+**Database errors**
+- Run migrations: `python backend/run_migrations.py`
+- Check connection: `python backend/test_supabase_connection.py`
+- Verify Supabase credentials
 
-### Verification & Testing
-- [backend/setup_supabase.py](backend/setup_supabase.py) - Setup verification
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#verification)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-verify-setup)
+**ML pipeline errors**
+- Check meal templates exist
+- Verify nutrition database is populated
+- Review logs for specific errors
 
-### Troubleshooting
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#troubleshooting)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-common-issues)
-- [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md#troubleshooting-during-setup)
-
-### Multi-Device Development
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#multi-device-development)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-multi-device-setup)
-- [README.md](README.md#multi-device-development)
-
-### Team Migration
-- [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-
-### Security
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#advanced-topics)
-- [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md#security-checklist)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-security-notes)
-
-### Performance
-- [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md#performance-considerations)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#connection-pooling)
+See [docs/PROJECT_DOCUMENTATION.md#troubleshooting](docs/PROJECT_DOCUMENTATION.md#troubleshooting) for detailed solutions.
 
 ---
 
-## 🔍 Find What You Need
+## 📋 Quick Reference
 
-### Search by Scenario
+### Start Development
+```bash
+# Backend
+cd backend
+venv\Scripts\activate
+python start_backend.py
 
-**Scenario**: "I want to use Supabase on my laptop"
-- Read: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-quick-start---supabase-5-minutes)
+# Frontend
+cd frontend
+npm start
+```
 
-**Scenario**: "Our team needs to migrate from Docker"
-- Read: [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
+### Run Tests
+```bash
+cd backend
+pytest tests/
+```
 
-**Scenario**: "I need to configure environment variables"
-- Read: [.env.supabase.example](.env.supabase.example)
-- Reference: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#environment-configuration)
+### Database Operations
+```bash
+# Run migrations
+python run_migrations.py
 
-**Scenario**: "My connection is failing"
-- Read: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#connection-issues)
-- Run: `python setup_supabase.py --test-connection`
+# Test connection
+python test_supabase_connection.py
+```
 
-**Scenario**: "I need to verify my setup"
-- Run: `python setup_supabase.py --diagnose`
-- Read: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-verify-setup)
-
-**Scenario**: "I need to go back to Docker"
-- Read: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-quick-start---docker-local-5-minutes)
-- Reference: [README.md](README.md#switching-between-setups)
-
-**Scenario**: "I need to understand the migration"
-- Read: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-
-**Scenario**: "I want to work from multiple machines"
-- Read: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#multi-device-development)
-- Reference: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-multi-device-setup)
-
----
-
-## 📊 File Statistics
-
-| Category | Count | Files |
-|----------|-------|-------|
-| New Documentation | 5 | QUICK_START_SUPABASE.md, docs/SUPABASE_MIGRATION.md, SUPABASE_MIGRATION_IMPLEMENTATION.md, SUPABASE_TEAM_MIGRATION_CHECKLIST.md, FILES_CREATED_SUMMARY.md |
-| Updated Documentation | 1 | README.md |
-| New Configuration | 1 | .env.supabase.example |
-| New Scripts | 1 | backend/setup_supabase.py |
-| Unchanged | Many | docker-compose.yml, .env.example, all app code, alembic migrations |
+### Cleanup Project
+```bash
+python cleanup_project.py
+```
 
 ---
 
-## ✅ What's Included
+## 📞 Support
 
-- ✅ Setup guides (quick and detailed)
-- ✅ Team migration checklist
-- ✅ Configuration templates
-- ✅ Automation script
-- ✅ Technical documentation
-- ✅ Troubleshooting guides
-- ✅ Security guidelines
-- ✅ Performance tuning
-- ✅ Multi-device support
-- ✅ 100% backward compatibility
+- **GitHub Issues**: https://github.com/meet-m-upadhyay/wellness_way/issues
+- **Documentation**: This index and linked files
+- **API Docs**: http://localhost:8000/docs (when running)
 
 ---
 
-## 🚀 Get Started Now
+## 🗂️ File Organization
 
-**Choose your path:**
+### Keep These Files
+- All files in `backend/tests/` folder
+- `backend/test_supabase_connection.py`
+- `backend/test_ml_pipeline.py`
+- `backend/test_admin_system.py`
+- All documentation listed in this index
 
-1. **I'm in a hurry** → [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-2. **I need details** → [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-3. **I'm a team lead** → [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-4. **I need technical details** → [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-
----
-
-## 💡 Tips
-
-- **Bookmark this page** for easy reference
-- **Share with your team** if coordinating migration
-- **Run `python setup_supabase.py --help`** to see script options
-- **Check troubleshooting first** before asking for help
-- **Keep `.env` files secure** - never commit them
+### Can Delete
+- Ad-hoc test files in `backend/` root (except those listed above)
+- `*_COMPLETION_REPORT.md` files
+- `CHATGPT_*.md` files
+- Debug scripts (`debug_*.py`)
+- See [docs/CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md) for complete list
 
 ---
 
-## 🆘 Need Help?
+## 📝 Contributing
 
-1. **Check troubleshooting sections**: Most common issues are covered
-2. **Run diagnostics**: `python setup_supabase.py --diagnose -v`
-3. **Search documentation**: Use Ctrl+F to find topics
-4. **Check project README**: [README.md](README.md)
+1. Read [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)
+2. Follow code style guidelines
+3. Write tests for new features
+4. Update documentation
+5. Submit pull request
 
 ---
 
-**Happy coding!** 🎉
+**This index is your starting point. For detailed information, follow the links to specific documentation files.**
 
-*Last updated: January 29, 2026*
+Generated: February 22, 2026
