@@ -2,251 +2,237 @@
 
 **Last Updated**: February 22, 2026
 
-This is your central hub for all project documentation. Everything you need is organized here.
+Your central hub for all project documentation.
 
 ---
 
-## 📖 Essential Reading
+## 🚀 START HERE
 
-### Start Here
-1. **[README.md](README.md)** - Project overview and introduction
-2. **[QUICK_START.md](QUICK_START.md)** - Get the app running in 5 minutes
-3. **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete consolidated documentation
+### New to the Project?
+1. **[QUICK_START.md](QUICK_START.md)** ⭐ - Get running in 5 minutes
+2. **[README.md](README.md)** - Project overview
+3. **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete guide
 
-### For New Developers
-- [docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md) - Development environment setup
-- [spec.md](spec.md) - Project specification and requirements
-- [NOTIFICATION_SYSTEM_ARCHITECTURE.md](NOTIFICATION_SYSTEM_ARCHITECTURE.md) - System architecture
-
----
-
-## 🗄️ Database & Infrastructure
-
-### Setup & Migration
-- **[SUPABASE_MIGRATION_SUCCESS.md](SUPABASE_MIGRATION_SUCCESS.md)** - Supabase setup guide (CURRENT)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md) - Detailed migration guide
-- [backend/DATABASE_SETUP.md](backend/DATABASE_SETUP.md) - Database configuration
-- [database_management_commands.md](database_management_commands.md) - Common DB commands
-
-### Migrations
-- [backend/ALEMBIC_MIGRATION_SYSTEM.md](backend/ALEMBIC_MIGRATION_SYSTEM.md) - Alembic migration system
+### For AI Agents / System Understanding
+1. **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)** - Complete system handover
+2. **[docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md)** - Quick reference
+3. **[spec.md](spec.md)** - Original specification
 
 ---
 
-## 🤖 ML & AI Features
+## 📁 Documentation Structure
 
-### ML Pipeline
-- **[ML_MODELS_USED.md](ML_MODELS_USED.md)** - ML models and architecture
-- [docs/PROJECT_DOCUMENTATION.md#ml-pipeline](docs/PROJECT_DOCUMENTATION.md#ml-pipeline) - ML pipeline details
-
-### Features
-- Diet plan generation (ML-based)
-- Meal regeneration
-- Ingredient canonicalization
-- Nutrition calculations
-
----
-
-## 🔐 Authentication & Security
-
-### Setup
-- **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)** - Google OAuth configuration
-- **[SECURITY_REMINDER.md](SECURITY_REMINDER.md)** - Security best practices
-
-### Features
-- JWT authentication
-- Google OAuth integration
-- Admin access control
-- User approval workflow
-
----
-
-## 🚀 Deployment & CI/CD
-
-- [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md) - Deployment and CI/CD setup
-- Environment configuration
-- Production best practices
-
----
-
-## 🧪 Testing
-
-### Test Organization
-- `backend/tests/` - Organized unit tests (KEEP)
-- `backend/test_supabase_connection.py` - Connection testing utility
-- `backend/test_ml_pipeline.py` - ML pipeline tests
-- `backend/test_admin_system.py` - Admin system tests
-
-### Running Tests
-```bash
-cd backend
-pytest                          # Run all tests
-pytest tests/                   # Run organized tests only
-pytest test_ml_pipeline.py      # Run specific test
-```
-
----
-
-## 📚 API Documentation
-
-### Interactive Docs
-When backend is running:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-### Endpoints
-- `/api/v1/auth/*` - Authentication
-- `/api/v1/users/*` - User management
-- `/api/v1/diet-plans/*` - AI diet plans (disabled)
-- `/api/v1/diet-plans-ml/*` - ML diet plans (active)
-- `/api/v1/health-context/*` - Health profiles
-- `/api/v1/admin/*` - Admin functions
-
----
-
-## 🛠️ Development Guide
-
-### Code Organization
 ```
 wellness_way/
-├── backend/
-│   ├── app/
-│   │   ├── api/endpoints/     # API routes
-│   │   ├── services/          # Business logic
-│   │   │   └── ml_diet_pipeline/  # ML pipeline
-│   │   ├── models/            # Database models
-│   │   └── schemas/           # Pydantic schemas
-│   └── tests/                 # Unit tests
-├── frontend/
-│   └── src/
-│       ├── components/        # React components
-│       ├── pages/             # Page components
-│       └── services/          # API client
-└── docs/                      # Documentation
+├── QUICK_START.md                      ⭐ Start here!
+├── README.md                           Project overview
+├── spec.md                             Original specification
+├── DOCUMENTATION_INDEX.md              This file
+├── GOOGLE_OAUTH_SETUP.md              OAuth configuration
+├── NOTIFICATION_SYSTEM_ARCHITECTURE.md System architecture
+└── docs/
+    ├── PROJECT_DOCUMENTATION.md        Complete project guide
+    ├── SYSTEM_INTELLIGENCE_DOCUMENT.md Complete system handover
+    ├── SYSTEM_INTELLIGENCE_QUICK_REF.md Quick reference
+    ├── ENVIRONMENT_SETUP.md            Environment configuration
+    ├── SUPABASE_MIGRATION.md           Database migration guide
+    ├── CI_CD_SETUP.md                  Deployment guide
+    └── CLEANUP_PLAN.md                 Cleanup documentation
 ```
-
-### Key Files
-- `backend/start_backend.py` - Start backend server
-- `backend/run_migrations.py` - Run database migrations
-- `backend/test_supabase_connection.py` - Test DB connection
-- `cleanup_project.py` - Clean up unnecessary files
 
 ---
 
-## 🧹 Project Maintenance
+## 📖 Documentation by Purpose
 
-### Cleanup
-- **[docs/CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md)** - What files can be deleted
-- Run `python cleanup_project.py` to clean up automatically
+### Getting Started
+- **[QUICK_START.md](QUICK_START.md)** - 5-minute setup guide
+- **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** - Detailed environment setup
+- **[README.md](README.md)** - Project overview
 
-### What Was Cleaned
-- ~85 ad-hoc test files removed
-- ~35 redundant documentation files consolidated
-- ~15 debug scripts removed
-- All essential functionality preserved
+### System Understanding
+- **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)** - Complete system documentation (1,878 lines)
+  - Architecture
+  - Database design
+  - API contracts
+  - Business logic flows
+  - ML pipeline details
+  - Extension guides
+- **[docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md)** - Quick reference
+- **[spec.md](spec.md)** - Original specification
+
+### Development
+- **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete development guide
+- **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** - Environment configuration
+- **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)** - OAuth setup
+- **[NOTIFICATION_SYSTEM_ARCHITECTURE.md](NOTIFICATION_SYSTEM_ARCHITECTURE.md)** - System architecture
+
+### Database & Infrastructure
+- **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** - Supabase setup and migration
+- **[QUICK_START.md#database-setup](QUICK_START.md#database-setup)** - Quick database setup
+
+### Deployment
+- **[docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)** - CI/CD configuration
+- **[QUICK_START.md#deployment](QUICK_START.md#deployment)** - Deployment overview
+
+---
+
+## 🎯 Quick Links by Task
+
+### "I want to run the app locally"
+→ **[QUICK_START.md](QUICK_START.md)**
+
+### "I need to understand the entire system"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)**
+
+### "I want to add a new feature"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#13-how-to-extend-the-system](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#13-how-to-extend-the-system)**
+
+### "I need to setup Google OAuth"
+→ **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)**
+
+### "I need to setup Supabase"
+→ **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)**
+
+### "I need environment variables"
+→ **[QUICK_START.md#environment-variables](QUICK_START.md#environment-variables)**
+
+### "I'm getting an error"
+→ **[QUICK_START.md#common-issues](QUICK_START.md#common-issues)**
+→ **[docs/PROJECT_DOCUMENTATION.md#troubleshooting](docs/PROJECT_DOCUMENTATION.md#troubleshooting)**
+
+### "I need API documentation"
+→ http://localhost:8000/docs (when backend is running)
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts)**
+
+### "I need to understand the ML pipeline"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline)**
+
+### "I need to understand the database"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design)**
+
+---
+
+## 🗂️ Files in Root Directory
+
+| File | Purpose | When to Read |
+|------|---------|--------------|
+| **QUICK_START.md** | 5-minute setup guide | First time setup |
+| **README.md** | Project overview | Understanding project |
+| **spec.md** | Original specification | Understanding requirements |
+| **DOCUMENTATION_INDEX.md** | This file | Finding documentation |
+| **GOOGLE_OAUTH_SETUP.md** | OAuth configuration | Setting up authentication |
+| **NOTIFICATION_SYSTEM_ARCHITECTURE.md** | System architecture | Understanding architecture |
+
+---
+
+## 📚 Files in docs/ Directory
+
+| File | Purpose | When to Read |
+|------|---------|--------------|
+| **PROJECT_DOCUMENTATION.md** | Complete project guide | Comprehensive understanding |
+| **SYSTEM_INTELLIGENCE_DOCUMENT.md** | Complete system handover | AI agent context / Deep dive |
+| **SYSTEM_INTELLIGENCE_QUICK_REF.md** | Quick reference | Quick lookups |
+| **ENVIRONMENT_SETUP.md** | Environment configuration | Detailed setup |
+| **SUPABASE_MIGRATION.md** | Database migration | Database setup |
+| **CI_CD_SETUP.md** | Deployment guide | Production deployment |
+| **CLEANUP_PLAN.md** | Cleanup documentation | Understanding cleanup |
+
+---
+
+## 🔍 Finding Information
+
+### By Topic
+
+**Authentication**
+- Setup: [GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)
+- Flow: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#authentication](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#authentication)
+
+**Database**
+- Setup: [QUICK_START.md#database-setup](QUICK_START.md#database-setup)
+- Schema: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design)
+- Migration: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
+
+**ML Pipeline**
+- Overview: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline)
+- Templates: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#adding-new-ml-templates](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#adding-new-ml-templates)
+
+**API**
+- Endpoints: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts)
+- Interactive: http://localhost:8000/docs
+
+**Frontend**
+- Setup: [QUICK_START.md#step-3-setup-frontend](QUICK_START.md#step-3-setup-frontend)
+- State: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#9-state-management](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#9-state-management)
+
+**Deployment**
+- Guide: [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
+- Quick: [QUICK_START.md#deployment](QUICK_START.md#deployment)
 
 ---
 
 ## 🆘 Troubleshooting
 
-### Common Issues
+**Can't find what you're looking for?**
+1. Check [QUICK_START.md](QUICK_START.md) for common issues
+2. Search [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)
+3. Check [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)
+4. Review API docs: http://localhost:8000/docs
 
-**Backend won't start**
-- Check `backend/.env` has correct DATABASE_URL
-- Verify Supabase project is active
-- Run: `python backend/test_supabase_connection.py`
-
-**Frontend can't connect**
-- Ensure backend is running on port 8000
-- Check `frontend/.env` has correct REACT_APP_API_URL
-- Verify CORS settings
-
-**Database errors**
-- Run migrations: `python backend/run_migrations.py`
-- Check connection: `python backend/test_supabase_connection.py`
-- Verify Supabase credentials
-
-**ML pipeline errors**
-- Check meal templates exist
-- Verify nutrition database is populated
-- Review logs for specific errors
-
-See [docs/PROJECT_DOCUMENTATION.md#troubleshooting](docs/PROJECT_DOCUMENTATION.md#troubleshooting) for detailed solutions.
+**Still stuck?**
+- Check GitHub issues: https://github.com/meet-m-upadhyay/wellness_way/issues
+- Review backend logs for errors
+- Check browser console for frontend errors
 
 ---
 
-## 📋 Quick Reference
+## 📝 Documentation Maintenance
 
-### Start Development
-```bash
-# Backend
-cd backend
-venv\Scripts\activate
-python start_backend.py
+### When to Update
 
-# Frontend
-cd frontend
-npm start
-```
+Update documentation when:
+- Adding new features
+- Changing architecture
+- Modifying database schema
+- Updating API contracts
+- Changing deployment process
 
-### Run Tests
-```bash
-cd backend
-pytest tests/
-```
+### What to Update
 
-### Database Operations
-```bash
-# Run migrations
-python run_migrations.py
+| Change | Update These Files |
+|--------|-------------------|
+| New feature | PROJECT_DOCUMENTATION.md, SYSTEM_INTELLIGENCE_DOCUMENT.md |
+| New API endpoint | SYSTEM_INTELLIGENCE_DOCUMENT.md (API Contracts) |
+| Database change | SYSTEM_INTELLIGENCE_DOCUMENT.md (Database Design) |
+| Setup change | QUICK_START.md, ENVIRONMENT_SETUP.md |
+| Deployment change | CI_CD_SETUP.md |
 
-# Test connection
-python test_supabase_connection.py
-```
+---
 
-### Cleanup Project
-```bash
-python cleanup_project.py
-```
+## 🎓 Learning Path
+
+### For New Developers
+
+1. **Day 1**: Read [QUICK_START.md](QUICK_START.md), get app running
+2. **Day 2**: Read [README.md](README.md) and [spec.md](spec.md)
+3. **Day 3**: Read [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)
+4. **Week 1**: Deep dive into [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)
+5. **Ongoing**: Reference docs as needed
+
+### For AI Agents
+
+1. **First**: Read [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md) completely
+2. **Reference**: Use [docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md) for quick lookups
+3. **Extend**: Follow guides in Section 13 of SYSTEM_INTELLIGENCE_DOCUMENT.md
 
 ---
 
 ## 📞 Support
 
-- **GitHub Issues**: https://github.com/meet-m-upadhyay/wellness_way/issues
 - **Documentation**: This index and linked files
 - **API Docs**: http://localhost:8000/docs (when running)
+- **GitHub**: https://github.com/meet-m-upadhyay/wellness_way
+- **Issues**: https://github.com/meet-m-upadhyay/wellness_way/issues
 
 ---
 
-## 🗂️ File Organization
-
-### Keep These Files
-- All files in `backend/tests/` folder
-- `backend/test_supabase_connection.py`
-- `backend/test_ml_pipeline.py`
-- `backend/test_admin_system.py`
-- All documentation listed in this index
-
-### Can Delete
-- Ad-hoc test files in `backend/` root (except those listed above)
-- `*_COMPLETION_REPORT.md` files
-- `CHATGPT_*.md` files
-- Debug scripts (`debug_*.py`)
-- See [docs/CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md) for complete list
-
----
-
-## 📝 Contributing
-
-1. Read [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)
-2. Follow code style guidelines
-3. Write tests for new features
-4. Update documentation
-5. Submit pull request
-
----
-
-**This index is your starting point. For detailed information, follow the links to specific documentation files.**
-
-Generated: February 22, 2026
+**Start with [QUICK_START.md](QUICK_START.md) to get running in 5 minutes!** 🚀

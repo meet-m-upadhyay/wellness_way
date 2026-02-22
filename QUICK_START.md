@@ -1,223 +1,404 @@
-# WellnessWay Diet Planner - Quick Start Guide
+# WellnessWay - Quick Start Guide
 
-## 🚀 Getting Started
+Get the application running in 5 minutes!
 
-### Prerequisites
-- Python 3.11+
-- Node.js 16+
-- Docker & Docker Compose
-- OpenAI API Key (for AI meal generation)
+---
 
-### 1. Setup Database
+## 📋 Prerequisites
+
+- **Python 3.11+** - Backend runtime
+- **Node.js 18+** - Frontend runtime
+- **Git** - Version control
+- **Supabase Account** (or local PostgreSQL)
+
+---
+
+## 🚀 Quick Setup (5 Minutes)
+
+### Step 1: Clone Repository
+
 ```bash
-# Start PostgreSQL database
-docker-compose up -d
+git clone https://github.com/meet-m-upadhyay/wellness_way.git
+cd wellness_way
 ```
 
-### 2. Setup Backend
+### Step 2: Setup Backend
+
 ```bash
-# Navigate to backend
 cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+venv\Scripts\activate  # Windows
+# OR
+source venv/bin/activate  # Mac/Linux
 
 # Install dependencies
 pip install -r requirements.txt
 
+# Create .env file (see Environment Variables section below)
+# Copy your secrets from Notion or create new ones
+
 # Run database migrations
-alembic upgrade head
+python run_migrations.py
 
-# Test backend (optional)
-cd ..
-python test_backend.py
+# Start backend server
+python start_backend.py
 ```
 
-### 3. Setup AI Provider (Choose One)
+Backend will run on: **http://localhost:8000**
 
-#### Option 1: Mock AI (Recommended for Testing) 🆓
+### Step 3: Setup Frontend
+
 ```bash
-# Interactive setup script
-python setup_ai.py
-# Choose option 1 for Mock AI
-```
-
-**Benefits:**
-- ✅ Completely free
-- ✅ No API key needed
-- ✅ Generates realistic meal plans
-- ✅ Perfect for development and testing
-
-#### Option 2: Groq (Free & Fast) 🚀
-```bash
-# Get free API key from https://console.groq.com/
-python setup_ai.py
-# Choose option 2 and enter your Groq API key
-```
-
-**Benefits:**
-- ✅ 14,400 requests/day free
-- ✅ Very fast inference
-- ✅ Uses Llama 3.1 model
-- ✅ High quality results
-
-#### Option 3: Ollama (Local & Free) 🏠
-```bash
-# Install Ollama first: https://ollama.ai/
-ollama serve
-ollama pull llama3.1
-
-# Then configure
-python setup_ai.py
-# Choose option 3
-```
-
-**Benefits:**
-- ✅ Completely free
-- ✅ Runs locally (no internet needed)
-- ✅ Privacy-focused
-- ✅ No rate limits
-
-#### Option 4: OpenAI (Paid) 💰
-```bash
-python setup_ai.py
-# Choose option 4 and enter your OpenAI API key
-```
-
-**Manual Setup:**
-Edit `.env` file and set:
-```bash
-AI_PROVIDER=mock  # or groq, ollama, openai
-GROQ_API_KEY=your-groq-key-here  # if using Groq
-```
-
-### 4. Setup Frontend
-```bash
-# Navigate to frontend
+# Open new terminal
 cd frontend
 
 # Install dependencies
 npm install
 
-# Build frontend (optional test)
-npm run build
+# Create .env file (see Environment Variables section below)
+
+# Start frontend
+npm start
 ```
 
-### 5. Start Application
-```bash
-# Terminal 1: Start Backend
-cd backend
-python -m uvicorn app.main:app --reload
+Frontend will run on: **http://localhost:3000**
 
-# Terminal 2: Start Frontend
+### Step 4: Verify Setup
+
+- **Backend Health**: http://localhost:8000/health
+- **API Docs**: http://localhost:8000/docs
+- **Frontend**: http://localhost:3000
+
+---
+
+## 🔐 Environment Variables
+
+### Backend Environment File (`backend/.env`)
+
+Create `backend/.env` with the following content:
+
+```env
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+DATABASE_URL=postgresql://postgres.ytlfneijevuhcwbqqkck:UlhiSGdNxvHm5s06@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
+REDIS_URL=redis://localhost:6379/0
+
+# =============================================================================
+# ENVIRONMENT
+# =============================================================================
+ENVIRONMENT=development
+DEBUG=true
+
+# =============================================================================
+# AI PROVIDER (Currently disabled, but configured)
+# =============================================================================
+AI_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key_here
+
+# =============================================================================
+# SECURITY
+# =============================================================================
+SECRET_KEY=dev-secret-key-change-in-production-12345
+JWT_SECRET_KEY=your_jwt_secret_key_here
+
+# =============================================================================
+# GOOGLE OAUTH
+# =============================================================================
+GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+```
+
+**Where to get these values:**
+- **DATABASE_URL**: From your Supabase dashboard (Settings → Database → Connection String)
+- **GROQ_API_KEY**: From https://console.groq.com/keys
+- **JWT_SECRET_KEY**: Generate with `python -c "import secrets; print(secrets.token_urlsafe(64))"`
+- **GOOGLE_CLIENT_ID & SECRET**: From https://console.cloud.google.com/apis/credentials
+
+### Frontend Environment File (`frontend/.env`)
+
+Create `frontend/.env` with the following content:
+
+```env
+REACT_APP_API_URL=http://localhost:8000/api/v1
+REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
+```
+
+---
+
+## 🗄️ Database Setup
+
+### Option 1: Supabase (Recommended)
+
+1. **Create Supabase Project**
+   - Go to https://supabase.com/dashboard
+   - Create new project
+   - Note your connection details
+
+2. **Get Connection String**
+   - Settings → Database → Connection String
+   - Select "URI" tab
+   - Copy the connection string
+   - Replace `[YOUR-PASSWORD]` with your actual password
+
+3. **Update backend/.env**
+   - Set `DATABASE_URL` to your Supabase connection string
+
+4. **Run Migrations**
+   ```bash
+   cd backend
+   python run_migrations.py
+   ```
+
+### Option 2: Local PostgreSQL
+
+1. **Install PostgreSQL**
+   - Download from https://www.postgresql.org/download/
+
+2. **Create Database**
+   ```bash
+   createdb wellnessway_db
+   ```
+
+3. **Update backend/.env**
+   ```env
+   DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/wellnessway_db
+   ```
+
+4. **Run Migrations**
+   ```bash
+   cd backend
+   python run_migrations.py
+   ```
+
+---
+
+## 🔑 Getting API Keys
+
+### 1. Groq API Key (AI Provider - Optional)
+
+1. Go to https://console.groq.com/keys
+2. Sign up / Login
+3. Create new API key
+4. Copy and paste into `backend/.env`
+
+**Note**: AI features are currently disabled. ML pipeline is active instead.
+
+### 2. Google OAuth Credentials
+
+1. Go to https://console.cloud.google.com/apis/credentials
+2. Create new project (or select existing)
+3. Click "Create Credentials" → "OAuth 2.0 Client ID"
+4. Configure consent screen if prompted
+5. Application type: "Web application"
+6. Add authorized origins:
+   - `http://localhost:3000`
+   - Your production domain (when deploying)
+7. Add authorized redirect URIs:
+   - `http://localhost:3000`
+   - Your production domain (when deploying)
+8. Copy Client ID and Client Secret
+9. Paste into `backend/.env` and `frontend/.env`
+
+### 3. JWT Secret Key
+
+Generate a secure random key:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Copy the output and paste into `backend/.env` as `JWT_SECRET_KEY`
+
+---
+
+## ✅ Verification Checklist
+
+After setup, verify everything works:
+
+- [ ] Backend starts without errors
+- [ ] Frontend starts without errors
+- [ ] Can access http://localhost:8000/health (returns `{"status":"healthy"}`)
+- [ ] Can access http://localhost:8000/docs (Swagger UI loads)
+- [ ] Can access http://localhost:3000 (Frontend loads)
+- [ ] Can click "Sign in with Google" (OAuth popup appears)
+- [ ] Database connection works (check backend logs)
+
+---
+
+## 🐛 Common Issues
+
+### Backend won't start
+
+**Error**: `Database connection failed`
+- **Solution**: Check `DATABASE_URL` in `backend/.env`
+- **Solution**: Verify Supabase project is active
+- **Solution**: Run `python backend/test_supabase_connection.py`
+
+**Error**: `Module not found`
+- **Solution**: Activate virtual environment: `venv\Scripts\activate`
+- **Solution**: Install dependencies: `pip install -r requirements.txt`
+
+### Frontend won't start
+
+**Error**: `Cannot find module`
+- **Solution**: Install dependencies: `npm install`
+
+**Error**: `API request failed`
+- **Solution**: Ensure backend is running on port 8000
+- **Solution**: Check `REACT_APP_API_URL` in `frontend/.env`
+
+### Google OAuth not working
+
+**Error**: `Invalid client ID`
+- **Solution**: Check `GOOGLE_CLIENT_ID` matches in both `backend/.env` and `frontend/.env`
+- **Solution**: Verify authorized origins in Google Console
+
+**Error**: `Redirect URI mismatch`
+- **Solution**: Add `http://localhost:3000` to authorized redirect URIs in Google Console
+
+### Database migration fails
+
+**Error**: `Relation already exists`
+- **Solution**: Database already has tables, skip migration or reset database
+
+**Error**: `Connection refused`
+- **Solution**: Check database is running
+- **Solution**: Verify connection string format
+
+---
+
+## 📚 Next Steps
+
+After successful setup:
+
+1. **Create Admin User**
+   - Login with Google OAuth
+   - Admin will need to approve your registration
+   - Or manually set `is_admin=true` in database
+
+2. **Complete Profile**
+   - Fill in age, weight, height, etc.
+   - Set health goals
+   - Set dietary preferences
+
+3. **Generate Diet Plan**
+   - Click "Generate Plan (ML)" button
+   - View your personalized meal plan
+   - Try regenerating meals/days/weeks
+
+4. **Explore Features**
+   - View nutrition summaries
+   - Check different meal types
+   - Test admin dashboard (if admin)
+
+---
+
+## 📖 Documentation
+
+For detailed information, see:
+
+- **Complete System Docs**: `docs/SYSTEM_INTELLIGENCE_DOCUMENT.md`
+- **Project Documentation**: `docs/PROJECT_DOCUMENTATION.md`
+- **Environment Setup**: `docs/ENVIRONMENT_SETUP.md`
+- **Supabase Migration**: `docs/SUPABASE_MIGRATION.md`
+- **API Documentation**: http://localhost:8000/docs (when running)
+
+---
+
+## 🆘 Need Help?
+
+1. Check `docs/PROJECT_DOCUMENTATION.md` for detailed guides
+2. Review `docs/SYSTEM_INTELLIGENCE_DOCUMENT.md` for architecture
+3. Check GitHub issues: https://github.com/meet-m-upadhyay/wellness_way/issues
+4. Review backend logs for error messages
+
+---
+
+## 🔄 Development Workflow
+
+### Starting Development
+
+```bash
+# Terminal 1 - Backend
+cd backend
+venv\Scripts\activate
+python start_backend.py
+
+# Terminal 2 - Frontend
 cd frontend
 npm start
 ```
 
-### 6. Test Complete Flow
-1. Open http://localhost:3000
-2. Click "Get Started" to create a profile
-3. Fill out the multi-step form:
-   - Basic Info (name, age, gender, height, weight, activity level)
-   - Health Goals (fat loss, muscle gain, or maintenance)
-   - Diet Preferences (vegetarian/vegan/non-vegetarian, allergies, etc.)
-4. Review and submit your profile
-5. Navigate to "Diet Plans" to generate meal plans
-6. Choose "Weekly" or "Daily" plan
-7. Click "Generate Plan" and wait for AI to create your personalized meals
+### Making Changes
 
-## 🔧 Troubleshooting
+1. Make code changes
+2. Backend auto-reloads (if using `start_backend.py`)
+3. Frontend auto-reloads (React hot reload)
+4. Test changes in browser
 
-### Backend Issues
+### Running Tests
+
 ```bash
-# Check if database is running
-docker ps
-
-# Check backend logs
+# Backend tests
 cd backend
-python -m uvicorn app.main:app --reload --log-level debug
+pytest tests/
 
-# Test database connection
-python test_backend.py
-```
-
-### Frontend Issues
-```bash
-# Check for TypeScript errors
+# Frontend tests (if configured)
 cd frontend
-npm run build
-
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm install
+npm test
 ```
 
-### AI Provider Issues
-- **"AI provider not configured"**: Run `python setup_ai.py`
-- **Mock AI**: No setup needed, generates fake but realistic meal plans
-- **Groq errors**: Check API key is valid and you haven't exceeded free limits
-- **Ollama errors**: Make sure `ollama serve` is running and model is installed
-- **OpenAI errors**: Check API key and account has sufficient credits
+### Database Migrations
 
-### Navigation Issues
-- **Blank pages**: Check browser console for errors
-- **Routes not working**: Make sure both backend and frontend are running
-- **API errors**: Check that backend is running on port 8000
+```bash
+# Create new migration
+cd backend
+alembic revision --autogenerate -m "description"
 
-## 📊 API Endpoints
+# Review generated migration file
+# Edit if needed
 
-### Backend (http://localhost:8000)
-- **Health Check**: GET `/health`
-- **API Docs**: GET `/docs` (Swagger UI)
-- **User Profile**: POST/GET/PUT `/api/v1/users/profile`
-- **Diet Plans**: POST `/api/v1/diet-plans/weekly` or `/daily`
+# Apply migration
+python run_migrations.py
+```
 
-### Frontend (http://localhost:3000)
-- **Home**: `/`
-- **Profile Setup**: `/profile-setup`
-- **Diet Plans**: `/diet-plans`
+---
 
-## 🎯 What's Working
+## 🚢 Deployment
 
-✅ **Complete Backend API**
-- User profile management
-- Health Context Document generation
-- AI-powered diet plan generation
-- Plan regeneration (meal/day/week)
-- Database operations with PostgreSQL
+For production deployment, see:
+- `docs/CI_CD_SETUP.md` - CI/CD configuration
+- Update environment variables for production
+- Use production database
+- Enable HTTPS
+- Set `DEBUG=false`
 
-✅ **Complete Frontend UI**
-- Multi-step profile creation
-- Diet plan generation interface
-- Plan viewing and navigation
-- Meal regeneration controls
+---
 
-✅ **AI Integration**
-- OpenAI GPT-4 integration
-- Structured meal plan generation
-- Safety constraints and validation
-- Nutritional calculations
+## 📝 Project Structure
 
-## 🚧 What's Next
+```
+wellness_way/
+├── backend/           # FastAPI backend
+│   ├── app/          # Application code
+│   ├── alembic/      # Database migrations
+│   ├── tests/        # Unit tests
+│   └── .env          # Environment variables (create this)
+├── frontend/         # React frontend
+│   ├── src/          # Source code
+│   ├── public/       # Static files
+│   └── .env          # Environment variables (create this)
+├── docs/             # Documentation
+└── README.md         # Project overview
+```
 
-The core application is fully functional! Optional enhancements:
+---
 
-- [ ] JWT Authentication (currently uses simplified headers)
-- [ ] Unit tests for API endpoints
-- [ ] E2E testing with Playwright
-- [ ] Performance optimization
-- [ ] Production deployment setup
+**You're all set! Happy coding!** 🎉
 
-## 💡 Tips
-
-1. **First Time Setup**: Use the test user ID that's automatically loaded
-2. **Development**: Both backend and frontend have hot reload
-3. **Testing**: Use the provided test scripts to verify setup
-4. **Debugging**: Check browser console and backend logs for errors
-5. **API Testing**: Use the Swagger UI at http://localhost:8000/docs
-
-## 🆘 Need Help?
-
-1. Run `python test_backend.py` to diagnose backend issues
-2. Check the browser console for frontend errors
-3. Verify all services are running with `docker ps`
-4. Make sure ports 3000 (frontend) and 8000 (backend) are available
-
-Happy meal planning! 🍽️✨
+For detailed documentation, see `docs/` folder.
