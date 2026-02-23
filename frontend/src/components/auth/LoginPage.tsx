@@ -8,12 +8,34 @@ import PendingApprovalPage from './PendingApprovalPage';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, emailLogin, emailSignup, isLoading, error, clearError } = useAuth();
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
   const [pendingApproval, setPendingApproval] = useState<{
     email: string;
     isNewRegistration: boolean;
   } | null>(null);
+
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.com$/.test(value);
+  const showEmailInvalid = touched.email && email.length > 0 && !isValidEmail(email);
+  const showPasswordInvalid = touched.password && password.length > 0 && password.length < 8;
+  const showConfirmInvalid = touched.confirmPassword && confirmPassword.length > 0 && confirmPassword !== password;
+  const canSubmitSignIn = isValidEmail(email) && password.length >= 8;
+  const canSubmitSignUp = isValidEmail(email)
+    && name.trim().length > 0
+    && password.length >= 8
+    && confirmPassword.length >= 8
+    && password === confirmPassword;
 
   const handleGoogleSuccess = useCallback(async (credential: string) => {
     try {
@@ -51,6 +73,69 @@ const LoginPage: React.FC = () => {
     setLoginError(error);
     setPendingApproval(null);
   }, []);
+
+  const handleEmailSignIn = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    try {
+      setLoginError(null);
+      setPendingApproval(null);
+      clearError();
+
+      await emailLogin(email, password);
+      navigate('/');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('202')) {
+        try {
+          const errorData = JSON.parse(error.message.replace('HTTP 202: ', ''));
+          setPendingApproval({
+            email: errorData.email,
+            isNewRegistration: errorData.is_new_registration
+          });
+          return;
+        } catch (parseError) {
+          // Fall through to standard error handling
+        }
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      setLoginError(errorMessage);
+    }
+  }, [emailLogin, email, password, navigate, clearError]);
+
+  const handleEmailSignUp = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (password !== confirmPassword) {
+      setLoginError('Passwords do not match');
+      return;
+    }
+
+    try {
+      setLoginError(null);
+      setPendingApproval(null);
+      clearError();
+
+      await emailSignup(name.trim(), email, password, confirmPassword);
+      navigate('/');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('202')) {
+        try {
+          const errorData = JSON.parse(error.message.replace('HTTP 202: ', ''));
+          setPendingApproval({
+            email: errorData.email,
+            isNewRegistration: errorData.is_new_registration
+          });
+          return;
+        } catch (parseError) {
+          // Fall through to standard error handling
+        }
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Signup failed';
+      setLoginError(errorMessage);
+    }
+  }, [emailSignup, name, email, password, confirmPassword, navigate, clearError]);
 
   const displayError = error || loginError;
 
@@ -108,17 +193,220 @@ const LoginPage: React.FC = () => {
                 </p>
               </div>
 
-              {displayError && (
-                <ErrorMessage 
-                  message={displayError} 
-                  onClose={() => {
-                    setLoginError(null);
-                    clearError();
-                  }}
-                />
-              )}
+              <div className="space-y-4 text-left">
+                <div className="flex rounded-lg border border-wellness-light-border dark:border-slate-600 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('signin');
+                      setLoginError(null);
+                      clearError();
+                    }}
+                    className={`flex-1 py-2 text-sm font-medium transition-colors duration-200 ${
+                      authMode === 'signin'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textSecondary dark:text-slate-400'
+                    }`}
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('signup');
+                      setLoginError(null);
+                      clearError();
+                    }}
+                    className={`flex-1 py-2 text-sm font-medium transition-colors duration-200 ${
+                      authMode === 'signup'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textSecondary dark:text-slate-400'
+                    }`}
+                  >
+                    Sign up
+                  </button>
+                </div>
 
-              <div className="space-y-4">
+                {authMode === 'signin' ? (
+                  <form className="space-y-4 text-left" onSubmit={handleEmailSignIn}>
+                    {displayError && (
+                      <ErrorMessage 
+                        message={displayError} 
+                        onClose={() => {
+                          setLoginError(null);
+                          clearError();
+                        }}
+                      />
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
+                          showEmailInvalid
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
+                        }`}
+                        placeholder="you@example.com"
+                        required
+                      />
+                      {showEmailInvalid && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Email must end with .com
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
+                          showPasswordInvalid
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
+                        }`}
+                        placeholder="Enter your password"
+                        required
+                      />
+                      {showPasswordInvalid && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Password must be at least 8 characters
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isLoading || !canSubmitSignIn}
+                      className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium transition-colors duration-200 disabled:opacity-60"
+                    >
+                      Sign in with email
+                    </button>
+                  </form>
+                ) : (
+                  <form className="space-y-4 text-left" onSubmit={handleEmailSignUp}>
+                    {displayError && (
+                      <ErrorMessage 
+                        message={displayError} 
+                        onClose={() => {
+                          setLoginError(null);
+                          clearError();
+                        }}
+                      />
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
+                        className="w-full rounded-md border border-wellness-light-border dark:border-slate-600 bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Your name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
+                          showEmailInvalid
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
+                        }`}
+                        placeholder="you@example.com"
+                        required
+                      />
+                      {showEmailInvalid && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Email must end with .com
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
+                          showPasswordInvalid
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
+                        }`}
+                        placeholder="Create a password"
+                        required
+                      />
+                      {showPasswordInvalid && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Password must be at least 8 characters
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                        Confirm password
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, confirmPassword: true }))}
+                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
+                          showConfirmInvalid
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
+                        }`}
+                        placeholder="Re-enter your password"
+                        required
+                      />
+                      {showConfirmInvalid && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Passwords do not match
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isLoading || !canSubmitSignUp}
+                      className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium transition-colors duration-200 disabled:opacity-60"
+                    >
+                      Create account
+                    </button>
+                  </form>
+                )}
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-wellness-light-border dark:border-slate-600 transition-colors duration-200" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}

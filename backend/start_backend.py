@@ -24,9 +24,6 @@ def start_backend():
     # Get port from .env or use default 8000
     port = int(os.getenv("PORT", 8000))
     
-    # Get port from .env or use default
-    port = int(os.getenv("API_PORT", "8000"))
-    
     # Mask password for display
     display_url = db_url.split('@')[0].split(':')[0] + ":***@" + db_url.split('@')[1] if '@' in db_url else db_url
     

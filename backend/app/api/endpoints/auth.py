@@ -7,9 +7,13 @@ from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.services.auth_service import auth_service
+import uuid
+
 from app.schemas.auth import (
-    GoogleTokenRequest, 
-    TokenResponse, 
+    GoogleTokenRequest,
+    EmailSignupRequest,
+    EmailLoginRequest,
+    TokenResponse,
     RefreshTokenRequest,
     AuthenticatedUser,
     UserAuthInfo,
@@ -17,10 +21,151 @@ from app.schemas.auth import (
     LogoutResponse
 )
 from app.middleware.auth import get_current_active_user
-from app.models.user import User
+from app.models.user import User, RegistrationRequest
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post("/signup", response_model=AuthenticatedUser)
+async def email_signup(
+    request: EmailSignupRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Register a new user with email and password
+    """
+    try:
+        if request.password != request.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Passwords do not match"
+            )
+
+        existing_user = auth_service.get_user_by_email(request.email, db)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+
+        existing_request = auth_service.get_registration_request_by_email(request.email, db)
+        if existing_request:
+            if existing_request.status == 'pending':
+                raise HTTPException(
+                    status_code=status.HTTP_202_ACCEPTED,
+                    detail={
+                        "message": "Your registration is pending admin approval.",
+                        "status": "pending",
+                        "email": request.email,
+                        "is_new_registration": False
+                    }
+                )
+            if existing_request.status == 'declined':
+                existing_request.status = 'pending'
+                existing_request.name = request.name or existing_request.name
+                existing_request.password_hash = auth_service.hash_password(request.password)
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_202_ACCEPTED,
+                    detail={
+                        "message": "Your registration was resubmitted for admin approval.",
+                        "status": "pending",
+                        "email": request.email,
+                        "is_new_registration": False
+                    }
+                )
+
+        name = request.name or request.email.split("@")[0]
+        new_request = RegistrationRequest(
+            id=uuid.uuid4(),
+            email=request.email,
+            name=name,
+            password_hash=auth_service.hash_password(request.password),
+            status='pending'
+        )
+
+        db.add(new_request)
+        db.commit()
+
+        raise HTTPException(
+            status_code=status.HTTP_202_ACCEPTED,
+            detail={
+                "message": "Your registration is pending admin approval.",
+                "status": "pending",
+                "email": request.email,
+                "is_new_registration": True
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Signup failed: {str(e)}"
+        )
+
+
+@router.post("/login", response_model=AuthenticatedUser)
+async def email_login(
+    request: EmailLoginRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Authenticate user with email and password
+    """
+    try:
+        user = auth_service.authenticate_user(request.email, request.password, db)
+
+        if user.approval_status != 'approved':
+            status_info = auth_service.get_user_status(user.email, db)
+            raise HTTPException(
+                status_code=status.HTTP_202_ACCEPTED,
+                detail={
+                    "message": status_info["message"],
+                    "status": status_info["status"],
+                    "email": user.email,
+                    "is_new_registration": False
+                }
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive user"
+            )
+
+        tokens = auth_service.create_tokens_for_user(user)
+
+        user_info = UserAuthInfo(
+            id=str(user.id),
+            email=user.email,
+            name=user.name,
+            is_active=user.is_active,
+            is_admin=user.is_admin,
+            profile_completed=user.profile_completed,
+            created_at=user.created_at
+        )
+
+        token_response = TokenResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            token_type=tokens["token_type"],
+            expires_in=30 * 60
+        )
+
+        return AuthenticatedUser(
+            user=user_info,
+            tokens=token_response
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Authentication failed: {str(e)}"
+        )
 
 
 @router.post("/google", response_model=AuthenticatedUser)

@@ -19,6 +19,7 @@ class User(Base):
     # Authentication fields
     email = Column(String(255), unique=True, nullable=False, index=True)
     google_id = Column(String(255), unique=True, nullable=True, index=True)
+    password_hash = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)  # Admin privileges
     approval_status = Column(String(20), default='approved', nullable=False)  # 'pending', 'approved', 'declined'
@@ -108,7 +109,8 @@ class RegistrationRequest(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    google_id = Column(String(255), nullable=False)
+    google_id = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     status = Column(String(20), default='pending', nullable=False, index=True)  # 'pending', 'approved', 'declined'
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

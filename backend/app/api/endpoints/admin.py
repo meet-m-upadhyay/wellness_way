@@ -99,6 +99,7 @@ async def approve_user_request(
             email=registration_request.email,
             google_id=registration_request.google_id,
             name=registration_request.name,
+            password_hash=registration_request.password_hash,
             is_active=True,
             is_admin=False,
             approval_status='approved',
