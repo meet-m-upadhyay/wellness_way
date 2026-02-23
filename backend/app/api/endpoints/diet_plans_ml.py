@@ -25,6 +25,7 @@ from app.schemas.diet_plan import (
     GenerateWeeklyPlanRequest,
     GenerateDailyPlanRequest,
 )
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,13 @@ async def parse_weekly_request(request: Request) -> GenerateWeeklyPlanRequest:
         return GenerateWeeklyPlanRequest()
 
 
+def ensure_ml_pipeline_enabled() -> None:
+    if not settings.enable_ml_pipeline:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ML pipeline is disabled",
+        )
+
 @router.post("/weekly", response_model=DietPlanResponse, status_code=status.HTTP_201_CREATED)
 async def generate_weekly_plan_ml(
     request: Request,
@@ -106,6 +114,7 @@ async def generate_weekly_plan_ml(
     Raises:
         HTTPException: If plan generation fails
     """
+    ensure_ml_pipeline_enabled()
     from app.services.ml_diet_pipeline.orchestrator import get_ml_pipeline_orchestrator
     from app.models.health_context import HealthContextDocument
     from app.models.diet_plan import DietPlan
@@ -195,6 +204,7 @@ async def generate_daily_plan_ml(
     Raises:
         HTTPException: If plan generation fails
     """
+    ensure_ml_pipeline_enabled()
     from app.services.ml_diet_pipeline.orchestrator import get_ml_pipeline_orchestrator
     from app.models.health_context import HealthContextDocument
     from app.models.diet_plan import DietPlan
@@ -277,12 +287,14 @@ async def regenerate_meal_ml(
     Returns:
         Updated diet plan with regenerated meal
     """
+    ensure_ml_pipeline_enabled()
     from app.services.ml_diet_pipeline.orchestrator import get_ml_pipeline_orchestrator
     from app.models.health_context import HealthContextDocument
     from app.models.diet_plan import DietPlan
     
     request_id = f"ml_regen_meal_{plan_id}"
     logger.info(f"[ML_REGENERATE_MEAL_INIT] request_id={request_id}")
+    logger.info(f"[USER_REGENERATE] request_id={request_id} user_id={current_user_id} scope=meal")
     
     try:
         # Parse request data
@@ -437,6 +449,7 @@ async def regenerate_day_ml(
     Returns:
         Updated diet plan with regenerated day
     """
+    ensure_ml_pipeline_enabled()
     from app.services.ml_diet_pipeline.orchestrator import get_ml_pipeline_orchestrator
     from app.models.health_context import HealthContextDocument
     from app.models.diet_plan import DietPlan
@@ -444,6 +457,7 @@ async def regenerate_day_ml(
     
     request_id = f"ml_regen_day_{plan_id}"
     logger.info(f"[ML_REGENERATE_DAY_INIT] request_id={request_id}")
+    logger.info(f"[USER_REGENERATE] request_id={request_id} user_id={current_user_id} scope=day")
     
     try:
         # Parse request data
@@ -560,12 +574,14 @@ async def regenerate_full_plan_ml(
     Returns:
         Completely regenerated diet plan
     """
+    ensure_ml_pipeline_enabled()
     from app.services.ml_diet_pipeline.orchestrator import get_ml_pipeline_orchestrator
     from app.models.health_context import HealthContextDocument
     from app.models.diet_plan import DietPlan
     
     request_id = f"ml_regen_full_{plan_id}"
     logger.info(f"[ML_REGENERATE_FULL_INIT] request_id={request_id}")
+    logger.info(f"[USER_REGENERATE] request_id={request_id} user_id={current_user_id} scope=full")
     
     try:
         # Get existing plan

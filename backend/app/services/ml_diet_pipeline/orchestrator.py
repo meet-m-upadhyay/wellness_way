@@ -318,3 +318,25 @@ def get_ml_pipeline_orchestrator() -> MLPipelineOrchestrator:
     if _orchestrator is None:
         _orchestrator = MLPipelineOrchestrator()
     return _orchestrator
+
+
+def build_ml_pipeline_components(db):
+    """
+    Build new ML pipeline components for the deterministic+ML+GenAI stack.
+    """
+    from app.services.ml_diet_pipeline.template_selection.selector import TemplateSelector
+    from app.services.ml_diet_pipeline.nutrition.engine import NutritionEngine
+    from app.services.ml_diet_pipeline.scaling.engine import ScalingEngine
+    from app.services.ml_diet_pipeline.validation.engine import ValidationEngine
+    from app.services.ml_diet_pipeline.genai.service import GenAIService
+
+    def no_op_generator(payload):
+        return payload
+
+    return {
+        "template_selector": TemplateSelector(),
+        "nutrition_engine": NutritionEngine(db),
+        "scaling_engine": ScalingEngine(),
+        "validation_engine": ValidationEngine(),
+        "genai_service": GenAIService(generator=no_op_generator),
+    }
