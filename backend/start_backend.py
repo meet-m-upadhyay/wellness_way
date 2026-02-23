@@ -20,6 +20,9 @@ def start_backend():
     os.environ["REDIS_URL"] = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     os.environ["ENVIRONMENT"] = os.getenv("ENVIRONMENT", "development")
     os.environ["DEBUG"] = os.getenv("DEBUG", "true")
+
+    # Get port from .env or use default 8000
+    port = int(os.getenv("PORT", 8000))
     
     # Mask password for display
     display_url = db_url.split('@')[0].split(':')[0] + ":***@" + db_url.split('@')[1] if '@' in db_url else db_url
@@ -27,6 +30,7 @@ def start_backend():
     print("🚀 Starting WellnessWay Backend...")
     print(f"📍 Database: {display_url}")
     print(f"🔴 Redis: {os.environ['REDIS_URL']}")
+    print(f"🔴 Port: {port}")
     
     # Now import and start uvicorn
     import uvicorn
@@ -34,7 +38,7 @@ def start_backend():
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=True,
         log_level="info"
     )

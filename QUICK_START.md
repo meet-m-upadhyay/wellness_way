@@ -41,14 +41,16 @@ pip install -r requirements.txt
 # Create .env file (see Environment Variables section below)
 # Copy your secrets from Notion or create new ones
 
-# Run database migrations
+# Run database migrations (if you want to create a new database)
 python run_migrations.py
+# ELSE (if you want to continue with same database on supabase)
+python test_supabase_connection.py
 
 # Start backend server
 python start_backend.py
 ```
 
-Backend will run on: **http://localhost:8000**
+Backend will run on: **http://localhost:8000**(configurable via `PORT` in `.env`)
 
 ### Step 3: Setup Frontend
 
