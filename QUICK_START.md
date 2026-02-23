@@ -48,7 +48,7 @@ python run_migrations.py
 python start_backend.py
 ```
 
-Backend will run on: **http://localhost:8000**
+Backend will run on: **http://localhost:8000** (configurable via `API_PORT` in `.env`)
 
 ### Step 3: Setup Frontend
 
@@ -93,6 +93,11 @@ REDIS_URL=redis://localhost:6379/0
 # =============================================================================
 ENVIRONMENT=development
 DEBUG=true
+
+# =============================================================================
+# API CONFIGURATION
+# =============================================================================
+API_PORT=8000
 
 # =============================================================================
 # AI PROVIDER (Currently disabled, but configured)
@@ -249,7 +254,8 @@ After setup, verify everything works:
 - **Solution**: Install dependencies: `npm install`
 
 **Error**: `API request failed`
-- **Solution**: Ensure backend is running on port 8000
+- **Solution**: Ensure backend is running (check terminal for startup message)
+- **Solution**: Verify port matches in `backend/.env` (`API_PORT`) and `frontend/.env` (`REACT_APP_API_URL`)
 - **Solution**: Check `REACT_APP_API_URL` in `frontend/.env`
 
 ### Google OAuth not working
@@ -269,6 +275,19 @@ After setup, verify everything works:
 **Error**: `Connection refused`
 - **Solution**: Check database is running
 - **Solution**: Verify connection string format
+
+---
+
+## 🔧 Advanced Configuration
+
+### Change Backend Port
+
+Want to run backend on a different port? See `CHANGE_BACKEND_PORT.md` for detailed instructions.
+
+Quick steps:
+1. Edit `backend/.env`: Set `API_PORT=YOUR_PORT`
+2. Edit `frontend/.env`: Update `REACT_APP_API_URL=http://localhost:YOUR_PORT/api/v1`
+3. Restart both servers
 
 ---
 
