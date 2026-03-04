@@ -39,6 +39,7 @@ class ScalingEngine:
         self,
         meals: List[Dict],
         target_daily_calories: float,
+        **kwargs
     ) -> List[Dict]:
         total_calories = sum(meal.get("nutrition", {}).get("calories", 0.0) for meal in meals)
         if total_calories <= 0:

@@ -91,7 +91,7 @@ app.add_middleware(CORSMiddleware, **cors_config)
 # Security middleware for input sanitization
 app.add_middleware(
     SecurityMiddleware,
-    skip_paths=["/docs", "/redoc", "/openapi.json", "/health", "/db-health", "/", "/config-info"]
+    skip_paths=["/docs", "/redoc", "/openapi.json", "/health", "/db-health", "/", "/config-info", "/api/v1/auth"]
 )
 
 # Rate limiting middleware - use basic rate limiting for now
@@ -126,7 +126,7 @@ async def add_comprehensive_security_headers(request: Request, call_next):
 @app.middleware("http")
 async def enforce_https_in_production(request: Request, call_next):
     """Enforce HTTPS in production environment"""
-    if settings.is_production:
+    if settings.is_production and request.url.hostname not in ["localhost", "127.0.0.1"]:
         # Check if request is using HTTPS
         if request.url.scheme != "https":
             # Check for forwarded protocol headers (when behind a proxy)

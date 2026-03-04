@@ -1,3 +1,0 @@
-"""
-Ingredient canonicalization utilities
-"""

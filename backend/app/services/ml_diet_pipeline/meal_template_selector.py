@@ -1,16 +1,8 @@
 """
 ML Meal Template Selector - Heuristic ranking (pluggable ML later)
-
-This module selects appropriate meal templates based on user constraints.
-Starts with heuristic ranking, designed to be pluggable with ML models later.
-
-CRITICAL RULES:
-- NO GenAI for selection
-- Deterministic scoring
-- Diet-type aware
-- Allergy filtering
-- Later: LightGBM / Logistic Regression
 """
+
+from __future__ import annotations
 
 import logging
 import random

@@ -26,25 +26,23 @@ class IngredientCanonicalizer:
 
     def __init__(
         self,
-        db: Session,
         index: FaissIndex,
         embedding_ids: List[str],
         embedding_generator: EmbeddingGenerator,
         accept_threshold: float = 0.90,
         warn_threshold: float = 0.80,
     ) -> None:
-        self._db = db
         self._index = index
         self._embedding_ids = embedding_ids
         self._embedding_generator = embedding_generator
         self._accept_threshold = accept_threshold
         self._warn_threshold = warn_threshold
 
-    def canonicalize(self, raw_name: str) -> Dict:
+    def canonicalize(self, db: Session, raw_name: str) -> Dict:
         query_embedding = self._embedding_generator.generate([raw_name])[0]
         distances, indices = self._index.search(query_embedding, top_k=5)
 
-        scored = self._build_scores(distances, indices)
+        scored = self._build_scores(db, distances, indices)
         best = scored[0]
 
         if best["confidence"] < self._warn_threshold:
@@ -75,13 +73,13 @@ class IngredientCanonicalizer:
         }
         return result
 
-    def _build_scores(self, distances: List[float], indices: List[int]) -> List[Dict]:
+    def _build_scores(self, db: Session, distances: List[float], indices: List[int]) -> List[Dict]:
         scored: List[Dict] = []
         for distance, index in zip(distances, indices):
             if index < 0 or index >= len(self._embedding_ids):
                 continue
             food_id = self._embedding_ids[index]
-            food = self._db.query(FoodItem).filter(FoodItem.id == food_id).first()
+            food = db.query(FoodItem).filter(FoodItem.id == food_id).first()
             if not food:
                 continue
             confidence = self._distance_to_confidence(distance)
@@ -96,7 +94,8 @@ class IngredientCanonicalizer:
             raise CanonicalizationError("No candidates returned from FAISS.")
         return scored
 
-    def _distance_to_confidence(self, distance: float) -> float:
-        if distance <= 0:
-            return 1.0
-        return 1.0 / (1.0 + distance)
+    def _distance_to_confidence(self, distance_squared: float) -> float:
+        # For normalized vectors, Euclidean d^2 = 2(1 - cos_sim)
+        # So cos_sim = 1 - (d^2 / 2)
+        confidence = 1.0 - (distance_squared / 2.0)
+        return max(0.0, min(1.0, confidence))

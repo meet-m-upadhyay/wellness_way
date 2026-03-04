@@ -140,11 +140,12 @@ async def generate_weekly_plan_ml(
             )
         
         # Get ML pipeline orchestrator
-        orchestrator = get_ml_pipeline_orchestrator()
+        orchestrator = get_ml_pipeline_orchestrator(db)
         
         # Generate plan using ML pipeline
         logger.info(f"[ML_PIPELINE_GENERATING] request_id={request_id}")
         plan_data = await orchestrator.generate_weekly_plan(
+            db=db,
             user_id=current_user_id,
             health_context=hcd.json_context or {},
             start_date=start_date
@@ -230,11 +231,12 @@ async def generate_daily_plan_ml(
             )
         
         # Get ML pipeline orchestrator
-        orchestrator = get_ml_pipeline_orchestrator()
+        orchestrator = get_ml_pipeline_orchestrator(db)
         
         # Generate plan using ML pipeline
         logger.info(f"[ML_PIPELINE_GENERATING] request_id={request_id}")
         plan_data = await orchestrator.generate_daily_plan(
+            db=db,
             user_id=current_user_id,
             health_context=hcd.json_context or {},
             target_date=target_date
@@ -331,7 +333,7 @@ async def regenerate_meal_ml(
             )
         
         # Get orchestrator
-        orchestrator = get_ml_pipeline_orchestrator()
+        orchestrator = get_ml_pipeline_orchestrator(db)
         
         # Generate new meal
         meal_types = ["breakfast", "lunch", "dinner", "snack"]
@@ -373,6 +375,7 @@ async def regenerate_meal_ml(
         
         # Build new meal
         new_meal = await orchestrator._build_meal_from_template(
+            db=db,
             template=template_score.template,
             target_calories=constraints.calorie_target,
             target_protein=constraints.protein_target
@@ -493,7 +496,7 @@ async def regenerate_day_ml(
             )
         
         # Get orchestrator
-        orchestrator = get_ml_pipeline_orchestrator()
+        orchestrator = get_ml_pipeline_orchestrator(db)
         
         # Handle based on plan type
         if plan.plan_type == "weekly":
@@ -502,6 +505,7 @@ async def regenerate_day_ml(
             
             # Generate new daily plan
             new_day_plan = await orchestrator.generate_daily_plan(
+                db=db,
                 user_id=current_user_id,
                 health_context=hcd.json_context or {},
                 target_date=target_date
@@ -528,6 +532,7 @@ async def regenerate_day_ml(
         else:  # daily plan
             # For daily plans, regenerate the entire day (all meals)
             new_day_plan = await orchestrator.generate_daily_plan(
+                db=db,
                 user_id=current_user_id,
                 health_context=hcd.json_context or {},
                 target_date=plan.start_date
@@ -609,17 +614,19 @@ async def regenerate_full_plan_ml(
             )
         
         # Get orchestrator
-        orchestrator = get_ml_pipeline_orchestrator()
+        orchestrator = get_ml_pipeline_orchestrator(db)
         
         # Generate new plan of same type
         if plan.plan_type == "weekly":
             new_plan_data = await orchestrator.generate_weekly_plan(
+                db=db,
                 user_id=current_user_id,
                 health_context=hcd.json_context or {},
                 start_date=plan.start_date
             )
         else:  # daily
             new_plan_data = await orchestrator.generate_daily_plan(
+                db=db,
                 user_id=current_user_id,
                 health_context=hcd.json_context or {},
                 target_date=plan.start_date

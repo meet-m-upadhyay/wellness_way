@@ -1,19 +1,15 @@
 """
-ML Diet Pipeline - New ML + constrained GenAI architecture
-
-This module implements the ML-based diet plan generation pipeline
-that lives side-by-side with the existing GenAI-only pipeline.
-
-ARCHITECTURE:
-- ML for ingredient canonicalization (sentence transformers)
-- ML for meal template selection (heuristic → LightGBM)
-- Deterministic nutrition calculation (reuse existing)
-- Constrained GenAI for text generation ONLY
-
-CRITICAL RULES:
-- NO GenAI for numeric decisions
-- NO AI retries after meal creation
-- Failures must be graceful with structured logs
+ML Diet Pipeline package
 """
 
-__version__ = "0.1.0"
+from .orchestrator import MLPipelineOrchestrator, get_ml_pipeline_orchestrator
+from .meal_template_selector import MealTemplateSelector, get_meal_template_selector
+from .meal_templates import get_meal_template_registry
+
+__all__ = [
+    "MLPipelineOrchestrator",
+    "get_ml_pipeline_orchestrator",
+    "MealTemplateSelector",
+    "get_meal_template_selector",
+    "get_meal_template_registry",
+]

@@ -35,6 +35,7 @@ venv\Scripts\activate  # Windows
 # OR
 source venv/bin/activate  # Mac/Linux
 
+update pip if required first
 # Install dependencies
 pip install -r requirements.txt
 

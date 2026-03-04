@@ -102,6 +102,18 @@ class SecuritySettings(BaseSettings):
         env="GOOGLE_CLIENT_SECRET"
     )
     
+    def __init__(self, **kwargs):
+        # Explicitly load environment variables for nested settings
+        import os
+        if 'google_client_id' not in kwargs and os.getenv('GOOGLE_CLIENT_ID'):
+            kwargs['google_client_id'] = os.getenv('GOOGLE_CLIENT_ID')
+        if 'google_client_secret' not in kwargs and os.getenv('GOOGLE_CLIENT_SECRET'):
+            kwargs['google_client_secret'] = os.getenv('GOOGLE_CLIENT_SECRET')
+        if 'jwt_secret_key' not in kwargs and os.getenv('JWT_SECRET_KEY'):
+            kwargs['jwt_secret_key'] = os.getenv('JWT_SECRET_KEY')
+        super().__init__(**kwargs)
+
+    
     password_min_length: int = Field(default=8, ge=6)
     bcrypt_rounds: int = Field(default=12, ge=10, le=15)
     

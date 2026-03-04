@@ -33,7 +33,11 @@ class EmbeddingGenerator:
     def generate(self, texts: List[str]) -> List[List[float]]:
         self._load_model()
         normalized = [normalize_text(text) for text in texts]
-        embeddings = self._model.encode(normalized, show_progress_bar=False)  # type: ignore[call-arg]
+        embeddings = self._model.encode(
+            normalized, 
+            show_progress_bar=False,
+            normalize_embeddings=True
+        )  # type: ignore[call-arg]
         return [embedding.tolist() for embedding in embeddings]
 
     @property

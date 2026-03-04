@@ -1,32 +1,32 @@
 """
 ML Pipeline Orchestrator - Glues all ML components together
-
-This module orchestrates the complete ML + constrained GenAI pipeline.
-One entry point for daily/weekly generation with zero AI retries.
-
-CRITICAL RULES:
-- Zero AI retries after meal creation
-- Comprehensive logging at each step
-- Graceful failure handling
-- Integration with existing DietPlanService
 """
 
+from __future__ import annotations
+
 import logging
+import os
 from typing import Dict, List, Any, Optional
 from datetime import date, timedelta
 from uuid import UUID
-
+from sqlalchemy.orm import Session
 from app.services.ml_diet_pipeline.meal_template_selector import (
     get_meal_template_selector,
     SelectionConstraints,
-    MealSlot,
-    DietType
+    MealTemplateSelector
 )
-from app.services.ml_diet_pipeline.meal_templates import get_meal_template_registry
-from app.services.ml_diet_pipeline.nutrition_engine_adapter import get_nutrition_engine_adapter
-from app.services.ml_diet_pipeline.scaling_engine import get_scaling_engine
-from app.services.ml_diet_pipeline.validation_engine import get_validation_engine
-from app.services.ml_diet_pipeline.genai_text_generator import get_genai_text_generator
+from app.services.ml_diet_pipeline.meal_templates import (
+    get_meal_template_registry,
+    DietType,
+    MealSlot
+)
+from app.services.ml_diet_pipeline.nutrition.engine import NutritionEngine
+from app.services.ml_diet_pipeline.scaling.engine import ScalingEngine
+from app.services.ml_diet_pipeline.validation.engine import ValidationEngine
+from app.services.ml_diet_pipeline.genai.service import GenAIService
+from app.services.ml_diet_pipeline.canonicalization.service import IngredientCanonicalizer
+from app.services.ml_diet_pipeline.embeddings.generator import EmbeddingGenerator
+from app.services.ml_diet_pipeline.embeddings.faiss_index import FaissIndex
 from app.services.nutrition_database import get_nutrition_database
 
 logger = logging.getLogger(__name__)
@@ -35,20 +35,38 @@ logger = logging.getLogger(__name__)
 class MLPipelineOrchestrator:
     """Orchestrates the complete ML diet plan generation pipeline"""
     
-    def __init__(self):
+    template_selector: Any
+    nutrition_adapter: Any
+    scaling_engine: Any
+    validation_engine: Any
+    text_generator: Any
+    canonicalizer: Optional[Any]
+    
+    def __init__(self, components: Optional[Dict[str, Any]] = None):
         """Initialize orchestrator with all components"""
-        self.template_selector = get_meal_template_selector()
+        if components:
+            self.template_selector = components.get("template_selector") or get_meal_template_selector()
+            self.scaling_engine = components.get("scaling_engine")
+            self.validation_engine = components.get("validation_engine")
+            self.text_generator = components.get("genai_service")
+            self.canonicalizer = components.get("canonicalizer")
+            self.nutrition_adapter = components.get("nutrition_engine") 
+        else:
+            self.template_selector = get_meal_template_selector()
+            self.scaling_engine = None
+            self.validation_engine = None
+            self.text_generator = None
+            self.canonicalizer = None
+            self.nutrition_adapter = None
+
         self.template_registry = get_meal_template_registry()
-        self.nutrition_adapter = get_nutrition_engine_adapter()
-        self.scaling_engine = get_scaling_engine()
-        self.validation_engine = get_validation_engine()
-        self.text_generator = get_genai_text_generator()
         self.nutrition_db = get_nutrition_database()
         
         logger.info("[ML_ORCHESTRATOR_INIT] Initialized ML pipeline orchestrator")
     
     async def generate_daily_plan(
         self,
+        db: Session,
         user_id: UUID,
         health_context: Dict[str, Any],
         target_date: Optional[date] = None
@@ -89,6 +107,7 @@ class MLPipelineOrchestrator:
                 
                 # Build meal with nutrition
                 meal = await self._build_meal_from_template(
+                    db=db,
                     template=template,
                     target_calories=constraints.calorie_target / 3,
                     target_protein=constraints.protein_target / 3
@@ -150,6 +169,7 @@ class MLPipelineOrchestrator:
     
     async def generate_weekly_plan(
         self,
+        db: Session,
         user_id: UUID,
         health_context: Dict[str, Any],
         start_date: Optional[date] = None
@@ -186,6 +206,7 @@ class MLPipelineOrchestrator:
                 
                 # Generate daily plan
                 daily_plan = await self.generate_daily_plan(
+                    db=db,
                     user_id=user_id,
                     health_context=health_context,
                     target_date=current_date
@@ -252,6 +273,7 @@ class MLPipelineOrchestrator:
     
     async def _build_meal_from_template(
         self,
+        db: Session,
         template,
         target_calories: float,
         target_protein: float
@@ -265,12 +287,34 @@ class MLPipelineOrchestrator:
         ingredients = []
         for ingredient_name in template.ingredients:
             try:
-                # Calculate nutrition for 100g
-                nutrition = self.nutrition_adapter.calculate_ingredient_nutrition(
-                    ingredient_name=ingredient_name,
-                    quantity=100,
-                    unit="g"
-                )
+                # STEP 2a: Canonicalization (ML Vector Search)
+                canonicalizer = self.canonicalizer
+                if canonicalizer is not None:
+                    try:
+                        canon_result = canonicalizer.canonicalize(db, ingredient_name)
+                        food_id = canon_result["ingredient_id"]
+                        logger.info(f"[ML_CANONICALIZED] {ingredient_name} -> {canon_result['canonical_name']} (conf: {canon_result['confidence']:.3f})")
+                        
+                        # Use the specific nutrition engine to get macros from registry
+                        nutrition = self.nutrition_adapter.calculate_ingredient_nutrition(
+                            food_id=food_id,
+                            quantity_g=100
+                        )
+                    except Exception as ce:
+                        logger.warning(f"[ML_CANON_FAILED] {ingredient_name}: {ce}. Falling back to legacy adapter.")
+                        # Fallback to legacy name-based adapter
+                        nutrition = self.nutrition_adapter.calculate_ingredient_nutrition(
+                            ingredient_name=ingredient_name,
+                            quantity=100,
+                            unit="g"
+                        )
+                else:
+                    # Legacy fallback if no canonicalizer
+                    nutrition = self.nutrition_adapter.calculate_ingredient_nutrition(
+                        ingredient_name=ingredient_name,
+                        quantity=100,
+                        unit="g"
+                    )
                 
                 ingredients.append({
                     "name": ingredient_name,
@@ -312,11 +356,15 @@ class MLPipelineOrchestrator:
 _orchestrator: Optional[MLPipelineOrchestrator] = None
 
 
-def get_ml_pipeline_orchestrator() -> MLPipelineOrchestrator:
-    """Get singleton instance of ML pipeline orchestrator"""
+def get_ml_pipeline_orchestrator(db: Optional[Session] = None) -> MLPipelineOrchestrator:
+    """Get instance of ML pipeline orchestrator with database components"""
     global _orchestrator
     if _orchestrator is None:
-        _orchestrator = MLPipelineOrchestrator()
+        if db:
+            components = build_ml_pipeline_components(db)
+            _orchestrator = MLPipelineOrchestrator(components=components)
+        else:
+            _orchestrator = MLPipelineOrchestrator()
     return _orchestrator
 
 
@@ -324,19 +372,37 @@ def build_ml_pipeline_components(db):
     """
     Build new ML pipeline components for the deterministic+ML+GenAI stack.
     """
-    from app.services.ml_diet_pipeline.template_selection.selector import TemplateSelector
-    from app.services.ml_diet_pipeline.nutrition.engine import NutritionEngine
-    from app.services.ml_diet_pipeline.scaling.engine import ScalingEngine
-    from app.services.ml_diet_pipeline.validation.engine import ValidationEngine
-    from app.services.ml_diet_pipeline.genai.service import GenAIService
+    logger.info("[ML_PIPELINE_INIT] Building components")
+    import json
 
     def no_op_generator(payload):
         return payload
 
+    index_dir = os.path.join(os.path.dirname(__file__), "canonicalization", "index")
+    index_path = os.path.join(index_dir, "faiss.index")
+    mapping_path = os.path.join(index_dir, "faiss_mapping.json")
+    
+    canonicalizer = None
+    try:
+        if os.path.exists(index_path) and os.path.exists(mapping_path):
+            with open(mapping_path, "r") as f:
+                embedding_ids = json.load(f)
+            index = FaissIndex.load(index_path)
+            canonicalizer = IngredientCanonicalizer(
+                index=index,
+                embedding_ids=embedding_ids,
+                embedding_generator=EmbeddingGenerator()
+            )
+        else:
+            logging.getLogger(__name__).warning("FAISS index files not found.")
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to load Canonicalizer: {e}")
+
     return {
-        "template_selector": TemplateSelector(),
+        "template_selector": MealTemplateSelector(),
         "nutrition_engine": NutritionEngine(db),
         "scaling_engine": ScalingEngine(),
         "validation_engine": ValidationEngine(),
         "genai_service": GenAIService(generator=no_op_generator),
+        "canonicalizer": canonicalizer,
     }
