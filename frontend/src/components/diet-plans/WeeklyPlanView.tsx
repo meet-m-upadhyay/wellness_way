@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { LegacyWeeklyPlan } from '../../services/api';
 import DailyPlanView from './DailyPlanView';
 import NutritionSummary from './NutritionSummary';
-import Button from '../ui/Button';
-
 interface WeeklyPlanViewProps {
   plan: LegacyWeeklyPlan;
   onRegenerateMeal?: (dayIndex: number, mealType: string, useML: boolean) => void;
@@ -40,14 +38,14 @@ export const WeeklyPlanView: React.FC<WeeklyPlanViewProps> = ({
     const start = new Date(startDate);
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
-    
-    return `${start.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric' 
-    })} - ${end.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric' 
+
+    return `${start.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric'
+    })} - ${end.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     })}`;
   };
 
@@ -140,11 +138,10 @@ export const WeeklyPlanView: React.FC<WeeklyPlanViewProps> = ({
               <button
                 key={index}
                 onClick={() => setSelectedDayIndex(index)}
-                className={`whitespace-nowrap py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors min-w-0 flex-shrink-0 ${
-                  selectedDayIndex === index
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
+                className={`whitespace-nowrap py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors min-w-0 flex-shrink-0 ${selectedDayIndex === index
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
               >
                 <div className="text-center">
                   <div className="font-semibold">
@@ -183,16 +180,15 @@ export const WeeklyPlanView: React.FC<WeeklyPlanViewProps> = ({
             Week at a Glance
           </h3>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 sm:gap-4">
           {plan.days.map((day, index) => (
             <div
               key={index}
-              className={`bg-white dark:bg-gray-700 rounded-lg p-3 sm:p-4 border-2 cursor-pointer transition-all ${
-                selectedDayIndex === index
-                  ? 'border-blue-500 shadow-md'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-              }`}
+              className={`bg-white dark:bg-gray-700 rounded-lg p-3 sm:p-4 border-2 cursor-pointer transition-all ${selectedDayIndex === index
+                ? 'border-blue-500 shadow-md'
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
               onClick={() => setSelectedDayIndex(index)}
             >
               <div className="text-center">

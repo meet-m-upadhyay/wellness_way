@@ -2,8 +2,6 @@ import React from 'react';
 import { LegacyDailyPlan } from '../../services/api';
 import MealCard from './MealCard';
 import NutritionSummary from './NutritionSummary';
-import Button from '../ui/Button';
-
 interface DailyPlanViewProps {
   plan: LegacyDailyPlan;
   onRegenerateMeal?: (mealType: string, useML: boolean) => void;
