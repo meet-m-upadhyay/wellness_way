@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
-import { 
-  apiClient, 
-  DietPlan, 
-  adaptWeeklyPlanToLegacy, 
+import {
+  apiClient,
+  DietPlan,
+  adaptWeeklyPlanToLegacy,
   adaptDailyPlanToLegacy,
   WeeklyPlanContent,
   DailyPlanContent,
@@ -24,7 +24,7 @@ export const DietPlans: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth(); // Get user from AuthContext
   const { state, dispatch } = useAppContext();
-  
+
   const [selectedPlanType, setSelectedPlanType] = useState<'daily' | 'weekly' | null>(null);
   const [currentPlan, setCurrentPlan] = useState<DietPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -65,7 +65,7 @@ export const DietPlans: React.FC = () => {
 
           // Get health goals
           const goalsResponse = await apiClient.getHealthGoals(urlUserId);
-          
+
           // Get diet preferences
           const preferencesResponse = await apiClient.getDietPreferences(urlUserId);
 
@@ -121,13 +121,13 @@ export const DietPlans: React.FC = () => {
       try {
         // Get user's diet plans (latest first)
         const response = await apiClient.getUserDietPlans(currentUserId, undefined, 1);
-        
+
         if (response.data && response.data.plans.length > 0) {
           const latestPlanSummary = response.data.plans[0];
-          
+
           // Get the full plan details
           const planResponse = await apiClient.getDietPlan(latestPlanSummary.id, currentUserId);
-          
+
           if (planResponse.data) {
             setCurrentPlan(planResponse.data);
             setSelectedPlanType(planResponse.data.plan_type as 'daily' | 'weekly');
@@ -157,7 +157,7 @@ export const DietPlans: React.FC = () => {
     try {
       // Pass the date options to the API client
       const response = await apiClient.generateDietPlan(currentUserId, selectedPlanType, options || {});
-      
+
       if (response.error) {
         // Check if this is a safety violation
         if (response.error === 'SAFETY_VIOLATION' && response.safetyViolation) {
@@ -177,7 +177,7 @@ export const DietPlans: React.FC = () => {
     }
   };
 
-  const handleRegenerateMeal = async (dayIndex: number | undefined, mealType: string, useML: boolean = false) => {
+  const handleRegenerateMeal = async (dayIndex: number | undefined, mealType: string) => {
     if (!currentPlan || !currentUserId) return;
 
     // Convert mealType to mealIndex
@@ -200,8 +200,8 @@ export const DietPlans: React.FC = () => {
     setSafetyViolation(null);
 
     try {
-      const response = await apiClient.regenerateMeal(currentPlan.id!, actualDayIndex, mealIndex, currentUserId, useML);
-      
+      const response = await apiClient.regenerateMeal(currentPlan.id!, actualDayIndex, mealIndex, currentUserId);
+
       if (response.error) {
         // Check if this is a safety violation
         if (response.error === 'SAFETY_VIOLATION' && response.safetyViolation) {
@@ -224,7 +224,7 @@ export const DietPlans: React.FC = () => {
     }
   };
 
-  const handleRegenerateDay = async (dayIndex: number, useML: boolean = false) => {
+  const handleRegenerateDay = async (dayIndex: number) => {
     if (!currentPlan || !currentUserId) return;
 
     setRegeneratingDay(dayIndex);
@@ -232,8 +232,8 @@ export const DietPlans: React.FC = () => {
     setSafetyViolation(null);
 
     try {
-      const response = await apiClient.regenerateDay(currentPlan.id!, dayIndex, currentUserId, useML);
-      
+      const response = await apiClient.regenerateDay(currentPlan.id!, dayIndex, currentUserId);
+
       if (response.error) {
         // Check if this is a safety violation
         if (response.error === 'SAFETY_VIOLATION' && response.safetyViolation) {
@@ -255,7 +255,7 @@ export const DietPlans: React.FC = () => {
     }
   };
 
-  const handleRegenerateWeek = async (useML: boolean = false) => {
+  const handleRegenerateWeek = async () => {
     if (!currentPlan || !currentUserId) return;
 
     setIsRegeneratingWeek(true);
@@ -263,8 +263,8 @@ export const DietPlans: React.FC = () => {
     setSafetyViolation(null);
 
     try {
-      const response = await apiClient.regenerateFullPlan(currentPlan.id!, currentUserId, useML);
-      
+      const response = await apiClient.regenerateFullPlan(currentPlan.id!, currentUserId);
+
       if (response.error) {
         // Check if this is a safety violation
         if (response.error === 'SAFETY_VIOLATION' && response.safetyViolation) {
@@ -311,7 +311,7 @@ export const DietPlans: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <LoadingSpinner size="lg" message=''/>
+          <LoadingSpinner size="lg" message='' />
           {loadingUser && <p className="mt-4 text-gray-600 dark:text-gray-300">Loading user data...</p>}
           {loadingExistingPlan && <p className="mt-4 text-gray-600 dark:text-gray-300">Loading your diet plans...</p>}
         </div>
@@ -420,12 +420,12 @@ export const DietPlans: React.FC = () => {
                 <BalanceGuidance guidance={currentPlan.balance_guidance} />
               </div>
             )}
-            
+
             {currentPlan.plan_type === 'daily' ? (
               <DailyPlanView
                 plan={adaptDailyPlanToLegacy(currentPlan.content as DailyPlanContent)}
-                onRegenerateMeal={(mealType, useML) => handleRegenerateMeal(undefined, mealType, useML)}
-                onRegenerateDay={(useML) => handleRegenerateDay(0, useML)}
+                onRegenerateMeal={(mealType) => handleRegenerateMeal(undefined, mealType)}
+                onRegenerateDay={() => handleRegenerateDay(0)}
                 regeneratingMeal={regeneratingMeal?.mealType || null}
                 isRegeneratingDay={regeneratingDay === 0}
               />
@@ -448,7 +448,7 @@ export const DietPlans: React.FC = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md mx-4">
               <div className="text-center">
-                <LoadingSpinner size="lg" className="mx-auto mb-4" message=''/>
+                <LoadingSpinner size="lg" className="mx-auto mb-4" message='' />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                   Generating Your Diet Plan
                 </h3>

@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 interface PlanTypeSelectorProps {
   selectedType: 'daily' | 'weekly' | null;
   onSelect: (type: 'daily' | 'weekly') => void;
-  onGenerate: (options?: { targetDate?: string; startDate?: string; useML?: boolean }) => void;
+  onGenerate: (options?: { targetDate?: string; startDate?: string }) => void;
   isLoading?: boolean;
 }
 
@@ -20,7 +20,7 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
 
   // Get today's date in YYYY-MM-DD format for min date
   const today = new Date().toISOString().split('T')[0];
-  
+
   // Get next Monday for weekly plan default
   const getNextMonday = () => {
     const date = new Date();
@@ -30,15 +30,15 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
     return date.toISOString().split('T')[0];
   };
 
-  const handleGenerate = (useML: boolean = false) => {
-    const options: { targetDate?: string; startDate?: string; useML?: boolean } = { useML };
-    
+  const handleGenerate = () => {
+    const options: { targetDate?: string; startDate?: string } = {};
+
     if (selectedType === 'daily' && targetDate) {
       options.targetDate = targetDate;
     } else if (selectedType === 'weekly' && startDate) {
       options.startDate = startDate;
     }
-    
+
     onGenerate(options);
   };
 
@@ -53,31 +53,29 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Daily Plan Option */}
           <div
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
-              selectedType === 'daily'
+            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${selectedType === 'daily'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
-            }`}
+              }`}
             onClick={() => onSelect('daily')}
           >
             <div className="flex items-center mb-4">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                selectedType === 'daily'
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${selectedType === 'daily'
                   ? 'border-blue-500 bg-blue-500'
                   : 'border-gray-300 dark:border-gray-600'
-              }`}>
+                }`}>
                 {selectedType === 'daily' && (
                   <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
                 )}
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Plan</h3>
             </div>
-            
+
             <div className="space-y-3">
               <p className="text-gray-600 dark:text-gray-300">
                 Get a complete meal plan for a single day with breakfast, lunch, dinner, and snacks.
               </p>
-              
+
               {/* Date Input for Daily Plan */}
               {selectedType === 'daily' && (
                 <div className="mt-4">
@@ -97,7 +95,7 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
                   </p>
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <h4 className="font-medium text-gray-900 dark:text-white">Perfect for:</h4>
                 <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
@@ -118,31 +116,29 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
 
           {/* Weekly Plan Option */}
           <div
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
-              selectedType === 'weekly'
+            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${selectedType === 'weekly'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
-            }`}
+              }`}
             onClick={() => onSelect('weekly')}
           >
             <div className="flex items-center mb-4">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                selectedType === 'weekly'
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${selectedType === 'weekly'
                   ? 'border-blue-500 bg-blue-500'
                   : 'border-gray-300 dark:border-gray-600'
-              }`}>
+                }`}>
                 {selectedType === 'weekly' && (
                   <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
                 )}
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Weekly Plan</h3>
             </div>
-            
+
             <div className="space-y-3">
               <p className="text-gray-600 dark:text-gray-300">
                 Get a comprehensive 7-day meal plan with varied meals and balanced nutrition throughout the week.
               </p>
-              
+
               {/* Date Input for Weekly Plan */}
               {selectedType === 'weekly' && (
                 <div className="mt-4">
@@ -163,7 +159,7 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
                   </p>
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <h4 className="font-medium text-gray-900 dark:text-white">Perfect for:</h4>
                 <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
@@ -185,13 +181,12 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
 
         {/* Generation Buttons */}
         <div className="text-center space-y-4">
-          {/* GenAI Button (Existing) Disabled for now*/}
-          {/* <div>
+          <div>
             <Button
-              onClick={() => handleGenerate(false)}
+              onClick={handleGenerate}
               disabled={!selectedType || isLoading}
               size="lg"
-              className="px-8 py-3"
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
             >
               {isLoading ? (
                 <>
@@ -203,48 +198,18 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
                 </>
               ) : (
                 <>
-                  🤖 Generate {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : ''} Plan (AI)
+                  🧠 Generate {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : ''} Plan
                 </>
               )}
             </Button>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Uses GenAI for creative meal generation
-            </p>
-          </div> */}
-
-          {/* ML Button (NEW) */}
-          <div>
-            <Button
-              onClick={() => handleGenerate(true)}
-              disabled={!selectedType || isLoading}
-              size="lg"
-              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Generating {selectedType} plan with ML...
-                </>
-              ) : (
-                <>
-                  🧠 Generate {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : ''} Plan (ML)
-                </>
-              )}
-            </Button>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
-                NEW
-              </span>
-              {' '}Uses ML templates + deterministic nutrition
+              Uses ML templates + deterministic nutrition calculations
             </p>
           </div>
-          
+
           {selectedType && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-              {selectedType === 'daily' 
+              {selectedType === 'daily'
                 ? `This will create a personalized meal plan for ${targetDate ? new Date(targetDate).toLocaleDateString() : 'today'}`
                 : `This will create a personalized meal plan starting ${startDate ? new Date(startDate).toLocaleDateString() : 'next Monday'}`
               }

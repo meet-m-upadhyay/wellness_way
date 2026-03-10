@@ -6,7 +6,7 @@ import Button from '../ui/Button';
 interface MealCardProps {
   meal: LegacyMeal;
   mealType: string;
-  onRegenerate?: (useML: boolean) => void;
+  onRegenerate?: () => void;
   isRegenerating?: boolean;
   showRegenerate?: boolean;
 }
@@ -19,7 +19,7 @@ export const MealCard: React.FC<MealCardProps> = ({
   showRegenerate = true,
 }) => {
   const [showIngredients, setShowIngredients] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [showRecipe, setShowRecipe] = useState(false);
 
   const formatMealType = (type: string) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
@@ -55,39 +55,13 @@ export const MealCard: React.FC<MealCardProps> = ({
           </div>
           {showRegenerate && onRegenerate && (
             <div className="flex gap-2">
-              {/* AI button temporarily disabled */}
-              {/* <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onRegenerate(false)}
-                disabled={isRegenerating}
-                className="flex items-center"
-                title="Regenerate using AI"
-              >
-                {isRegenerating ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    ...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    🤖
-                  </>
-                )}
-              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onRegenerate(true)}
+                onClick={() => onRegenerate()}
                 disabled={isRegenerating}
                 className="flex items-center bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-300 dark:border-purple-700"
-                title="Regenerate using ML"
+                title="Regenerate Meal"
               >
                 {isRegenerating ? (
                   <>
@@ -138,9 +112,8 @@ export const MealCard: React.FC<MealCardProps> = ({
           >
             <h4 className="font-medium text-gray-900 dark:text-white">Ingredients ({meal.ingredients.length})</h4>
             <svg
-              className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${
-                showIngredients ? 'rotate-180' : ''
-              }`}
+              className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${showIngredients ? 'rotate-180' : ''
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -148,7 +121,7 @@ export const MealCard: React.FC<MealCardProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          
+
           {showIngredients && (
             <div className="mt-3 space-y-1">
               {meal.ingredients.map((ingredient, index) => (
@@ -161,17 +134,16 @@ export const MealCard: React.FC<MealCardProps> = ({
           )}
         </div>
 
-        {/* Instructions Section */}
+        {/* Recipe Section */}
         <div>
           <button
-            onClick={() => setShowInstructions(!showInstructions)}
+            onClick={() => setShowRecipe(!showRecipe)}
             className="flex items-center justify-between w-full text-left"
           >
-            <h4 className="font-medium text-gray-900 dark:text-white">Instructions</h4>
+            <h4 className="font-medium text-gray-900 dark:text-white text-left">Recipe</h4>
             <svg
-              className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${
-                showInstructions ? 'rotate-180' : ''
-              }`}
+              className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${showRecipe ? 'rotate-180' : ''
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -179,10 +151,10 @@ export const MealCard: React.FC<MealCardProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          
-          {showInstructions && (
-            <div className="mt-3">
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+
+          {showRecipe && (
+            <div className="mt-3 text-left">
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line text-left">
                 {meal.instructions}
               </p>
             </div>

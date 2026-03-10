@@ -75,13 +75,31 @@ class IngredientCanonicalizer:
 
     def _build_scores(self, db: Session, distances: List[float], indices: List[int]) -> List[Dict]:
         scored: List[Dict] = []
+        
+        # Collect candidate food IDs to batch query
+        candidate_ids = []
+        for index in indices:
+            if 0 <= index < len(self._embedding_ids):
+                candidate_ids.append(self._embedding_ids[index])
+        
+        if not candidate_ids:
+            return []
+
+        # Batch query all candidates at once
+        foods = db.query(FoodItem).filter(FoodItem.id.in_(candidate_ids)).all()
+        food_map = {str(f.id): f for f in foods}
+        
+        # Build scores in the original distance order
         for distance, index in zip(distances, indices):
             if index < 0 or index >= len(self._embedding_ids):
                 continue
+            
             food_id = self._embedding_ids[index]
-            food = db.query(FoodItem).filter(FoodItem.id == food_id).first()
+            food = food_map.get(food_id)
+            
             if not food:
                 continue
+                
             confidence = self._distance_to_confidence(distance)
             scored.append(
                 {
@@ -90,6 +108,7 @@ class IngredientCanonicalizer:
                     "confidence": confidence,
                 }
             )
+            
         if not scored:
             raise CanonicalizationError("No candidates returned from FAISS.")
         return scored

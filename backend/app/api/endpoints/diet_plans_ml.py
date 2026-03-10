@@ -12,9 +12,9 @@ CRITICAL RULES:
 """
 
 import logging
-from typing import Optional
+from typing import Optional, List, Any
 from uuid import UUID
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
@@ -22,9 +22,12 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.schemas.diet_plan import (
     DietPlanResponse,
+    DietPlanSummaryListResponse,
     GenerateWeeklyPlanRequest,
     GenerateDailyPlanRequest,
+    SuccessResponse
 )
+from app.models.diet_plan import DietPlan
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -87,6 +90,74 @@ def ensure_ml_pipeline_enabled() -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="ML pipeline is disabled",
         )
+
+
+@router.get("/", response_model=DietPlanSummaryListResponse)
+async def list_diet_plans(
+    limit: int = 10,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user_id: UUID = Depends(get_current_user_id)
+):
+    """List diet plans for the current user"""
+    query = db.query(DietPlan).filter(DietPlan.user_id == current_user_id)
+    total = query.count()
+    plans = query.order_by(DietPlan.created_at.desc()).offset(offset).limit(limit).all()
+    
+    # Format plans for summary
+    formatted_plans = []
+    for plan in plans:
+        summary = {
+            "id": plan.id,
+            "plan_type": plan.plan_type,
+            "start_date": plan.start_date,
+            "created_at": plan.created_at,
+            "total_calories": plan.content.get("daily_totals", {}).get("calories") or plan.content.get("weekly_totals", {}).get("calories"),
+            "total_meals": len(plan.content.get("meals", [])) if plan.plan_type == "daily" else sum(len(day.get("meals", [])) for day in plan.content.get("days", []))
+        }
+        formatted_plans.append(summary)
+        
+    return {"plans": formatted_plans, "total": total}
+
+
+@router.get("/{plan_id}", response_model=DietPlanResponse)
+async def get_diet_plan(
+    plan_id: UUID,
+    db: Session = Depends(get_db),
+    current_user_id: UUID = Depends(get_current_user_id)
+):
+    """Get a specific diet plan by ID"""
+    plan = db.query(DietPlan).filter(
+        DietPlan.id == plan_id,
+        DietPlan.user_id == current_user_id
+    ).first()
+    
+    if not plan:
+        raise HTTPException(status_code=404, detail="Diet plan not found")
+        
+    return plan
+
+
+@router.delete("/{plan_id}", response_model=SuccessResponse)
+async def delete_diet_plan(
+    plan_id: UUID,
+    db: Session = Depends(get_db),
+    current_user_id: UUID = Depends(get_current_user_id)
+):
+    """Delete a diet plan"""
+    plan = db.query(DietPlan).filter(
+        DietPlan.id == plan_id,
+        DietPlan.user_id == current_user_id
+    ).first()
+    
+    if not plan:
+        raise HTTPException(status_code=404, detail="Diet plan not found")
+        
+    db.delete(plan)
+    db.commit()
+    
+    return {"message": "Diet plan deleted successfully"}
+
 
 @router.post("/weekly", response_model=DietPlanResponse, status_code=status.HTTP_201_CREATED)
 async def generate_weekly_plan_ml(
@@ -335,81 +406,54 @@ async def regenerate_meal_ml(
         # Get orchestrator
         orchestrator = get_ml_pipeline_orchestrator(db)
         
-        # Generate new meal
-        meal_types = ["breakfast", "lunch", "dinner", "snack"]
-        meal_type = meal_types[meal_index] if meal_index < len(meal_types) else "snack"
-        
-        # Extract constraints from HCD
-        from app.services.ml_diet_pipeline.meal_template_selector import SelectionConstraints, DietType, MealSlot
-        
-        diet_type_str = hcd.json_context.get("diet_type", "vegetarian").lower()
-        diet_type_map = {
-            "vegetarian": DietType.VEGETARIAN,
-            "vegan": DietType.VEGAN,
-            "non-vegetarian": DietType.NON_VEGETARIAN,
-            "non_vegetarian": DietType.NON_VEGETARIAN,
-            "eggetarian": DietType.EGGETARIAN
-        }
-        diet_type = diet_type_map.get(diet_type_str, DietType.VEGETARIAN)
-        
-        meal_slot_map = {
-            "breakfast": MealSlot.BREAKFAST,
-            "lunch": MealSlot.LUNCH,
-            "dinner": MealSlot.DINNER,
-            "snack": MealSlot.SNACK
-        }
-        meal_slot = meal_slot_map.get(meal_type, MealSlot.BREAKFAST)
-        
-        constraints = SelectionConstraints(
-            diet_type=diet_type,
-            meal_slot=meal_slot,
-            calorie_target=hcd.json_context.get("tdee_calories", 2000) / 3,
-            protein_target=hcd.json_context.get("min_protein_grams", 60) / 3,
-            allergies=set(hcd.json_context.get("allergies", [])),
-            foods_to_avoid=set(hcd.json_context.get("foods_to_avoid", [])),
-            preferred_tags=set()
-        )
-        
-        # Select new template
-        template_score = orchestrator.template_selector.select_template(constraints)
-        
-        # Build new meal
-        new_meal = await orchestrator._build_meal_from_template(
-            db=db,
-            template=template_score.template,
-            target_calories=constraints.calorie_target,
-            target_protein=constraints.protein_target
-        )
-        
-        # Update plan content
+        # Get existing meal to exclude its ingredients (for variety)
         plan_content = plan.content
+        exclude_ingredients = set()
+        meal_type = "breakfast"
         
         if plan.plan_type == "weekly":
             if "days" in plan_content and day_index < len(plan_content["days"]):
                 day = plan_content["days"][day_index]
                 if "meals" in day and meal_index < len(day["meals"]):
-                    day["meals"][meal_index] = new_meal
-                    
-                    # Recalculate daily totals
-                    daily_totals = orchestrator.nutrition_adapter.calculate_daily_nutrition(day["meals"])
-                    day["daily_totals"] = daily_totals
-                    
-                    # Recalculate weekly totals
-                    weekly_totals = {
-                        "calories": sum(d["daily_totals"]["calories"] for d in plan_content["days"]),
-                        "protein": sum(d["daily_totals"]["protein"] for d in plan_content["days"]),
-                        "carbohydrates": sum(d["daily_totals"]["carbohydrates"] for d in plan_content["days"]),
-                        "fat": sum(d["daily_totals"]["fat"] for d in plan_content["days"]),
-                        "fiber": sum(d["daily_totals"]["fiber"] for d in plan_content["days"])
-                    }
-                    plan_content["weekly_totals"] = weekly_totals
+                    old_meal = day["meals"][meal_index]
+                    meal_type = old_meal.get("type", "breakfast")
+                    for ing in old_meal.get("ingredients", []):
+                        exclude_ingredients.add(ing["name"])
         else:  # daily
             if "meals" in plan_content and meal_index < len(plan_content["meals"]):
-                plan_content["meals"][meal_index] = new_meal
-                
-                # Recalculate daily totals
-                daily_totals = orchestrator.nutrition_adapter.calculate_daily_nutrition(plan_content["meals"])
-                plan_content["daily_totals"] = daily_totals
+                old_meal = plan_content["meals"][meal_index]
+                meal_type = old_meal.get("type", "breakfast")
+                for ing in old_meal.get("ingredients", []):
+                    exclude_ingredients.add(ing["name"])
+
+        # Generate new meal using the ML orchestrator
+        new_meal = await orchestrator.regenerate_meal(
+            db=db,
+            user_id=current_user_id,
+            health_context=hcd.json_context or {},
+            meal_type=meal_type,
+            exclude_ingredients=exclude_ingredients
+        )
+        
+        # Update plan content
+        if plan.plan_type == "weekly":
+            day = plan_content["days"][day_index]
+            day["meals"][meal_index] = new_meal
+            
+            # Recalculate daily totals
+            day["daily_totals"] = orchestrator.nutrition_engine.calculate_daily_nutrition(day["meals"])
+            
+            # Recalculate weekly totals
+            plan_content["weekly_totals"] = {
+                "calories": sum(d["daily_totals"]["calories"] for d in plan_content["days"]),
+                "protein": sum(d["daily_totals"]["protein"] for d in plan_content["days"]),
+                "carbohydrates": sum(d["daily_totals"]["carbohydrates"] for d in plan_content["days"]),
+                "fat": sum(d["daily_totals"]["fat"] for d in plan_content["days"]),
+                "fiber": sum(d["daily_totals"]["fiber"] for d in plan_content["days"])
+            }
+        else:  # daily
+            plan_content["meals"][meal_index] = new_meal
+            plan_content["daily_totals"] = orchestrator.nutrition_engine.calculate_daily_nutrition(plan_content["meals"])
         
         # Save updated plan - force SQLAlchemy to detect the change
         from sqlalchemy.orm.attributes import flag_modified
