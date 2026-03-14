@@ -1,0 +1,18 @@
+architecture-beta
+    group user_env(client)[Client]
+    group backend_env(cloud)[Backend]
+    group external_env(cloud)[External]
+
+    service browser(internet)[Frontend] in user_env
+    
+    service api(server)[FastAPI] in backend_env
+    service pipeline(server)[ML_Engine] in backend_env
+    service db(database)[PostgreSQL] in backend_env
+    
+    service llm(server)[LLM_API] in external_env
+
+    browser:R -- L:api
+    api:R -- L:pipeline
+    api:B -- T:db
+    pipeline:B -- R:db
+    pipeline:R -- L:llm
