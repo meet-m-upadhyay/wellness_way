@@ -235,6 +235,22 @@ async def generate_weekly_plan_ml(
         db.commit()
         db.refresh(diet_plan)
         
+        # Enforce max 3 weekly diet plans per user
+        existing_weekly = db.query(DietPlan.id)\
+            .filter(DietPlan.user_id == current_user_id)\
+            .filter(DietPlan.plan_type == "weekly")\
+            .order_by(DietPlan.created_at.desc())\
+            .all()
+            
+        if len(existing_weekly) > 3:
+            ids_to_keep = [p[0] for p in existing_weekly[:3]]
+            db.query(DietPlan)\
+                .filter(DietPlan.user_id == current_user_id)\
+                .filter(DietPlan.plan_type == "weekly")\
+                .filter(DietPlan.id.notin_(ids_to_keep))\
+                .delete(synchronize_session=False)
+            db.commit()
+        
         logger.info(f"[ML_PIPELINE_SUCCESS] request_id={request_id} plan_id={diet_plan.id}")
         
         return DietPlanResponse.model_validate(diet_plan)
@@ -326,6 +342,22 @@ async def generate_daily_plan_ml(
         db.commit()
         db.refresh(diet_plan)
         
+        # Enforce max 3 daily diet plans per user
+        existing_daily = db.query(DietPlan.id)\
+            .filter(DietPlan.user_id == current_user_id)\
+            .filter(DietPlan.plan_type == "daily")\
+            .order_by(DietPlan.created_at.desc())\
+            .all()
+            
+        if len(existing_daily) > 3:
+            ids_to_keep = [p[0] for p in existing_daily[:3]]
+            db.query(DietPlan)\
+                .filter(DietPlan.user_id == current_user_id)\
+                .filter(DietPlan.plan_type == "daily")\
+                .filter(DietPlan.id.notin_(ids_to_keep))\
+                .delete(synchronize_session=False)
+            db.commit()
+        
         logger.info(f"[ML_PIPELINE_SUCCESS] request_id={request_id} plan_id={diet_plan.id}")
         
         return DietPlanResponse.model_validate(diet_plan)
@@ -410,21 +442,38 @@ async def regenerate_meal_ml(
         plan_content = plan.content
         exclude_ingredients = set()
         meal_type = "breakfast"
+        other_meals_cal = 0
+        other_meals_prot = 0
         
         if plan.plan_type == "weekly":
             if "days" in plan_content and day_index < len(plan_content["days"]):
                 day = plan_content["days"][day_index]
                 if "meals" in day and meal_index < len(day["meals"]):
-                    old_meal = day["meals"][meal_index]
-                    meal_type = old_meal.get("type", "breakfast")
-                    for ing in old_meal.get("ingredients", []):
-                        exclude_ingredients.add(ing["name"])
+                    for i, m in enumerate(day["meals"]):
+                        if i == meal_index:
+                            old_meal = m
+                            meal_type = old_meal.get("type", "breakfast")
+                            for ing in old_meal.get("ingredients", []):
+                                exclude_ingredients.add(ing["name"])
+                        else:
+                            other_meals_cal += m.get("nutrition", {}).get("calories", 0)
+                            other_meals_prot += m.get("nutrition", {}).get("protein", 0)
         else:  # daily
             if "meals" in plan_content and meal_index < len(plan_content["meals"]):
-                old_meal = plan_content["meals"][meal_index]
-                meal_type = old_meal.get("type", "breakfast")
-                for ing in old_meal.get("ingredients", []):
-                    exclude_ingredients.add(ing["name"])
+                for i, m in enumerate(plan_content["meals"]):
+                    if i == meal_index:
+                        old_meal = m
+                        meal_type = old_meal.get("type", "breakfast")
+                        for ing in old_meal.get("ingredients", []):
+                            exclude_ingredients.add(ing["name"])
+                    else:
+                        other_meals_cal += m.get("nutrition", {}).get("calories", 0)
+                        other_meals_prot += m.get("nutrition", {}).get("protein", 0)
+
+        # Calculate remainder daily macros
+        constraints = orchestrator._extract_constraints(hcd.json_context or {})
+        remaining_cal = max(100, constraints.calorie_target - other_meals_cal)
+        remaining_prot = max(5, constraints.protein_target - other_meals_prot)
 
         # Generate new meal using the ML orchestrator
         new_meal = await orchestrator.regenerate_meal(
@@ -432,7 +481,9 @@ async def regenerate_meal_ml(
             user_id=current_user_id,
             health_context=hcd.json_context or {},
             meal_type=meal_type,
-            exclude_ingredients=exclude_ingredients
+            exclude_ingredients=exclude_ingredients,
+            target_calories=remaining_cal,
+            target_protein=remaining_prot
         )
         
         # Update plan content
@@ -459,6 +510,7 @@ async def regenerate_meal_ml(
         from sqlalchemy.orm.attributes import flag_modified
         plan.content = plan_content
         flag_modified(plan, "content")
+        plan.updated_at = datetime.now()
         db.commit()
         db.refresh(plan)
         
@@ -588,6 +640,7 @@ async def regenerate_day_ml(
         # Force SQLAlchemy to detect the change
         from sqlalchemy.orm.attributes import flag_modified
         flag_modified(plan, "content")
+        plan.updated_at = datetime.now()
         db.commit()
         db.refresh(plan)
         
@@ -682,6 +735,7 @@ async def regenerate_full_plan_ml(
         # Force SQLAlchemy to detect the change
         from sqlalchemy.orm.attributes import flag_modified
         flag_modified(plan, "content")
+        plan.updated_at = datetime.now()
         db.commit()
         db.refresh(plan)
         

@@ -5,7 +5,7 @@ Constrained GenAI service wrapper
 from __future__ import annotations
 
 import logging
-from typing import Callable, Dict, Any, List
+from typing import Callable, Dict, Any, List, Optional
 
 from .schema import GenAIMealText
 
@@ -23,12 +23,20 @@ class GenAIService:
         self,
         ingredients: List[Dict[str, Any]],
         meal_type: str,
-        diet_type: Any
+        diet_type: Any,
+        allergies: Optional[List[str]] = None,
+        foods_to_avoid: Optional[List[str]] = None,
+        budget_constraints: Optional[str] = None,
+        lifestyle_constraints: Optional[str] = None
     ) -> Dict[str, Any]:
         payload = {
             "ingredients": ingredients,
             "meal_type": meal_type,
-            "diet_type": diet_type
+            "diet_type": diet_type,
+            "allergies": allergies or [],
+            "foods_to_avoid": foods_to_avoid or [],
+            "budget_constraints": budget_constraints,
+            "lifestyle_constraints": lifestyle_constraints
         }
         raw = await self._generator(payload)
         try:
@@ -68,3 +76,24 @@ class GenAIService:
             "summary": f"A balanced daily plan with {len(meals)} meals, totaling {calories:.0f} calories and {protein:.1f}g protein.",
             "notes": "Drink plenty of water and stay active!"
         }
+
+    async def generate_protein_supplement_note(
+        self,
+        missing_protein_g: float,
+        diet_type: str,
+        allergies: Optional[List[str]] = None,
+        nutrition_targets: Optional[Dict[str, Any]] = None,
+        safety_constraints: Optional[Dict[str, Any]] = None
+    ) -> str:
+        payload = {
+            "action": "generate_supplement_note",
+            "missing_protein_g": missing_protein_g,
+            "diet_type": diet_type,
+            "allergies": allergies or [],
+            "nutrition_targets": nutrition_targets or {},
+            "safety_constraints": safety_constraints or {}
+        }
+        raw = await self._generator(payload)
+        if raw and isinstance(raw, dict) and "note" in raw:
+            return raw["note"]
+        return f"Note: To meet your rigorous protein target, consider adding a protein supplement to cover your {missing_protein_g:.1f}g deficit."

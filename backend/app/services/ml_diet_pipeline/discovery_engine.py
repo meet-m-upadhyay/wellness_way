@@ -27,6 +27,7 @@ class DiscoveryEngine:
         db: Session,
         diet_type: str,
         allergies: Set[str],
+        foods_to_avoid: Optional[Set[str]] = None,
         exclude_ingredients: Optional[Set[str]] = None
     ) -> Dict[str, List[FoodItem]]:
         """
@@ -36,6 +37,7 @@ class DiscoveryEngine:
             Dict mapping categories to lists of FoodItem models
         """
         exclude_ingredients = exclude_ingredients or set()
+        foods_to_avoid = foods_to_avoid or set()
         
         # Categories we want to fill for a balanced day
         portfolio = {
@@ -90,9 +92,18 @@ class DiscoveryEngine:
                     ]))
                 )
         
-        # Exclude allergens
+        # Exclude allergens strictly
         for allergen in allergies:
-            base_query = base_query.filter(not_(FoodItem.allergen_flags.contains([allergen.lower()])))
+            base_query = base_query.filter(
+                and_(
+                    not_(FoodItem.allergen_flags.contains([allergen.lower()])),
+                    not_(FoodItem.canonical_name.ilike(f"%{allergen}%"))
+                )
+            )
+            
+        # Exclude foods to avoid strictly
+        for food in foods_to_avoid:
+            base_query = base_query.filter(not_(FoodItem.canonical_name.ilike(f"%{food}%")))
             
         # Exclude specific ingredients (for variety)
         if exclude_ingredients:
@@ -108,7 +119,7 @@ class DiscoveryEngine:
         for item in candidates:
             name = item.canonical_name.lower()
             macros = item.macros or {}
-            protein_pct = (macros.get("protein", 0) * 4) / max(macros.get("calories", 1), 1)
+            protein_pct = (macros.get("protein", 0) * 4) / max(macros.get("calories", 0) or 1, 1)
             
             if "protein" in name or protein_pct > 0.3:
                 portfolio["proteins"].append(item)

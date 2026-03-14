@@ -96,6 +96,8 @@ export interface WeeklyPlanContent {
   start_date: string; // YYYY-MM-DD format
   days: DayPlan[];
   weekly_totals: Nutrition;
+  summary?: string;
+  notes?: string;
 }
 
 export interface DailyPlanContent {
@@ -104,6 +106,8 @@ export interface DailyPlanContent {
   day_name: string;
   meals: Meal[];
   daily_totals: Nutrition;
+  summary?: string;
+  notes?: string;
 }
 
 export interface BalanceGuidance {
@@ -169,6 +173,8 @@ export interface LegacyDailyPlan {
     total_carbs_g: number;
     total_fat_g: number;
   };
+  summary?: string;
+  notes?: string;
 }
 
 export interface LegacyWeeklyPlan {
@@ -180,6 +186,8 @@ export interface LegacyWeeklyPlan {
     avg_daily_carbs_g: number;
     avg_daily_fat_g: number;
   };
+  summary?: string;
+  notes?: string;
 }
 
 // Adapter functions to convert new interfaces to legacy format
@@ -261,6 +269,8 @@ export function adaptWeeklyPlanToLegacy(weeklyPlan: WeeklyPlanContent): LegacyWe
     start_date: weeklyPlan.start_date,
     days: adaptedDays,
     weekly_nutrition: weeklyNutrition, // Use calculated averages
+    summary: weeklyPlan.summary,
+    notes: weeklyPlan.notes,
   };
 }
 
@@ -297,6 +307,8 @@ export function adaptDailyPlanToLegacy(dailyPlan: DailyPlanContent): LegacyDaily
       snacks: snacks.length > 0 ? snacks.map(adaptMealToLegacy) : undefined,
     },
     daily_nutrition: calculatedNutrition, // Use calculated values instead of AI totals
+    summary: dailyPlan.summary,
+    notes: dailyPlan.notes,
   };
 }
 

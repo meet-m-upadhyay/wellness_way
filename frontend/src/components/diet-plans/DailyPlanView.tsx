@@ -172,6 +172,24 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
           <li>• Listen to your body and adjust portion sizes as needed</li>
         </ul>
       </div>
+
+      {/* AI Nutritionist Insights */}
+      {(plan.summary || plan.notes) && (
+        <div className="mt-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
+          <h3 className="text-base font-medium text-purple-900 dark:text-purple-100 mb-4 flex items-center">
+            <span className="text-xl mr-2">🤖</span>
+            AI Nutritionist Insights
+          </h3>
+          <div className="text-sm text-purple-800 dark:text-purple-200 space-y-3">
+            {plan.summary && (
+              <p><strong>Overview:</strong> {plan.summary}</p>
+            )}
+            {plan.notes && (
+              <p><strong>Guidance:</strong> {plan.notes}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

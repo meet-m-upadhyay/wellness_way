@@ -108,6 +108,7 @@ class MLPipelineOrchestrator:
                 db=db,
                 diet_type=constraints.diet_type.value,
                 allergies=constraints.allergies,
+                foods_to_avoid=constraints.foods_to_avoid,
                 exclude_ingredients=exclude_templates
             )
             
@@ -137,7 +138,11 @@ class MLPipelineOrchestrator:
                         for ing in raw_meal["ingredients"]
                     ],
                     meal_type=raw_meal["type"],
-                    diet_type=constraints.diet_type.value
+                    diet_type=constraints.diet_type.value,
+                    allergies=list(constraints.allergies),
+                    foods_to_avoid=list(constraints.foods_to_avoid),
+                    budget_constraints=constraints.budget_constraints,
+                    lifestyle_constraints=constraints.lifestyle_constraints
                 )
                 
                 # Format instructions as a clear bulleted list
@@ -181,6 +186,18 @@ class MLPipelineOrchestrator:
             
             # STEP 6: Calculate daily totals
             daily_totals = self.nutrition_engine.calculate_daily_nutrition(final_meals)
+            
+            # Formulate warning if protein is significantly missed
+            prot_diff = constraints.protein_target - daily_totals["protein"]
+            if prot_diff > 20:
+                note = await self.genai_service.generate_protein_supplement_note(
+                    missing_protein_g=prot_diff,
+                    diet_type=constraints.diet_type.value,
+                    allergies=list(constraints.allergies),
+                    nutrition_targets=health_context.get("nutrition_targets", {}),
+                    safety_constraints=health_context.get("safety_constraints", {})
+                )
+                daily_summary_text["notes"] = daily_summary_text.get("notes", "") + f" {note}"
             
             # Build final plan structure
             plan_data = {
@@ -289,7 +306,9 @@ class MLPipelineOrchestrator:
         user_id: UUID,
         health_context: Dict[str, Any],
         meal_type: str,
-        exclude_ingredients: Optional[Set[str]] = None
+        exclude_ingredients: Optional[Set[str]] = None,
+        target_calories: Optional[float] = None,
+        target_protein: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Regenerate a specific meal for a user.
@@ -315,29 +334,23 @@ class MLPipelineOrchestrator:
             db=db,
             diet_type=constraints.diet_type.value,
             allergies=constraints.allergies,
+            foods_to_avoid=constraints.foods_to_avoid,
             exclude_ingredients=exclude_ingredients
         )
         
-        # 3. Assemble (we assemble a full day to keep macro distribution consistent)
+        # 3. Assemble single meal using remaining macro targets
+        meal_target_cal = target_calories if target_calories is not None else (constraints.calorie_target / (constraints.meals_per_day or 3))
+        meal_target_prot = target_protein if target_protein is not None else (constraints.protein_target / (constraints.meals_per_day or 3))
+        
         raw_meals = self.daily_assembler.assemble_day(
             portfolio=portfolio,
-            target_calories=constraints.calorie_target,
-            target_protein=constraints.protein_target,
-            meals_per_day=constraints.meals_per_day or 3
+            target_calories=meal_target_cal,
+            target_protein=meal_target_prot,
+            meals_per_day=1
         )
         
-        # 4. Pick the meal that matches the type or index
-        # For simplicity, we'll try to find a meal of the same type
-        target_meal = None
-        for meal in raw_meals:
-            if meal["type"] == meal_type:
-                target_meal = meal
-                break
-        
-        if not target_meal:
-            # Fallback to first meal if type not found
-            target_meal = raw_meals[0]
-            target_meal["type"] = meal_type # Coerce type
+        target_meal = raw_meals[0]
+        target_meal["type"] = meal_type # Coerce type
             
         # 5. Generate creative text
         creative_text = await self.genai_service.generate_meal_text(
@@ -346,7 +359,11 @@ class MLPipelineOrchestrator:
                 for ing in target_meal["ingredients"]
             ],
             meal_type=meal_type,
-            diet_type=constraints.diet_type.value
+            diet_type=constraints.diet_type.value,
+            allergies=list(constraints.allergies),
+            foods_to_avoid=list(constraints.foods_to_avoid),
+            budget_constraints=constraints.budget_constraints,
+            lifestyle_constraints=constraints.lifestyle_constraints
         )
         
         # Format instructions as a clear bulleted list
@@ -417,9 +434,11 @@ class MLPipelineOrchestrator:
             diet_type=diet_type,
             calorie_target=calorie_target,
             protein_target=protein_target,
-            allergies=set(health_context.get("allergies", [])),
-            foods_to_avoid=set(health_context.get("foods_to_avoid", [])),
-            meals_per_day=int(meals_per_day)
+            allergies=allergies,
+            foods_to_avoid=foods_to_avoid,
+            meals_per_day=int(meals_per_day),
+            budget_constraints=health_context.get("budget_constraints") or health_context.get("preferences", {}).get("budget_constraints"),
+            lifestyle_constraints=health_context.get("lifestyle_constraints") or health_context.get("preferences", {}).get("lifestyle_constraints")
         )
     
     async def _dummy_build_meal(self):
@@ -439,28 +458,72 @@ def get_groq_generator():
         if not api_key:
             return None # Fallback to service-level mock
             
-        meal_type = payload.get("meal_type", "meal")
-        ingredients = payload.get("ingredients", [])
-        diet_type = payload.get("diet_type", "any")
+        action = payload.get("action", "generate_meal")
         
-        prompt = f"""
-        Generate a creative recipe name, description, and instructions for a {meal_type} with these ingredients:
-        {json.dumps(ingredients)}
-        The user follows a {diet_type} diet.
+        if action == "generate_supplement_note":
+            missing_protein_g = payload.get("missing_protein_g", 0)
+            diet = payload.get("diet_type", "any")
+            allergy_list = payload.get("allergies", [])
+            nutrition = payload.get("nutrition_targets", {})
+            safety = payload.get("safety_constraints", {})
+            
+            prompt = f"""
+            The user needs a short, friendly note suggesting how to achieve a remaining {missing_protein_g:.1f}g protein gap for their diet.
+            Their diet type is {diet}.
+            They are allergic to: {', '.join(allergy_list) if allergy_list else 'None'}.
+            Nutrition targets: {json.dumps(nutrition)}
+            Safety constraints: {json.dumps(safety)}
+            
+            STRICT rules:
+            1. 1 scoop of protein powder = ~25g protein. Calculate: gap / 25, then round to the nearest 0.5 (e.g. 37g gap → 1.5 scoops, 55g gap → 2 scoops, 70g gap → 3 scoops).
+            2. NEVER suggest more than 3 scoops. NEVER write fractional explanations like ".5 scoop each".
+            3. If 3 scoops alone cannot cover the gap, also suggest whole foods the diet allows (eggs ~6g each, sprouts, high-protein yogurt).
+            4. If the gap is too large to fill realistically, just say: "You're a bit low on protein today — don't worry, try balancing it tomorrow!"
+            5. Choose a safe powder type based on allergies/diet (whey for non-vegan without milk allergy, pea protein for vegan/milk-allergic, etc).
+            
+            Keep it to 1-2 sentences. Do NOT include the word "Guidance" or hydration tips.
+            Respond ONLY with a JSON object:
+            {{ "note": "Note: ..." }}
+            """
+        else:
+            meal_type = payload.get("meal_type", "meal")
+            ingredients = payload.get("ingredients", [])
+            diet_type = payload.get("diet_type", "any")
+            allergies = payload.get("allergies", [])
+            foods_to_avoid = payload.get("foods_to_avoid", [])
+            budget = payload.get("budget_constraints")
+            lifestyle = payload.get("lifestyle_constraints")
+            
+            constraints_text = ""
+            if allergies:
+                constraints_text += f"\n- MUST NOT contain any of these allergens: {', '.join(allergies)}"
+            if foods_to_avoid:
+                constraints_text += f"\n- MUST NOT contain any of these foods: {', '.join(foods_to_avoid)}"
+            if budget:
+                constraints_text += f"\n- Keep in mind budget constraints: {budget}"
+            if lifestyle:
+                constraints_text += f"\n- Keep in mind lifestyle constraints: {lifestyle}"
         
-        IMPORTANT RULES:
-        1. Use VERY SIMPLE English. No difficult words.
-        2. Keep instructions short and clear.
-        3. Respond ONLY with a JSON object following this schema:
-        {{
-            "meal_name": "Simple Name",
-            "description": "Very simple short description",
-            "prep_time_minutes": 10,
-            "cook_time_minutes": 15,
-            "servings": 1,
-            "steps": ["Short step 1", "Short step 2"]
-        }}
-        """
+            
+            prompt = f"""
+            Generate a creative recipe name, description, and instructions for a {meal_type} with these ingredients:
+            {json.dumps(ingredients)}
+            The user follows a {diet_type} diet.
+            {constraints_text}
+            
+            IMPORTANT RULES:
+            1. Use VERY SIMPLE English. No difficult words.
+            2. Keep instructions short and clear.
+            3. Respond ONLY with a JSON object following this schema:
+            {{
+                "meal_name": "Simple Name",
+                "description": "Very simple short description",
+                "prep_time_minutes": 10,
+                "cook_time_minutes": 15,
+                "servings": 1,
+                "steps": ["Short step 1", "Short step 2"]
+            }}
+            """
         
         try:
             async with httpx.AsyncClient() as client:
