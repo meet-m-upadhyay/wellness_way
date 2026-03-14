@@ -121,3 +121,23 @@ flowchart TD
     class GenAI_Call,GroqGen,GenAI_Fallback llmFlow
     class Prompt,Schema promptbox
     class Disc_Call,Assem_Call,Val_Call,Nut_Call internal
+    
+    Notes --> BottomNote["`
+    Based on the architecture and codebase of the WellnessWay application, here are the ML and AI models used during the Daily Meal Plan Generation flow, along with their steps and responsibilities:
+
+    1. Vector Embeddings & Similarity Search
+    Model: all-MiniLM-L6-v2 (via sentence-transformers) coupled with a FAISS Vector Index.
+    Location: app/services/ml_diet_pipeline/embeddings/generator.py and canonicalization services.
+    Step Called: Referenced in Step 1: Portfolio Discovery (as per your detailed architecture diagram).
+    Responsibility: The EmbeddingGenerator generates dense vector representations of food items. The FAISS index is used by the IngredientCanonicalizer to map raw user ingredient requests or dynamically discovered food items to canonical database entries. (Note: The current active discovery_engine.py primarily uses PostgreSQL heuristics and random categorical sampling, but the canonicalization pipeline is initialized as part of the core ML orchestrator to support similarity search).
+    2. Generative AI (LLM) for Recipe Creation
+    Model: Defaults to llama-3.1-8b-instant over the Groq API (Configurable in app/core/config.py to also use gpt-4 via OpenAI, meta-llama/Llama-3.2-1B-Instruct via HuggingFace, or a local llama3.1 via Ollama).
+    Location: app/services/ml_diet_pipeline/genai/service.py (GenAIService) and app/services/ml_diet_pipeline/orchestrator.py (get_groq_generator).
+    Step Called:
+    Step 3: Creative Generation (Loop): Called for each assembled meal.
+    Daily Summary Generation: Called once after validation.
+    Responsibility:
+    Recipe Generation: It takes the raw, calculated list of ingredients and precise gram weights from the DailyAssembler and generates a creative meal_name, description, and step-by-step cooking instructions. It is strictly prompted to return a precise JSON schema (GenAIMealText).
+    Fallback Handling: If the LLM breaks schema or times out, the GenAIService intercepts the failure and yields a safe, hardcoded placeholder dict to prevent the pipeline from crashing.
+    Daily Plan Text: Generates a quick conversational summary string and motivational notes summarizing the final daily macros of the created plan.
+        `"]
