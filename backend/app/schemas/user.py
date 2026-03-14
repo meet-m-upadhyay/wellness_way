@@ -185,6 +185,8 @@ class DietPreferencesBase(BaseModel):
     allergies: List[str] = Field(default_factory=list, description="List of allergies")
     foods_to_avoid: List[str] = Field(default_factory=list, description="List of foods to avoid")
     meals_per_day: int = Field(3, ge=1, le=8, description="Number of meals per day (1-8)")
+    cuisine: str = Field("indian", min_length=1, max_length=50, description="Preferred cuisine")
+    reuse_ingredients: bool = Field(False, description="Whether to reuse base ingredients across the day")
     budget_constraints: Optional[str] = Field(None, max_length=500, description="Budget constraints")
     lifestyle_constraints: Optional[str] = Field(None, max_length=500, description="Lifestyle constraints")
 
@@ -226,6 +228,8 @@ class DietPreferencesUpdate(BaseModel):
     allergies: Optional[List[str]] = None
     foods_to_avoid: Optional[List[str]] = None
     meals_per_day: Optional[int] = Field(None, ge=1, le=8)
+    cuisine: Optional[str] = Field(None, min_length=1, max_length=50)
+    reuse_ingredients: Optional[bool] = None
     budget_constraints: Optional[str] = Field(None, max_length=500)
     lifestyle_constraints: Optional[str] = Field(None, max_length=500)
 

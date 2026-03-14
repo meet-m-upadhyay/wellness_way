@@ -51,6 +51,8 @@ export interface DietPreferences {
   allergies: string[];
   foods_to_avoid: string[];
   meals_per_day?: number;
+  cuisine: string;
+  reuse_ingredients: boolean;
   budget_constraints?: string;
   lifestyle_constraints?: string;
 }

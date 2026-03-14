@@ -139,6 +139,8 @@ class MLPipelineOrchestrator:
                     ],
                     meal_type=raw_meal["type"],
                     diet_type=constraints.diet_type.value,
+                    cuisine=constraints.cuisine,
+                    reuse_ingredients=constraints.reuse_ingredients,
                     allergies=list(constraints.allergies),
                     foods_to_avoid=list(constraints.foods_to_avoid),
                     budget_constraints=constraints.budget_constraints,
@@ -360,6 +362,8 @@ class MLPipelineOrchestrator:
             ],
             meal_type=meal_type,
             diet_type=constraints.diet_type.value,
+            cuisine=constraints.cuisine,
+            reuse_ingredients=constraints.reuse_ingredients,
             allergies=list(constraints.allergies),
             foods_to_avoid=list(constraints.foods_to_avoid),
             budget_constraints=constraints.budget_constraints,
@@ -437,6 +441,8 @@ class MLPipelineOrchestrator:
             allergies=allergies,
             foods_to_avoid=foods_to_avoid,
             meals_per_day=int(meals_per_day),
+            cuisine=diet_section.get("cuisine") or health_context.get("cuisine") or "indian",
+            reuse_ingredients=bool(diet_section.get("reuse_ingredients") or health_context.get("reuse_ingredients") or False),
             budget_constraints=health_context.get("budget_constraints") or health_context.get("preferences", {}).get("budget_constraints"),
             lifestyle_constraints=health_context.get("lifestyle_constraints") or health_context.get("preferences", {}).get("lifestyle_constraints")
         )
@@ -493,8 +499,13 @@ def get_groq_generator():
             foods_to_avoid = payload.get("foods_to_avoid", [])
             budget = payload.get("budget_constraints")
             lifestyle = payload.get("lifestyle_constraints")
+            cuisine = payload.get("cuisine", "indian")
+            reuse = payload.get("reuse_ingredients", False)
             
-            constraints_text = ""
+            constraints_text = f"\n- PREFERRED CUISINE: {cuisine}"
+            if reuse:
+                constraints_text += "\n- INGREDIENT REUSE: This plan prioritizes reusing core ingredients from previous meals to save time and reduce waste."
+            
             if allergies:
                 constraints_text += f"\n- MUST NOT contain any of these allergens: {', '.join(allergies)}"
             if foods_to_avoid:

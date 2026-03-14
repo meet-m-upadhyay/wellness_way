@@ -25,6 +25,8 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({
     allergies: initialData.allergies || [],
     foods_to_avoid: initialData.foods_to_avoid || [],
     meals_per_day: initialData.meals_per_day || 3,
+    cuisine: initialData.cuisine || 'indian',
+    reuse_ingredients: initialData.reuse_ingredients || false,
     budget_constraints: initialData.budget_constraints || '',
     lifestyle_constraints: initialData.lifestyle_constraints || '',
   });
@@ -328,9 +330,6 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({
                   className="w-full px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none resize-none"
                   maxLength={500}
                 />
-                {errors.budget_constraints && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{errors.budget_constraints}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -347,9 +346,70 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({
                   className="w-full px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none resize-none"
                   maxLength={500}
                 />
-                {errors.lifestyle_constraints && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{errors.lifestyle_constraints}</p>
-                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 5: Plan Customization */}
+          <div className="space-y-6 text-left">
+            <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-2 text-left">
+              <div className="h-2 w-2 rounded-full bg-purple-500" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-400 text-left">Section 5: Plan Customization</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <Select
+                  label="Preferred Cuisine"
+                  id="cuisine"
+                  value={formData.cuisine}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('cuisine', e.target.value)}
+                  options={[
+                    { value: 'indian', label: 'Indian' },
+                    { value: 'continental', label: 'Continental' },
+                    { value: 'mediterranean', label: 'Mediterranean' },
+                    { value: 'asian', label: 'Asian' },
+                    { value: 'mexican', label: 'Mexican' },
+                  ]}
+                  fullWidth
+                />
+                <p className="text-xs text-neutral-500">
+                  Plans will be tailored to this cuisine's typical flavors and ingredients.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <Input
+                  label="Meals Per Day"
+                  id="mealsPerDay"
+                  type="number"
+                  value={formData.meals_per_day}
+                  disabled
+                  fullWidth
+                />
+                <p className="text-xs text-neutral-500 italic">
+                  Multiple meals support is coming soon! For now, we optimize for 3 balanced meals.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100">Reuse Daily Ingredients</h4>
+                  <p className="text-xs text-purple-700 dark:text-purple-300">
+                    Saves time and reduces waste by repeating base ingredients (e.g., Chicken, Paneer, Tofu) across daily meals.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={formData.reuse_ingredients}
+                    onChange={(e) => handleInputChange('reuse_ingredients', e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none dark:bg-neutral-700 rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
               </div>
             </div>
           </div>
@@ -379,9 +439,9 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({
               )}
             </button>
           </div>
-        </form>
-      </div>
-    </Card>
+        </form >
+      </div >
+    </Card >
   );
 };
 

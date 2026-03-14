@@ -92,6 +92,8 @@ class DietPreferences(Base):
     allergies = Column(JSON, nullable=False, default=list)  # List of allergens
     foods_to_avoid = Column(JSON, nullable=False, default=list)  # List of foods to avoid
     meals_per_day = Column(Integer, nullable=False, default=3)
+    cuisine = Column(String(50), nullable=False, default='indian')
+    reuse_ingredients = Column(Boolean, nullable=False, default=False)
     budget_constraints = Column(Text, nullable=True)
     lifestyle_constraints = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
