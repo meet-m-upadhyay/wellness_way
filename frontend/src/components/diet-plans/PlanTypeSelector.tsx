@@ -16,61 +16,57 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
   isLoading = false,
 }) => {
 
-
-
-
-
   const handleGenerate = () => {
     onGenerate({});
   };
 
   return (
-    <Card className="max-w-4xl mx-auto">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-left">Choose Your Diet Plan Type</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-8 text-left">
+    <Card className="max-w-4xl mx-auto animate-card-enter">
+      <div className="p-6 sm:p-8">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-wellness-light-text dark:text-wellness-dark-text mb-2 text-left">Choose Your Diet Plan Type</h2>
+        <p className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary mb-8 text-left leading-relaxed">
           Select the type of diet plan you'd like to generate based on your profile and goals.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           {/* Daily Plan Option */}
           <div
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${selectedType === 'daily'
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
+            className={`border-2 rounded-2xl p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] ${selectedType === 'daily'
+              ? 'border-primary-500 dark:border-primary-400 bg-primary-50/50 dark:bg-primary-900/10 shadow-glow-emerald'
+              : 'border-wellness-light-border dark:border-wellness-dark-border hover:border-primary-300 dark:hover:border-primary-700 bg-white dark:bg-wellness-dark-card'
               }`}
             onClick={() => onSelect('daily')}
           >
             <div className="flex items-center mb-4">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${selectedType === 'daily'
-                ? 'border-blue-500 bg-blue-500'
-                : 'border-gray-300 dark:border-gray-600'
+              <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all duration-200 ${selectedType === 'daily'
+                ? 'border-primary-500 bg-primary-500'
+                : 'border-wellness-light-textMuted dark:border-wellness-dark-textMuted'
                 }`}>
                 {selectedType === 'daily' && (
-                  <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
                 )}
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Plan</h3>
+              <h3 className="text-lg font-semibold text-wellness-light-text dark:text-wellness-dark-text">Daily Plan</h3>
             </div>
 
             <div className="space-y-3">
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary leading-relaxed">
                 Get a complete meal plan for a single day with breakfast, lunch, dinner, and snacks.
               </p>
 
               <div className="space-y-2">
-                <h4 className="font-medium text-gray-900 dark:text-white">Perfect for:</h4>
-                <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• Trying out new meal ideas</li>
-                  <li>• Planning today's meals</li>
-                  <li>• Quick meal inspiration</li>
-                  <li>• Testing dietary preferences</li>
+                <h4 className="font-medium text-sm text-wellness-light-text dark:text-wellness-dark-text">Perfect for:</h4>
+                <ul className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary space-y-1.5">
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-500"></span> Trying out new meal ideas</li>
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-500"></span> Planning today's meals</li>
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-500"></span> Quick meal inspiration</li>
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-primary-500"></span> Testing dietary preferences</li>
                 </ul>
               </div>
 
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3 mt-4">
-                <p className="text-sm text-green-800 dark:text-green-300">
-                  <span className="font-medium">⚡ Quick:</span> Generated in seconds
+              <div className="bg-primary-50 dark:bg-primary-900/15 border border-primary-200 dark:border-primary-800/30 rounded-xl p-3 mt-4">
+                <p className="text-sm text-primary-700 dark:text-primary-300">
+                  <span className="font-semibold">⚡ Quick:</span> Generated in seconds
                 </p>
               </div>
             </div>
@@ -78,56 +74,56 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
 
           {/* Weekly Plan Option */}
           <div
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${selectedType === 'weekly'
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
+            className={`border-2 rounded-2xl p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] ${selectedType === 'weekly'
+              ? 'border-primary-500 dark:border-primary-400 bg-primary-50/50 dark:bg-primary-900/10 shadow-glow-emerald'
+              : 'border-wellness-light-border dark:border-wellness-dark-border hover:border-primary-300 dark:hover:border-primary-700 bg-white dark:bg-wellness-dark-card'
               }`}
             onClick={() => onSelect('weekly')}
           >
             <div className="flex items-center mb-4">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${selectedType === 'weekly'
-                ? 'border-blue-500 bg-blue-500'
-                : 'border-gray-300 dark:border-gray-600'
+              <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all duration-200 ${selectedType === 'weekly'
+                ? 'border-primary-500 bg-primary-500'
+                : 'border-wellness-light-textMuted dark:border-wellness-dark-textMuted'
                 }`}>
                 {selectedType === 'weekly' && (
-                  <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
                 )}
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Weekly Plan</h3>
+              <h3 className="text-lg font-semibold text-wellness-light-text dark:text-wellness-dark-text">Weekly Plan</h3>
             </div>
 
             <div className="space-y-3">
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary leading-relaxed">
                 Get a comprehensive 7-day meal plan with varied meals and balanced nutrition throughout the week.
               </p>
 
               <div className="space-y-2">
-                <h4 className="font-medium text-gray-900 dark:text-white">Perfect for:</h4>
-                <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <li>• Meal prep planning</li>
-                  <li>• Grocery shopping lists</li>
-                  <li>• Long-term nutrition goals</li>
-                  <li>• Consistent eating habits</li>
+                <h4 className="font-medium text-sm text-wellness-light-text dark:text-wellness-dark-text">Perfect for:</h4>
+                <ul className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary space-y-1.5">
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-accent-500"></span> Meal prep planning</li>
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-accent-500"></span> Grocery shopping lists</li>
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-accent-500"></span> Long-term nutrition goals</li>
+                  <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-accent-500"></span> Consistent eating habits</li>
                 </ul>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mt-4">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <span className="font-medium">📊 Comprehensive:</span> Balanced weekly nutrition
+              <div className="bg-accent-50 dark:bg-accent-900/15 border border-accent-200 dark:border-accent-800/30 rounded-xl p-3 mt-4">
+                <p className="text-sm text-accent-700 dark:text-accent-300">
+                  <span className="font-semibold">📊 Comprehensive:</span> Balanced weekly nutrition
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Generation Buttons */}
+        {/* Generation Button */}
         <div className="text-center space-y-4">
           <div>
             <Button
               onClick={handleGenerate}
               disabled={!selectedType || isLoading}
               size="lg"
-              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              className="px-8 py-3"
             >
               {isLoading ? (
                 <>
@@ -143,13 +139,13 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
                 </>
               )}
             </Button>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="text-xs text-wellness-light-textMuted dark:text-wellness-dark-textMuted mt-3">
               Uses ML templates + deterministic nutrition calculations
             </p>
           </div>
 
           {selectedType && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+            <p className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary mt-3">
               {selectedType === 'daily'
                 ? `This will create a personalized meal plan for today`
                 : `This will create a personalized meal plan starting from today`
@@ -158,14 +154,14 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
           )}
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-8 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-left">💡 How it works</h4>
-          <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1 text-left">
-            <li>• Plans are generated based on your profile, goals, and preferences</li>
-            <li>• All meals respect your dietary restrictions and allergies</li>
-            <li>• Nutrition targets are calculated for your specific needs</li>
-            <li>• You can regenerate individual meals or entire days if needed</li>
+        {/* How it works */}
+        <div className="mt-8 bg-wellness-light-elevated dark:bg-wellness-dark-elevated rounded-2xl p-5">
+          <h4 className="font-semibold text-sm text-wellness-light-text dark:text-wellness-dark-text mb-3 text-left">💡 How it works</h4>
+          <ul className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary space-y-2 text-left">
+            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full bg-primary-500 mt-2 flex-shrink-0"></span> Plans are generated based on your profile, goals, and preferences</li>
+            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full bg-primary-500 mt-2 flex-shrink-0"></span> All meals respect your dietary restrictions and allergies</li>
+            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full bg-primary-500 mt-2 flex-shrink-0"></span> Nutrition targets are calculated for your specific needs</li>
+            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full bg-primary-500 mt-2 flex-shrink-0"></span> You can regenerate individual meals or entire days if needed</li>
           </ul>
         </div>
       </div>

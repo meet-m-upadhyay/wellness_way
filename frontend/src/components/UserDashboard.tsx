@@ -1,10 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import AdminDashboard from './AdminDashboard';
 
 const UserDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   if (!user) {
@@ -12,93 +9,60 @@ const UserDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-slide-up">
       {/* User's Personal Dashboard */}
-      <div className="bg-wellness-light-card dark:bg-slate-800 shadow overflow-hidden sm:rounded-lg border border-wellness-light-border dark:border-slate-600 transition-colors duration-200">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-wellness-light-text dark:text-slate-100 transition-colors duration-200">
-            Welcome back, {user.name}!
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">
-            Your personal wellness dashboard
-          </p>
-        </div>
-        
-        <div className="border-t border-wellness-light-border dark:border-slate-600 transition-colors duration-200">
-          <dl>
-            <div className="bg-wellness-light-elevated dark:bg-slate-700 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 transition-colors duration-200">
-              <dt className="text-sm font-medium text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">Email</dt>
-              <dd className="mt-1 text-sm text-wellness-light-text dark:text-slate-100 sm:mt-0 sm:col-span-2 transition-colors duration-200">{user.email}</dd>
+      {/* User's Personal Dashboard Section Header */}
+      <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-2 text-left">
+        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+        <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-400">Account Overview</h3>
+      </div>
+
+      <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden text-left">
+
+        <div className="border-t border-wellness-light-border dark:border-wellness-dark-border">
+          {/* Info rows */}
+          <div className="divide-y divide-wellness-light-border dark:divide-wellness-dark-border">
+            <div className="px-6 py-4 sm:px-8 sm:grid sm:grid-cols-3 sm:gap-4 bg-wellness-light-elevated/50 dark:bg-wellness-dark-elevated/50">
+              <dt className="text-sm font-medium text-wellness-light-textMuted dark:text-wellness-dark-textMuted">Email</dt>
+              <dd className="mt-1 text-sm text-wellness-light-text dark:text-wellness-dark-text sm:mt-0 sm:col-span-2">{user.email}</dd>
             </div>
-            
-            <div className="bg-wellness-light-card dark:bg-slate-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 transition-colors duration-200">
-              <dt className="text-sm font-medium text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">Profile Status</dt>
-              <dd className="mt-1 text-sm text-wellness-light-text dark:text-slate-100 sm:mt-0 sm:col-span-2 transition-colors duration-200">
+
+            <div className="px-6 py-4 sm:px-8 sm:grid sm:grid-cols-3 sm:gap-4">
+              <dt className="text-sm font-medium text-wellness-light-textMuted dark:text-wellness-dark-textMuted">Profile Status</dt>
+              <dd className="mt-1 text-sm sm:mt-0 sm:col-span-2">
                 {user.profile_completed ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-emerald-900/50 text-green-800 dark:text-emerald-200 transition-colors duration-200">
-                    Complete
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300">
+                    ✓ Complete
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 transition-colors duration-200">
-                    Incomplete
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                    ○ Incomplete
                   </span>
                 )}
               </dd>
             </div>
-            
+
             {user.is_admin && (
-              <div className="bg-red-50 dark:bg-red-900/20 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 transition-colors duration-200">
-                <dt className="text-sm font-medium text-red-700 dark:text-red-300 transition-colors duration-200">Admin Status</dt>
-                <dd className="mt-1 text-sm text-wellness-light-text dark:text-slate-100 sm:mt-0 sm:col-span-2 transition-colors duration-200">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 transition-colors duration-200">
-                    Administrator
+              <div className="px-6 py-4 sm:px-8 sm:grid sm:grid-cols-3 sm:gap-4 bg-wellness-light-elevated/50 dark:bg-wellness-dark-elevated/50">
+                <dt className="text-sm font-medium text-red-600 dark:text-red-400">Admin Status</dt>
+                <dd className="mt-1 text-sm sm:mt-0 sm:col-span-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+                    🛡️ Administrator
                   </span>
                 </dd>
               </div>
             )}
-            
-            <div className="bg-wellness-light-elevated dark:bg-slate-700 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 transition-colors duration-200">
-              <dt className="text-sm font-medium text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">Member Since</dt>
-              <dd className="mt-1 text-sm text-wellness-light-text dark:text-slate-100 sm:mt-0 sm:col-span-2 transition-colors duration-200">
-                {new Date(user.created_at).toLocaleDateString()}
+
+            <div className="px-6 py-4 sm:px-8 sm:grid sm:grid-cols-3 sm:gap-4 bg-wellness-light-elevated/50 dark:bg-wellness-dark-elevated/50">
+              <dt className="text-sm font-medium text-wellness-light-textMuted dark:text-wellness-dark-textMuted">Member Since</dt>
+              <dd className="mt-1 text-sm text-wellness-light-text dark:text-wellness-dark-text sm:mt-0 sm:col-span-2">
+                {new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </dd>
             </div>
-          </dl>
-        </div>
-        
-        <div className="px-4 py-5 sm:px-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {!user.profile_completed ? (
-              <button
-                onClick={() => navigate('/profile-setup')}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 dark:bg-blue-600 hover:bg-indigo-700 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-indigo-500 dark:focus:ring-blue-400 transition-colors duration-200"
-              >
-                Complete Profile Setup
-              </button>
-            ) : (
-              <>
-                {/* <button
-                  onClick={() => navigate('/diet-plans')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  View Diet Plans
-                </button> */}
-                <button
-                  onClick={() => navigate('/profile-setup')}
-                  className="inline-flex items-center px-4 py-2 border border-wellness-light-border dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-wellness-light-textSecondary dark:text-slate-300 bg-wellness-light-card dark:bg-slate-800 hover:bg-wellness-light-elevated dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-indigo-500 dark:focus:ring-blue-400 transition-colors duration-200"
-                >
-                  Edit Profile
-                </button>
-              </>
-            )}
           </div>
         </div>
-      </div>
 
-      {/* Admin Dashboard - Only visible to admin users */}
-      {user.is_admin && (
-        <AdminDashboard />
-      )}
+      </div>
     </div>
   );
 };

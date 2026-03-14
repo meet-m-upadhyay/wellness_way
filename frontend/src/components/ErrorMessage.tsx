@@ -16,11 +16,11 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 transition-colors duration-200 ${className}`}>
+    <div className={`rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-200/60 dark:border-red-800/30 p-4 ${className}`}>
       <div className="flex">
         <div className="flex-shrink-0">
           <svg
-            className="h-5 w-5 text-red-400 dark:text-red-300 transition-colors duration-200"
+            className="h-5 w-5 text-red-500 dark:text-red-400"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
@@ -33,16 +33,16 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
           </svg>
         </div>
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-red-800 dark:text-red-200 transition-colors duration-200">{title}</h3>
-          <div className="mt-2 text-sm text-red-700 dark:text-red-300 transition-colors duration-200">
+          <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">{title}</h3>
+          <div className="mt-1.5 text-sm text-red-700 dark:text-red-300">
             <p>{message}</p>
           </div>
           {onRetry && (
-            <div className="mt-4">
+            <div className="mt-3">
               <button
                 type="button"
                 onClick={onRetry}
-                className="bg-red-100 dark:bg-red-800/50 px-3 py-2 rounded-md text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-red-500 dark:focus:ring-red-400 transition-colors duration-200"
+                className="bg-red-100 dark:bg-red-800/30 px-3 py-1.5 rounded-lg text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-wellness-dark-bg transition-colors duration-150"
               >
                 Try Again
               </button>
@@ -51,18 +51,16 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
         </div>
         {onClose && (
           <div className="ml-auto pl-3">
-            <div className="-mx-1.5 -my-1.5">
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex bg-red-50 dark:bg-red-900/20 rounded-md p-1.5 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 dark:focus:ring-offset-slate-800 focus:ring-red-600 dark:focus:ring-red-400 transition-colors duration-200"
-              >
-                <span className="sr-only">Dismiss</span>
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex rounded-lg p-1.5 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors duration-150"
+            >
+              <span className="sr-only">Dismiss</span>
+              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
         )}
       </div>

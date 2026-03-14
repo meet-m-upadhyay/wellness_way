@@ -46,7 +46,7 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ onSuccess, onError, disabled 
   useEffect(() => {
     if (isScriptLoaded && window.google) {
       const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-      
+
       if (!clientId) {
         onError('Google Client ID not configured');
         return;
@@ -71,7 +71,7 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ onSuccess, onError, disabled 
       if (buttonElement) {
         // Clear any existing content
         buttonElement.innerHTML = '';
-        
+
         window.google.accounts.id.renderButton(
           buttonElement,
           {
@@ -91,20 +91,20 @@ const GoogleLogin: React.FC<GoogleLoginProps> = ({ onSuccess, onError, disabled 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading Google Sign-In...</span>
+        <div className="animate-spin rounded-full h-5 w-5 border-2 border-wellness-light-border dark:border-wellness-dark-border border-t-primary-500 dark:border-t-primary-400"></div>
+        <span className="ml-2 text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary">Loading Google Sign-In...</span>
       </div>
     );
   }
 
   return (
     <div className="w-full">
-      <div 
-        id="google-signin-button" 
+      <div
+        id="google-signin-button"
         className={`w-full ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
       ></div>
       {!process.env.REACT_APP_GOOGLE_CLIENT_ID && (
-        <div className="mt-2 p-2 bg-yellow-100 border border-yellow-400 rounded text-sm text-yellow-700">
+        <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-800/30 rounded-xl text-sm text-amber-700 dark:text-amber-300">
           Google Client ID not configured. Please set REACT_APP_GOOGLE_CLIENT_ID in your environment.
         </div>
       )}

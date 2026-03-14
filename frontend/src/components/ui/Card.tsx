@@ -4,12 +4,14 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   shadow?: 'none' | 'sm' | 'md' | 'lg';
+  hover?: boolean;
 }
 
 const Card: React.FC<CardProps> = ({
   children,
-  padding = 'md',
+  padding = 'none',
   shadow = 'md',
+  hover = false,
   className = '',
   ...props
 }) => {
@@ -22,14 +24,27 @@ const Card: React.FC<CardProps> = ({
 
   const shadowClasses = {
     none: '',
-    sm: 'shadow-sm',
-    md: 'shadow-md',
-    lg: 'shadow-lg',
+    sm: 'shadow-card dark:shadow-card-dark',
+    md: 'shadow-card dark:shadow-card-dark',
+    lg: 'shadow-card-hover dark:shadow-card-dark-hover',
   };
+
+  const hoverClass = hover
+    ? 'card-hover'
+    : '';
 
   return (
     <div
-      className={`bg-wellness-light-card dark:bg-wellness-dark-card rounded-lg border border-wellness-light-border dark:border-wellness-dark-border ${paddingClasses[padding]} ${shadowClasses[shadow]} ${className}`}
+      className={`
+        bg-white dark:bg-wellness-dark-card
+        rounded-2xl
+        border border-wellness-light-border dark:border-wellness-dark-border
+        ${paddingClasses[padding]}
+        ${shadowClasses[shadow]}
+        ${hoverClass}
+        transition-all duration-200
+        ${className}
+      `}
       {...props}
     >
       {children}
@@ -43,7 +58,7 @@ interface CardHeaderProps {
 }
 
 export const CardHeader: React.FC<CardHeaderProps> = ({ children, className = '' }) => (
-  <div className={`border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 ${className}`}>
+  <div className={`border-b border-wellness-light-border dark:border-wellness-dark-border pb-4 mb-4 ${className}`}>
     {children}
   </div>
 );
@@ -54,7 +69,7 @@ interface CardTitleProps {
 }
 
 export const CardTitle: React.FC<CardTitleProps> = ({ children, className = '' }) => (
-  <h3 className={`text-lg font-medium text-gray-900 dark:text-white ${className}`}>
+  <h3 className={`text-lg font-semibold text-wellness-light-text dark:text-wellness-dark-text tracking-tight ${className}`}>
     {children}
   </h3>
 );
@@ -76,7 +91,7 @@ interface CardFooterProps {
 }
 
 export const CardFooter: React.FC<CardFooterProps> = ({ children, className = '' }) => (
-  <div className={`border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 ${className}`}>
+  <div className={`border-t border-wellness-light-border dark:border-wellness-dark-border pt-4 mt-4 ${className}`}>
     {children}
   </div>
 );

@@ -8,7 +8,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   return (
     <header className={`sticky top-0 z-50 ${className}`}>
-      <Navigation />
+      <div className="glass border-b border-wellness-light-border dark:border-wellness-dark-border shadow-nav">
+        <Navigation />
+      </div>
     </header>
   );
 };

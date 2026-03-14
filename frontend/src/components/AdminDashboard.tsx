@@ -28,9 +28,9 @@ const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await apiClient.getAllUsers(50);
-      
+
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
@@ -46,7 +46,7 @@ const AdminDashboard: React.FC = () => {
 
   const getActivityLevelDisplay = (level: string | null) => {
     if (!level) return 'Not specified';
-    
+
     const levels = {
       'sedentary': 'Sedentary',
       'lightly_active': 'Lightly Active',
@@ -177,16 +177,16 @@ const AdminDashboard: React.FC = () => {
 
   if (!user?.is_admin) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 transition-colors duration-200">
+      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200/60 dark:border-red-800/30 rounded-2xl p-4">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400 dark:text-red-300" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-5 w-5 text-red-500 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Access Denied</h3>
-            <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+            <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">Access Denied</h3>
+            <div className="mt-1.5 text-sm text-red-700 dark:text-red-300">
               <p>You don't have admin privileges to access this section.</p>
             </div>
           </div>
@@ -198,7 +198,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <LoadingSpinner message=''/>
+        <LoadingSpinner message='' />
       </div>
     );
   }
@@ -209,7 +209,7 @@ const AdminDashboard: React.FC = () => {
         <ErrorMessage message={error} />
         <button
           onClick={loadUsers}
-          className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="mt-4 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 px-4 text-sm font-semibold transition-all duration-200"
         >
           Retry
         </button>
@@ -220,28 +220,27 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-wellness-light-card dark:bg-slate-800 shadow-sm border border-wellness-light-border dark:border-slate-600 rounded-lg transition-colors duration-200">
-        <div className="px-6 py-4">
-          <h1 className="text-2xl font-bold text-wellness-light-text dark:text-slate-100 transition-colors duration-200">
+      <div className="bg-white dark:bg-wellness-dark-card shadow-card dark:shadow-card-dark border border-wellness-light-border dark:border-wellness-dark-border rounded-2xl">
+        <div className="px-6 py-5">
+          <h1 className="text-xl font-bold tracking-tight text-wellness-light-text dark:text-wellness-dark-text">
             Admin Dashboard
           </h1>
-          <p className="mt-1 text-sm text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">
+          <p className="mt-1 text-sm text-wellness-light-textMuted dark:text-wellness-dark-textMuted">
             Manage user registrations and system users
           </p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-wellness-light-card dark:bg-slate-800 shadow-sm border border-wellness-light-border dark:border-slate-600 rounded-lg transition-colors duration-200">
-        <div className="border-b border-wellness-light-border dark:border-slate-600">
+      <div className="bg-white dark:bg-wellness-dark-card shadow-card dark:shadow-card-dark border border-wellness-light-border dark:border-wellness-dark-border rounded-2xl">
+        <div className="border-b border-wellness-light-border dark:border-wellness-dark-border">
           <nav className="-mb-px flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('requests')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                activeTab === 'requests'
-                  ? 'border-indigo-500 dark:border-blue-400 text-indigo-600 dark:text-blue-400'
-                  : 'border-transparent text-wellness-light-textMuted dark:text-slate-400 hover:text-wellness-light-textSecondary dark:hover:text-slate-300 hover:border-wellness-light-border dark:hover:border-slate-500'
-              }`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${activeTab === 'requests'
+                  ? 'border-primary-500 dark:border-primary-400 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-wellness-light-textMuted dark:text-wellness-dark-textMuted hover:text-wellness-light-textSecondary dark:hover:text-wellness-dark-textSecondary hover:border-wellness-light-border dark:hover:border-wellness-dark-border'
+                }`}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,11 +252,10 @@ const AdminDashboard: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                activeTab === 'users'
-                  ? 'border-indigo-500 dark:border-blue-400 text-indigo-600 dark:text-blue-400'
-                  : 'border-transparent text-wellness-light-textMuted dark:text-slate-400 hover:text-wellness-light-textSecondary dark:hover:text-slate-300 hover:border-wellness-light-border dark:hover:border-slate-500'
-              }`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${activeTab === 'users'
+                  ? 'border-primary-500 dark:border-primary-400 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-wellness-light-textMuted dark:text-wellness-dark-textMuted hover:text-wellness-light-textSecondary dark:hover:text-wellness-dark-textSecondary hover:border-wellness-light-border dark:hover:border-wellness-dark-border'
+                }`}
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,16 +286,16 @@ const AdminDashboard: React.FC = () => {
               <div className="mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                   <div>
-                    <h2 className="text-lg font-medium text-wellness-light-text dark:text-slate-100 transition-colors duration-200 text-left">
+                    <h2 className="text-lg font-semibold text-wellness-light-text dark:text-wellness-dark-text text-left">
                       System Users
                     </h2>
-                    <p className="mt-1 text-sm text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200 text-left">
+                    <p className="mt-1 text-sm text-wellness-light-textMuted dark:text-wellness-dark-textMuted text-left">
                       View and manage all approved users in the system
                     </p>
                   </div>
                   <button
                     onClick={loadUsers}
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 dark:bg-blue-600 hover:bg-indigo-700 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-blue-400 transition-colors duration-200 w-full sm:w-auto"
+                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -319,17 +317,16 @@ const AdminDashboard: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-slate-700 shadow overflow-hidden sm:rounded-md border border-wellness-light-border dark:border-slate-600 transition-colors duration-200">
-                  <ul className="divide-y divide-wellness-light-border dark:divide-slate-600">
+                <div className="bg-white dark:bg-wellness-dark-card shadow-card dark:shadow-card-dark overflow-hidden rounded-2xl border border-wellness-light-border dark:border-wellness-dark-border">
+                  <ul className="divide-y divide-wellness-light-border dark:divide-wellness-dark-border">
                     {users.map((userItem) => (
                       <li key={userItem.id} className="px-4 sm:px-6 py-4 transition-colors duration-200">
                         {/* Mobile Layout */}
                         <div className="block sm:hidden">
                           <div className="flex items-start space-x-3">
                             <div className="flex-shrink-0">
-                              <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors duration-200 ${
-                                userItem.is_admin ? 'bg-red-500 dark:bg-red-600' : 'bg-indigo-500 dark:bg-blue-600'
-                              }`}>
+                              <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-colors duration-200 ${userItem.is_admin ? 'bg-red-500 dark:bg-red-600' : 'bg-gradient-to-br from-primary-400 to-primary-600'
+                                }`}>
                                 <span className="text-sm font-medium text-white">
                                   {userItem.name?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
@@ -396,9 +393,8 @@ const AdminDashboard: React.FC = () => {
                         <div className="hidden sm:flex items-center justify-between">
                           <div className="flex items-center">
                             <div className="flex-shrink-0">
-                              <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors duration-200 ${
-                                userItem.is_admin ? 'bg-red-500 dark:bg-red-600' : 'bg-indigo-500 dark:bg-blue-600'
-                              }`}>
+                              <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-colors duration-200 ${userItem.is_admin ? 'bg-red-500 dark:bg-red-600' : 'bg-gradient-to-br from-primary-400 to-primary-600'
+                                }`}>
                                 <span className="text-sm font-medium text-white">
                                   {userItem.name?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>

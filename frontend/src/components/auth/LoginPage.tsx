@@ -42,17 +42,13 @@ const LoginPage: React.FC = () => {
       setLoginError(null);
       setPendingApproval(null);
       clearError();
-      
+
       await login(credential);
-      
-      // The login function should return the user data, but if not, we'll get it from context
-      // For now, we'll redirect to home and let the routing logic handle the redirect
+
       navigate('/');
     } catch (error) {
-      // Check if this is a pending approval error (HTTP 202)
       if (error instanceof Error && error.message.includes('202')) {
         try {
-          // Parse the error message to extract approval details
           const errorData = JSON.parse(error.message.replace('HTTP 202: ', ''));
           setPendingApproval({
             email: errorData.email,
@@ -60,10 +56,9 @@ const LoginPage: React.FC = () => {
           });
           return;
         } catch (parseError) {
-          // If parsing fails, treat as regular error
         }
       }
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       setLoginError(errorMessage);
     }
@@ -94,7 +89,6 @@ const LoginPage: React.FC = () => {
           });
           return;
         } catch (parseError) {
-          // Fall through to standard error handling
         }
       }
 
@@ -128,7 +122,6 @@ const LoginPage: React.FC = () => {
           });
           return;
         } catch (parseError) {
-          // Fall through to standard error handling
         }
       }
 
@@ -139,28 +132,32 @@ const LoginPage: React.FC = () => {
 
   const displayError = error || loginError;
 
-  // Show pending approval page if user needs approval
   if (pendingApproval) {
     return (
-      <PendingApprovalPage 
+      <PendingApprovalPage
         email={pendingApproval.email}
         isNewRegistration={pendingApproval.isNewRegistration}
       />
     );
   }
 
+  const inputBaseClass = "w-full rounded-xl border px-4 py-2.5 text-sm leading-normal bg-white dark:bg-wellness-dark-bg text-wellness-light-text dark:text-wellness-dark-text placeholder:text-wellness-light-textMuted dark:placeholder:text-wellness-dark-textMuted focus:outline-none focus:ring-2 transition-all duration-200";
+  const inputNormalBorder = "border-wellness-light-border dark:border-wellness-dark-border focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400";
+  const inputErrorBorder = "border-red-400 dark:border-red-500 focus:ring-red-500 dark:focus:ring-red-400";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-wellness-light-bg dark:bg-slate-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
-      {/* Theme Toggle - Fixed position */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-wellness-light-bg via-primary-50/30 to-accent-50/20 dark:from-wellness-dark-bg dark:via-wellness-dark-bg dark:to-wellness-dark-card py-12 px-4 sm:px-6 lg:px-8">
+      {/* Theme Toggle */}
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
-      
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50 transition-colors duration-200">
+
+      <div className="max-w-md w-full space-y-6 animate-scale-in">
+        {/* Product Intro Section */}
+        <div className="text-left space-y-2 mb-8">
+          <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 shadow-glow-emerald mb-4">
             <svg
-              className="h-8 w-8 text-blue-600 dark:text-blue-400 transition-colors duration-200"
+              className="h-6 w-6 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -173,65 +170,67 @@ const LoginPage: React.FC = () => {
               />
             </svg>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-wellness-light-text dark:text-slate-100 transition-colors duration-200">
-            Welcome to WellnessWay
-          </h2>
-          <p className="mt-2 text-center text-sm text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">
-            Your AI-powered wellness companion
+          <h1 className="text-4xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            Personalized Diet Planning
+          </h1>
+          <p className="text-lg text-neutral-500 dark:text-neutral-400">
+            Powered by AI. Tailored for your unique health goals.
           </p>
         </div>
 
-        <div className="mt-8 space-y-6">
-          <div className="bg-wellness-light-card dark:bg-slate-800 py-8 px-6 shadow rounded-lg border border-wellness-light-border dark:border-slate-600 transition-colors duration-200">
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-wellness-light-text dark:text-slate-100 mb-4 transition-colors duration-200">
-                  Sign in to get started
+        {/* Login Card */}
+        <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          <div className="p-8">
+            <div className="space-y-8">
+              <div className="text-left">
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
+                  {authMode === 'signin' ? 'Sign in to your account' : 'Create your account'}
                 </h3>
-                <p className="text-sm text-wellness-light-textSecondary dark:text-slate-400 mb-6 transition-colors duration-200">
-                  Create personalized diet plans tailored to your health goals, dietary preferences, and lifestyle.
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  {authMode === 'signin'
+                    ? 'Welcome back! Please enter your details.'
+                    : 'Start your journey to better health today.'}
                 </p>
               </div>
 
-              <div className="space-y-4 text-left">
-                <div className="flex rounded-lg border border-wellness-light-border dark:border-slate-600 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('signin');
-                      setLoginError(null);
-                      clearError();
-                    }}
-                    className={`flex-1 py-2 text-sm font-medium transition-colors duration-200 ${
-                      authMode === 'signin'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textSecondary dark:text-slate-400'
+              {/* Auth Mode Toggle */}
+              <div className="flex rounded-2xl bg-neutral-100 dark:bg-neutral-800 p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signin');
+                    setLoginError(null);
+                    clearError();
+                  }}
+                  className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${authMode === 'signin'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                    : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                     }`}
-                  >
-                    Sign in
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('signup');
-                      setLoginError(null);
-                      clearError();
-                    }}
-                    className={`flex-1 py-2 text-sm font-medium transition-colors duration-200 ${
-                      authMode === 'signup'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textSecondary dark:text-slate-400'
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signup');
+                    setLoginError(null);
+                    clearError();
+                  }}
+                  className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${authMode === 'signup'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm'
+                    : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                     }`}
-                  >
-                    Sign up
-                  </button>
-                </div>
+                >
+                  Sign up
+                </button>
+              </div>
 
+              <div className="space-y-4 text-left">
                 {authMode === 'signin' ? (
                   <form className="space-y-4 text-left" onSubmit={handleEmailSignIn}>
                     {displayError && (
-                      <ErrorMessage 
-                        message={displayError} 
+                      <ErrorMessage
+                        message={displayError}
                         onClose={() => {
                           setLoginError(null);
                           clearError();
@@ -239,30 +238,26 @@ const LoginPage: React.FC = () => {
                       />
                     )}
                     <div>
-                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
-                        Email
+                      <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+                        Email Address
                       </label>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
-                          showEmailInvalid
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
-                        }`}
+                        className={`${inputBaseClass} ${showEmailInvalid ? inputErrorBorder : inputNormalBorder}`}
                         placeholder="you@example.com"
                         required
                       />
                       {showEmailInvalid && (
-                        <p className="mt-1 text-xs text-red-500">
+                        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
                           Email must end with .com
                         </p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
+                      <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
                         Password
                       </label>
                       <input
@@ -270,16 +265,12 @@ const LoginPage: React.FC = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
-                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
-                          showPasswordInvalid
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
-                        }`}
+                        className={`${inputBaseClass} ${showPasswordInvalid ? inputErrorBorder : inputNormalBorder}`}
                         placeholder="Enter your password"
                         required
                       />
                       {showPasswordInvalid && (
-                        <p className="mt-1 text-xs text-red-500">
+                        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
                           Password must be at least 8 characters
                         </p>
                       )}
@@ -287,16 +278,16 @@ const LoginPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isLoading || !canSubmitSignIn}
-                      className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium transition-colors duration-200 disabled:opacity-60"
+                      className="w-full rounded-2xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 py-3 text-sm font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-800 dark:hover:bg-neutral-100 active:scale-[0.98]"
                     >
-                      Sign in with email
+                      Sign In
                     </button>
                   </form>
                 ) : (
                   <form className="space-y-4 text-left" onSubmit={handleEmailSignUp}>
                     {displayError && (
-                      <ErrorMessage 
-                        message={displayError} 
+                      <ErrorMessage
+                        message={displayError}
                         onClose={() => {
                           setLoginError(null);
                           clearError();
@@ -304,84 +295,72 @@ const LoginPage: React.FC = () => {
                       />
                     )}
                     <div>
-                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
-                        Name
+                      <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+                        Full Name
                       </label>
                       <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
-                        className="w-full rounded-md border border-wellness-light-border dark:border-slate-600 bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`${inputBaseClass} ${inputNormalBorder}`}
                         placeholder="Your name"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
-                        Email
+                      <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+                        Email Address
                       </label>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
-                          showEmailInvalid
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
-                        }`}
+                        className={`${inputBaseClass} ${showEmailInvalid ? inputErrorBorder : inputNormalBorder}`}
                         placeholder="you@example.com"
                         required
                       />
                       {showEmailInvalid && (
-                        <p className="mt-1 text-xs text-red-500">
+                        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
                           Email must end with .com
                         </p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
-                        Password
+                      <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+                        Create Password
                       </label>
                       <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
-                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
-                          showPasswordInvalid
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
-                        }`}
+                        className={`${inputBaseClass} ${showPasswordInvalid ? inputErrorBorder : inputNormalBorder}`}
                         placeholder="Create a password"
                         required
                       />
                       {showPasswordInvalid && (
-                        <p className="mt-1 text-xs text-red-500">
+                        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
                           Password must be at least 8 characters
                         </p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-wellness-light-text dark:text-slate-200 mb-1">
-                        Confirm password
+                      <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+                        Confirm Password
                       </label>
                       <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, confirmPassword: true }))}
-                        className={`w-full rounded-md border bg-wellness-light-bg dark:bg-slate-900 px-3 py-2 text-sm text-wellness-light-text dark:text-slate-100 focus:outline-none focus:ring-2 ${
-                          showConfirmInvalid
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-wellness-light-border dark:border-slate-600 focus:ring-blue-500'
-                        }`}
+                        className={`${inputBaseClass} ${showConfirmInvalid ? inputErrorBorder : inputNormalBorder}`}
                         placeholder="Re-enter your password"
                         required
                       />
                       {showConfirmInvalid && (
-                        <p className="mt-1 text-xs text-red-500">
+                        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
                           Passwords do not match
                         </p>
                       )}
@@ -389,20 +368,21 @@ const LoginPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isLoading || !canSubmitSignUp}
-                      className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium transition-colors duration-200 disabled:opacity-60"
+                      className="w-full rounded-2xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 py-3 text-sm font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-800 dark:hover:bg-neutral-100 active:scale-[0.98]"
                     >
-                      Create account
+                      Create Account
                     </button>
                   </form>
                 )}
 
-                <div className="relative">
+                {/* Divider */}
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-wellness-light-border dark:border-slate-600 transition-colors duration-200" />
+                    <div className="w-full border-t border-neutral-200 dark:border-neutral-800" />
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">
-                      Or continue with
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-3 bg-white dark:bg-neutral-900 text-neutral-400 uppercase tracking-widest font-bold">
+                      or
                     </span>
                   </div>
                 </div>
@@ -414,72 +394,43 @@ const LoginPage: React.FC = () => {
                 />
 
                 {isLoading && (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                    <span className="ml-2 text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">Signing you in...</span>
+                  <div className="flex items-center justify-center py-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-wellness-light-border dark:border-wellness-dark-border border-t-primary-500 dark:border-t-primary-400"></div>
+                    <span className="ml-2.5 text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary">Signing you in...</span>
                   </div>
                 )}
-              </div>
-
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-wellness-light-border dark:border-slate-600 transition-colors duration-200" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-wellness-light-card dark:bg-slate-800 text-wellness-light-textMuted dark:text-slate-400 transition-colors duration-200">Features</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-1 gap-4">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-green-500 dark:text-emerald-400 transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">
-                        AI-powered personalized meal plans
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-green-500 dark:text-emerald-400 transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">
-                        Dietary preferences and allergy support
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-green-500 dark:text-emerald-400 transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">
-                        Health goal tracking and optimization
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
 
-          <div className="text-center">
-            <p className="text-xs text-wellness-light-textMuted dark:text-slate-500 transition-colors duration-200">
-              By signing in, you agree to our Terms of Service and Privacy Policy
-            </p>
+          {/* Benefits Section */}
+          <div className="bg-neutral-100 dark:bg-neutral-800/50 px-8 py-6 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="space-y-4">
+              {[
+                { title: 'AI Personalized Meal Plans', desc: 'Precision nutrition tailored for you' },
+                { title: 'Dietary & Allergy Support', desc: 'Smart exclusions and alternatives' },
+                { title: 'Health Goal Optimization', desc: 'Real-time tracking and adjustments' },
+              ].map((benefit, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center mt-0.5">
+                    <svg className="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-neutral-900 dark:text-white">{benefit.title}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{benefit.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="text-center">
+          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">
+            Secure Cloud Environment • AES-256 Encryption
+          </p>
         </div>
       </div>
     </div>
