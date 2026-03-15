@@ -7,6 +7,11 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+class AdminActionRequest(BaseModel):
+    """Request body for approve/decline actions"""
+    note: Optional[str] = Field(None, max_length=500, description="Optional note to include in the notification email")
+
+
 class RegistrationRequestResponse(BaseModel):
     """Registration request response schema"""
     id: str = Field(..., description="Registration request ID")
@@ -14,6 +19,7 @@ class RegistrationRequestResponse(BaseModel):
     name: str = Field(..., description="User name")
     google_id: Optional[str] = Field(None, description="Google ID")
     status: str = Field(..., description="Request status (pending, approved, declined)")
+    admin_note: Optional[str] = Field(None, description="Admin note for the decision")
     created_at: datetime = Field(..., description="Request creation timestamp")
     updated_at: datetime = Field(..., description="Request last update timestamp")
 

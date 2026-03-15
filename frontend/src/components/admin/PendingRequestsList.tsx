@@ -13,8 +13,8 @@ interface RegistrationRequest {
 }
 
 interface PendingRequestsListProps {
-  onApprove: (requestId: string) => Promise<void>;
-  onDecline: (requestId: string) => Promise<void>;
+  onApprove: (requestId: string, note?: string) => Promise<void>;
+  onDecline: (requestId: string, note?: string) => Promise<void>;
   refreshTrigger?: number; // Used to trigger refresh from parent
 }
 
@@ -27,6 +27,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
 
@@ -70,9 +71,13 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   const handleApprove = async (requestId: string) => {
     try {
       setActionLoading(requestId);
-      await onApprove(requestId);
+      await onApprove(requestId, notes[requestId]);
       // Refresh the list after successful approval
       await loadPendingRequests();
+      // Clear note
+      const newNotes = { ...notes };
+      delete newNotes[requestId];
+      setNotes(newNotes);
     } catch (err) {
       console.error('Error approving request:', err);
     } finally {
@@ -83,9 +88,13 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   const handleDecline = async (requestId: string) => {
     try {
       setActionLoading(requestId);
-      await onDecline(requestId);
+      await onDecline(requestId, notes[requestId]);
       // Refresh the list after successful decline
       await loadPendingRequests();
+      // Clear note
+      const newNotes = { ...notes };
+      delete newNotes[requestId];
+      setNotes(newNotes);
     } catch (err) {
       console.error('Error declining request:', err);
     } finally {
@@ -203,6 +212,15 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
                   </div>
                   <div className="text-xs text-wellness-light-textMuted dark:text-wellness-dark-textMuted">
                     Requested: {formatDate(request.created_at)}
+                  </div>
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      placeholder="Add an optional note (sent to user)..."
+                      value={notes[request.id] || ''}
+                      onChange={(e) => setNotes({ ...notes, [request.id]: e.target.value })}
+                      className="block w-full sm:w-64 px-3 py-1.5 text-xs rounded-lg border border-wellness-light-border dark:border-wellness-dark-border bg-white dark:bg-wellness-dark-bg text-wellness-light-text dark:text-wellness-dark-text placeholder-wellness-light-textMuted dark:placeholder-wellness-dark-textMuted focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                    />
                   </div>
                 </div>
               </div>

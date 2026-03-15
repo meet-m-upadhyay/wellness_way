@@ -114,6 +114,7 @@ class RegistrationRequest(Base):
     google_id = Column(String(255), nullable=True)
     password_hash = Column(String(255), nullable=True)
     status = Column(String(20), default='pending', nullable=False, index=True)  # 'pending', 'approved', 'declined'
+    admin_note = Column(String(500), nullable=True)  # Optional note from admin when approving/declining
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

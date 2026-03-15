@@ -1,9 +1,47 @@
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
 
 const UserDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [pendingCount, setPendingCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (user?.is_admin) {
+      const fetchPendingCount = async () => {
+        try {
+          const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+          const token = localStorage.getItem('health_buddy_access_token');
+          if (!token) {
+            console.log('[DEBUG] No token found for admin count fetch');
+            return;
+          }
+
+          const response = await fetch(`${API_BASE_URL}/admin/pending-count`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('[DEBUG] Pending count fetched:', data.count);
+            setPendingCount(data.count || 0);
+          } else {
+            console.error('[DEBUG] Pending count fetch failed:', response.status);
+          }
+        } catch (err) {
+          console.error('[DEBUG] Error fetching pending count:', err);
+        }
+      };
+      
+      fetchPendingCount();
+      const interval = setInterval(fetchPendingCount, 60000); // Refresh every minute
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   if (!user) {
     return null;
@@ -52,11 +90,17 @@ const UserDashboard: React.FC = () => {
                   </span>
                   <Link
                     to="/admin"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-sm"
+                    className="relative inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-sm"
                   >
                     <ShieldCheck size={14} />
                     Go to Admin Dashboard
                     <ArrowRight size={14} />
+                    
+                    {pendingCount > 0 && (
+                      <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-amber-950 shadow-sm border-2 border-white dark:border-neutral-900 animate-pulse">
+                        {pendingCount}
+                      </span>
+                    )}
                   </Link>
                 </dd>
               </div>

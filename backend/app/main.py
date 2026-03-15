@@ -39,6 +39,11 @@ async def lifespan(app: FastAPI):
     # Setup logging
     setup_logging()
     
+    # Initialize email notification listeners
+    from app.services.email_service import init_email_listeners
+    init_email_listeners()
+    logging.info("Email notification system initialized")
+    
     yield
     
     # Shutdown

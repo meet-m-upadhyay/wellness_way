@@ -22,6 +22,7 @@ from app.schemas.auth import (
 )
 from app.middleware.auth import get_current_active_user
 from app.models.user import User, RegistrationRequest
+from app.core.events import event_bus, USER_REGISTERED
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -66,6 +67,13 @@ async def email_signup(
                 existing_request.name = request.name or existing_request.name
                 existing_request.password_hash = auth_service.hash_password(request.password)
                 db.commit()
+
+                # Publish event to notify admin
+                await event_bus.publish(
+                    USER_REGISTERED,
+                    user_email=request.email,
+                    user_name=request.name or existing_request.name
+                )
                 raise HTTPException(
                     status_code=status.HTTP_202_ACCEPTED,
                     detail={
@@ -87,6 +95,13 @@ async def email_signup(
 
         db.add(new_request)
         db.commit()
+
+        # Publish event to notify admin
+        await event_bus.publish(
+            USER_REGISTERED,
+            user_email=request.email,
+            user_name=name
+        )
 
         raise HTTPException(
             status_code=status.HTTP_202_ACCEPTED,
@@ -181,7 +196,7 @@ async def google_oauth_login(
         google_user_info = auth_service.verify_google_token(request.token)
         
         # Get or create user/registration request
-        user, is_new_registration = auth_service.get_or_create_user_from_google(google_user_info, db)
+        user, is_new_registration = await auth_service.get_or_create_user_from_google(google_user_info, db)
         
         # If user is None, it means they need approval
         if user is None:

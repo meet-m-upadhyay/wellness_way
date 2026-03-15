@@ -18,6 +18,7 @@ from fastapi import HTTPException, status
 from app.core.config import get_settings
 from app.models.user import User, RegistrationRequest
 from app.schemas.user import UserProfileCreate, UserProfileResponse
+from app.core.events import event_bus, USER_REGISTERED
 
 
 class AuthService:
@@ -152,11 +153,11 @@ class AuthService:
                 detail=f"Token verification failed: {str(e)}"
             )
     
-    def get_or_create_user_from_google(
+    async def get_or_create_user_from_google(
         self, 
         google_user_info: Dict[str, Any], 
         db: Session
-    ) -> tuple[User, bool]:
+    ) -> tuple[Optional[User], bool]:
         """Get existing user or create registration request from Google OAuth info
         
         Returns:
@@ -256,9 +257,16 @@ class AuthService:
             elif existing_request.status == 'declined':
                 # Allow them to create a new request
                 existing_request.status = 'pending'
-                existing_request.name = google_user_info['name'] or existing_request.name
                 existing_request.google_id = google_user_info['google_id']
                 db.commit()
+                
+                # Publish event to notify admin
+                await event_bus.publish(
+                    USER_REGISTERED,
+                    user_email=google_user_info['email'],
+                    user_name=google_user_info['name'] or existing_request.name
+                )
+                
                 return None, True
         else:
             # Create new registration request
@@ -273,6 +281,13 @@ class AuthService:
             db.add(new_request)
             db.commit()
             db.refresh(new_request)
+            
+            # Publish event to notify admin
+            await event_bus.publish(
+                USER_REGISTERED,
+                user_email=google_user_info['email'],
+                user_name=google_user_info['name'] or 'User'
+            )
             
             return None, True
     

@@ -62,7 +62,7 @@ const AdminDashboard: React.FC = () => {
     return gender.charAt(0).toUpperCase() + gender.slice(1);
   };
 
-  const handleApproveUser = async (requestId: string) => {
+  const handleApproveUser = async (requestId: string, note?: string) => {
     try {
       const token = localStorage.getItem('health_buddy_access_token');
       if (!token) {
@@ -75,6 +75,7 @@ const AdminDashboard: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ note }),
       });
 
       if (!response.ok) {
@@ -91,7 +92,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeclineUser = async (requestId: string) => {
+  const handleDeclineUser = async (requestId: string, note?: string) => {
     try {
       const token = localStorage.getItem('health_buddy_access_token');
       if (!token) {
@@ -104,6 +105,7 @@ const AdminDashboard: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ note }),
       });
 
       if (!response.ok) {
