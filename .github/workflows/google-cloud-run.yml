@@ -48,6 +48,21 @@ jobs:
             SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
             GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            AI_PROVIDER=${{ secrets.AI_PROVIDER }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            ENABLE_ML_PIPELINE=${{ secrets.ENABLE_ML_PIPELINE }}
+            ENABLE_EMAIL_NOTIFICATIONS=${{ secrets.ENABLE_EMAIL_NOTIFICATIONS }}
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+            FROM_EMAIL=${{ secrets.FROM_EMAIL }}
+            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            APP_BASE_URL=${{ secrets.APP_BASE_URL }}
             ENVIRONMENT=production
             DEBUG=false
 
