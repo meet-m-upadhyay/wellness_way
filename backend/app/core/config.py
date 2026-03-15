@@ -117,12 +117,17 @@ class SecuritySettings(BaseSettings):
     password_min_length: int = Field(default=8, ge=6)
     bcrypt_rounds: int = Field(default=12, ge=10, le=15)
     
-    # CORS settings
-    # cors_origins: List[str] = Field(
-    #     default=["http://localhost:3000", "http://127.0.0.1:3000"],
-    #     description="Allowed CORS origins",
-    #     env="CORS_ORIGINS"
-    # )
+    # CORS and Host settings
+    cors_origins: List[str] = Field(
+        default=["http://localhost:3000", "http://127.0.0.1:3000", "https://wellness-way.meetupadhyaykgp.workers.dev"],
+        description="Allowed CORS origins",
+        env="CORS_ORIGINS"
+    )
+    trusted_hosts: List[str] = Field(
+        default=["localhost", "127.0.0.1", "0.0.0.0"],
+        description="Trusted hosts for middleware",
+        env="TRUSTED_HOSTS"
+    )
     cors_allow_credentials: bool = Field(default=True)
     
     # Rate limiting

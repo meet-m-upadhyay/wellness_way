@@ -1,6 +1,5 @@
 """
-Security configuration and constants
-"""
+from app.core.config import settings
 
 from typing import Dict, List
 
@@ -54,17 +53,13 @@ class SecurityHeaders:
     HSTS_POLICY = "max-age=31536000; includeSubDomains; preload"
     
     # Referrer Policy
-    REFERRER_POLICY = "strict-origin-when-cross-origin"
+    REFERRER_POLICY = "no-referrer-when-downgrade"
 
 
 class CORSConfig:
     """CORS configuration for different environments"""
     
-    PRODUCTION_ALLOWED_ORIGINS = [
-        "https://wellnessway.com",
-        "https://app.wellnessway.com",
-        "https://www.wellnessway.com"
-    ]
+    PRODUCTION_ALLOWED_ORIGINS = settings.security.cors_origins
     
     DEVELOPMENT_ALLOWED_ORIGINS = [
         "http://localhost:3000",
@@ -73,17 +68,9 @@ class CORSConfig:
         "http://127.0.0.1:3001"
     ]
     
-    ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE"]
+    ALLOWED_METHODS = ["*"]
     
-    PRODUCTION_ALLOWED_HEADERS = [
-        "Accept",
-        "Accept-Language",
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "X-User-Id"  # Temporary until JWT auth is implemented
-    ]
+    PRODUCTION_ALLOWED_HEADERS = ["*"]
     
     DEVELOPMENT_ALLOWED_HEADERS = ["*"]
     
@@ -145,12 +132,7 @@ class RateLimitConfig:
 class TrustedHostConfig:
     """Trusted host configuration"""
     
-    PRODUCTION_HOSTS = [
-        "wellnessway.com",
-        "app.wellnessway.com", 
-        "api.wellnessway.com",
-        "www.wellnessway.com"
-    ]
+    PRODUCTION_HOSTS = settings.security.trusted_hosts
     
     DEVELOPMENT_HOSTS = [
         "localhost",
@@ -213,13 +195,12 @@ def get_security_headers(is_production: bool) -> Dict[str, str]:
         "Permissions-Policy": SecurityHeaders.PERMISSIONS_POLICY,
     }
     
-    if is_production:
         headers.update({
             "Strict-Transport-Security": SecurityHeaders.HSTS_POLICY,
             "Expect-CT": "max-age=86400, enforce",
-            "Cross-Origin-Embedder-Policy": "require-corp",
-            "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Resource-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "unsafe-none",
+            "Cross-Origin-Opener-Policy": "unsafe-none",
+            "Cross-Origin-Resource-Policy": "cross-origin",
             "Server": "WellnessWay"  # Hide server information
         })
     else:

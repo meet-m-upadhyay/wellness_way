@@ -60,7 +60,9 @@ Add these secrets to your GitHub repository (**Settings** -> **Secrets and varia
 | `SMTP_PASSWORD` | Your email app password |
 | `FROM_EMAIL` | Sender email |
 | `ADMIN_EMAIL` | Admin email |
-| `APP_BASE_URL` | Your Cloudflare Pages URL |
+| `APP_BASE_URL` | Your frontend URL (e.g., `https://wellness-way.pages.dev`) |
+| `CORS_ORIGINS` | Comma-separated list of allowed origins (e.g., `["https://wellness-way.meetupadhyaykgp.workers.dev", "http://localhost:3000"]`) |
+| `TRUSTED_HOSTS` | Comma-separated list of trusted hosts (e.g., `["wellness-way-backend-1021198538658.us-central1.run.app", "localhost"]`) |
 
 ## STEP 4: Trigger Deployment
 
