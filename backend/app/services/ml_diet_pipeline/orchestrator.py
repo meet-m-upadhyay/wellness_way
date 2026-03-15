@@ -104,12 +104,18 @@ class MLPipelineOrchestrator:
 
             # STEP 1: Discover Portfolio (Finding ingredients)
             logger.info(f"[ML_STEP_1] Daily Portfolio Discovery")
+            
+            # Combine variety exclusions
+            variety_exclusions = set(exclude_templates or [])
+            
             portfolio = self.discovery_engine.discover_daily_portfolio(
                 db=db,
                 diet_type=constraints.diet_type.value,
                 allergies=constraints.allergies,
+                cuisine=constraints.cuisine,
+                primary_goal=constraints.primary_goal,
                 foods_to_avoid=constraints.foods_to_avoid,
-                exclude_ingredients=exclude_templates
+                exclude_ingredients=variety_exclusions
             )
             
             # STEP 2: Assemble Day (Solving portions & splitting meals)
@@ -124,6 +130,7 @@ class MLPipelineOrchestrator:
                 portfolio=portfolio,
                 target_calories=constraints.calorie_target,
                 target_protein=constraints.protein_target,
+                primary_goal=constraints.primary_goal,
                 meals_per_day=meals_per_day
             )
             
@@ -140,6 +147,7 @@ class MLPipelineOrchestrator:
                     meal_type=raw_meal["type"],
                     diet_type=constraints.diet_type.value,
                     cuisine=constraints.cuisine,
+                    primary_goal=constraints.primary_goal,
                     reuse_ingredients=constraints.reuse_ingredients,
                     allergies=list(constraints.allergies),
                     foods_to_avoid=list(constraints.foods_to_avoid),
@@ -266,6 +274,8 @@ class MLPipelineOrchestrator:
                     db=db,
                     diet_type=constraints.diet_type.value,
                     allergies=constraints.allergies,
+                    cuisine=constraints.cuisine,
+                    primary_goal=constraints.primary_goal,
                     foods_to_avoid=constraints.foods_to_avoid,
                     exclude_ingredients=previous_day_ingredients
                 )
@@ -279,6 +289,7 @@ class MLPipelineOrchestrator:
                     portfolio=portfolio,
                     target_calories=constraints.calorie_target,
                     target_protein=constraints.protein_target,
+                    primary_goal=constraints.primary_goal,
                     meals_per_day=meals_per_day
                 )
                 
@@ -315,6 +326,7 @@ class MLPipelineOrchestrator:
                         meal_type=raw_meal["type"],
                         diet_type=constraints.diet_type.value,
                         cuisine=constraints.cuisine,
+                        primary_goal=constraints.primary_goal,
                         reuse_ingredients=constraints.reuse_ingredients,
                         allergies=list(constraints.allergies),
                         foods_to_avoid=list(constraints.foods_to_avoid),
@@ -412,6 +424,8 @@ class MLPipelineOrchestrator:
             db=db,
             diet_type=constraints.diet_type.value,
             allergies=constraints.allergies,
+            cuisine=constraints.cuisine,
+            primary_goal=constraints.primary_goal,
             foods_to_avoid=constraints.foods_to_avoid,
             exclude_ingredients=exclude_ingredients
         )
@@ -424,6 +438,7 @@ class MLPipelineOrchestrator:
             portfolio=portfolio,
             target_calories=meal_target_cal,
             target_protein=meal_target_prot,
+            primary_goal=constraints.primary_goal,
             meals_per_day=1
         )
         
@@ -439,6 +454,7 @@ class MLPipelineOrchestrator:
             meal_type=meal_type,
             diet_type=constraints.diet_type.value,
             cuisine=constraints.cuisine,
+            primary_goal=constraints.primary_goal,
             reuse_ingredients=constraints.reuse_ingredients,
             allergies=list(constraints.allergies),
             foods_to_avoid=list(constraints.foods_to_avoid),
@@ -507,8 +523,11 @@ class MLPipelineOrchestrator:
         )
         
         # Extract restrictions
-        allergies = set(diet_section.get("allergies", health_context.get("allergies", [])))
-        foods_to_avoid = set(diet_section.get("foods_to_avoid", health_context.get("foods_to_avoid", [])))
+        allergies_list = diet_section.get("allergies") or health_context.get("allergies") or []
+        foods_avoid_list = diet_section.get("foods_to_avoid") or health_context.get("foods_to_avoid") or []
+        
+        allergies = set(allergies_list)
+        foods_to_avoid = set(foods_avoid_list)
         
         return SimpleNamespace(
             diet_type=diet_type,
@@ -517,6 +536,7 @@ class MLPipelineOrchestrator:
             allergies=allergies,
             foods_to_avoid=foods_to_avoid,
             meals_per_day=int(meals_per_day),
+            primary_goal=health_context.get("primary_goal") or nutrition_section.get("primary_goal") or "maintain",
             cuisine=diet_section.get("cuisine") or health_context.get("cuisine") or "indian",
             reuse_ingredients=bool(diet_section.get("reuse_ingredients") or health_context.get("reuse_ingredients") or False),
             budget_constraints=health_context.get("budget_constraints") or health_context.get("preferences", {}).get("budget_constraints"),
@@ -582,9 +602,11 @@ def get_groq_generator():
                     budget = payload.get("budget_constraints")
                     lifestyle = payload.get("lifestyle_constraints")
                     cuisine = payload.get("cuisine", "indian")
+                    primary_goal = payload.get("primary_goal", "maintain")
                     reuse = payload.get("reuse_ingredients", False)
                     
                     constraints_text = f"\n- PREFERRED CUISINE: {cuisine}"
+                    constraints_text += f"\n- PRIMARY HEALTH GOAL: {primary_goal}"
                     if reuse:
                         constraints_text += "\n- INGREDIENT REUSE: This plan prioritizes reusing core ingredients from previous meals to save time and reduce waste."
                     

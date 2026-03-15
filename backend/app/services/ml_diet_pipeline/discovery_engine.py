@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class DiscoveryEngine:
-    """Dynamically discover allowed ingredients based on diet and allergies"""
+    """Dynamically discover allowed ingredients based on diet, allergies, cuisine, and goals"""
 
     def __init__(self):
         """Initialize discovery engine"""
@@ -27,19 +27,23 @@ class DiscoveryEngine:
         db: Session,
         diet_type: str,
         allergies: Set[str],
+        cuisine: Optional[str] = "indian",
+        primary_goal: Optional[str] = "maintain",
         foods_to_avoid: Optional[Set[str]] = None,
         exclude_ingredients: Optional[Set[str]] = None
     ) -> Dict[str, List[FoodItem]]:
         """
-        Discover a portfolio of ingredients for the day.
-        
-        Returns:
-            Dict mapping categories to lists of FoodItem models
+        Discover a portfolio of ingredients for the day with strict filtering and scoring.
         """
         exclude_ingredients = exclude_ingredients or set()
         foods_to_avoid = foods_to_avoid or set()
+        cuisine = (cuisine or "indian").lower()
+        primary_goal = (primary_goal or "maintain").lower()
         
-        # 1. Fetch ALL candidates matching STRICTOR constraints (Diet, Allergies)
+        # 1. Base Query
+        base_query = db.query(FoodItem).filter(FoodItem.is_deprecated == False)
+        
+        # 2. Strict Diet Policy
         diet_filter = []
         if diet_type == "vegan":
             diet_filter = ["vegan"]
@@ -48,8 +52,6 @@ class DiscoveryEngine:
         elif diet_type == "eggetarian":
             diet_filter = ["vegan", "vegetarian", "eggetarian"]
 
-        base_query = db.query(FoodItem).filter(FoodItem.is_deprecated == False)
-        
         if diet_filter:
             flag_match = or_(*[FoodItem.diet_flags.contains([d]) for d in diet_filter])
             base_query = base_query.filter(
@@ -73,6 +75,7 @@ class DiscoveryEngine:
                     ]))
                 )
         
+        # 3. Strict Allergen & Avoidance Policy
         for allergen in allergies:
             base_query = base_query.filter(
                 and_(
@@ -90,52 +93,70 @@ class DiscoveryEngine:
             logger.error(f"[DISCOVERY_ERROR] No candidates found for diet={diet_type} allergies={allergies}")
             raise ValueError(f"No compatible food items found in registry for {diet_type} diet.")
 
-        # 2. Categorize candidates
-        categorized = {
-            "protein": [],
-            "starch": [],
-            "vegetables": [],
-            "fat": []
-        }
-        
+        # 4. Goal-Based Scoring & Cuisine Prioritization
+        scored_candidates = []
         for item in all_allowed_candidates:
+            score = 1.0
             name = item.canonical_name.lower()
+            
+            # Cuisine prioritization
+            item_cuisines = [c.lower() for c in item.cuisine_tags] if item.cuisine_tags else []
+            if cuisine in name or cuisine in item_cuisines:
+                score += 3.0
+            
+            # Goal logic prioritization
             macros = item.macros or {}
-            # Heuristic for protein: >30% energy or name-based
             protein_pct = (macros.get("protein", 0) * 4) / max(macros.get("calories", 0) or 1, 1)
             
-            if "protein" in name or protein_pct > 0.3:
+            if primary_goal == "fat loss":
+                if protein_pct > 0.4: score += 1.5
+                if "green" in name or "spinach" in name or "lettuce" in name: score += 1.0
+            elif primary_goal == "muscle gain":
+                if protein_pct > 0.3: score += 2.0
+                if macros.get("calories", 0) > 150: score += 0.5
+                
+            scored_candidates.append((item, score))
+            
+        scored_candidates.sort(key=lambda x: x[1], reverse=True)
+        final_candidates = [x[0] for x in scored_candidates]
+
+        # 5. Categorize and Select
+        categorized = {"protein": [], "starch": [], "vegetables": [], "fat": []}
+        
+        for item in final_candidates:
+            name = item.canonical_name.lower()
+            macros = item.macros or {}
+            protein_pct = (macros.get("protein", 0) * 4) / max(macros.get("calories", 0) or 1, 1)
+            
+            if protein_pct > 0.25:
                 categorized["protein"].append(item)
-            elif any(x in name for x in ["rice", "bread", "oats", "quinoa", "potato", "pasta", "tortilla"]):
+            elif any(x in name for x in ["rice", "bread", "oats", "quinoa", "potato", "pasta", "tortilla", "poha", "upma"]):
                 categorized["starch"].append(item)
-            elif any(x in name for x in ["oil", "butter", "avocado", "nut", "seed", "tahini"]):
+            elif any(x in name for x in ["oil", "butter", "avocado", "nut", "seed", "tahini", "ghee"]):
                 categorized["fat"].append(item)
             else:
                 categorized["vegetables"].append(item)
 
-        # 3. Apply exclusions with soft fallback per category
+        # 6. Build the selected portfolio
         selected = {}
         for cat, items in categorized.items():
-            # Try applying variety exclusions
             non_excluded = [it for it in items if it.canonical_name not in exclude_ingredients]
+            target_count = 4 
             
-            if len(non_excluded) >= 3:
-                selected[cat] = random.sample(non_excluded, 3)
+            if len(non_excluded) >= target_count:
+                selected[cat] = non_excluded[:target_count]
             elif len(non_excluded) > 0:
-                # Use what we have, then supplement from excluded if needed to hit 3
                 selected[cat] = non_excluded
-                remaining = 3 - len(non_excluded)
+                remaining = target_count - len(non_excluded)
                 excluded_items = [it for it in items if it.canonical_name in exclude_ingredients]
                 if excluded_items:
-                    selected[cat].extend(random.sample(excluded_items, min(len(excluded_items), remaining)))
+                    selected[cat].extend(excluded_items[:remaining])
             else:
-                # No non-excluded items! Fallback completely to the full allowed list for this category
-                logger.warning(f"[DISCOVERY_VARIETY_WARNING] category={cat} depleted due to exclusions. Falling back.")
-                selected[cat] = random.sample(items, min(len(items), 3))
+                selected[cat] = items[:target_count]
 
         logger.info(
             f"[DISCOVERY_PORTFOLIO] Discoverd {sum(len(v) for v in selected.values())} "
-            f"ingredients for diet={diet_type} (variety fallback check complete)"
+            f"ingredients for diet={diet_type} goal={primary_goal} cuisine={cuisine}"
         )
         
         return selected
