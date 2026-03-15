@@ -134,14 +134,6 @@ export const WeeklyPlanView: React.FC<WeeklyPlanViewProps> = ({
 }) => {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
   const formatWeekRange = (startDate: string) => {
     const start = new Date(startDate);
