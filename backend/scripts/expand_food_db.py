@@ -20,7 +20,7 @@ def expand_food_database():
     Script to quickly add variety to the food_items table.
     """
     settings = get_settings()
-    engine = create_engine(settings.database_url)
+    engine = create_engine(settings.get_database_url())
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
 
@@ -51,30 +51,40 @@ def expand_food_database():
 
     try:
         added_count = 0
+        skipped_count = 0
         for item in new_items_data:
-            # Check if exists
-            exists = db.query(FoodItem).filter(FoodItem.canonical_name == item["name"]).first()
+            # Check if exists (case-insensitive)
+            exists = db.query(FoodItem).filter(FoodItem.canonical_name.ilike(item["name"])).first()
             if not exists:
-                new_food = FoodItem(
-                    id=uuid4(),
-                    canonical_name=item["name"],
-                    macros=item["macros"],
-                    diet_flags=item.get("diet_flags", []),
-                    cuisine_tags=item.get("cuisine_tags", []),
-                    is_deprecated=False
-                )
-                db.add(new_food)
-                added_count += 1
+                try:
+                    new_food = FoodItem(
+                        id=uuid4(),
+                        canonical_name=item["name"],
+                        macros=item["macros"],
+                        diet_flags=item.get("diet_flags", []),
+                        cuisine_tags=item.get("cuisine_tags", []),
+                        is_deprecated=False
+                    )
+                    db.add(new_food)
+                    db.flush() # Check for integrity errors here
+                    added_count += 1
+                except Exception as inner_e:
+                    db.rollback()
+                    logger.warning(f"[SKIPPED] Could not add '{item['name']}': {inner_e}")
+                    skipped_count += 1
+            else:
+                skipped_count += 1
         
         db.commit()
-        logger.info(f"[DATABASE_EXPANDED] Added {added_count} new food items.")
+        logger.info(f"[DATABASE_EXPANDED] Added {added_count} new food items. Skipped {skipped_count} (existing or error).")
         
         # Reminder to rebuild FAISS
-        logger.info("[REBUILD_REMINDER] Please run 'python scripts/build_vector_index.py' to update the FAISS index!")
+        if added_count > 0:
+            logger.info("[REBUILD_REMINDER] New items added! Please run 'python backend/scripts/build_vector_index.py' to update the FAISS index.")
         
     except Exception as e:
         db.rollback()
-        logger.error(f"[DATABASE_EXPAND_FAILED] Error: {e}")
+        logger.error(f"[DATABASE_EXPAND_FAILED] Global error: {e}")
     finally:
         db.close()
 
