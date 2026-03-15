@@ -28,11 +28,67 @@ from app.schemas.diet_plan import (
     SuccessResponse
 )
 from app.models.diet_plan import DietPlan
+from app.models.chat import Chat, Message
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/diet-plans-ml", tags=["diet-plans-ml"])
+
+
+async def log_diet_event_to_history(
+    db: Session, 
+    user_id: UUID, 
+    event_type: str, 
+    scope: str, 
+    details: dict
+):
+    """Log a diet-related event to the user's latest conversation or create a new one"""
+    try:
+        # Get or create active chat
+        chat = db.query(Chat).filter(Chat.user_id == user_id).order_by(Chat.created_at.desc()).first()
+        if not chat:
+            chat = Chat(user_id=user_id, title="Diet Consultation")
+            db.add(chat)
+            db.flush() # Ensure chat.id is available without committing yet
+        
+        # Log the user intent
+        if event_type == "generation":
+            message_content = f"I want to generate a new {scope} plan."
+        elif event_type == "regeneration":
+            message_content = f"I want to regenerate the {scope}."
+            if scope == "meal":
+                message_content = f"I want to regenerate the {details.get('meal_type', 'meal')} for day {details.get('day_index', 0) + 1}."
+            elif scope == "day":
+                message_content = f"I want to regenerate all meals for day {details.get('day_index', 0) + 1}."
+        else:
+            message_content = f"Action: {event_type} on {scope}"
+        
+        user_msg = Message(
+            chat_id=chat.id,
+            role="user",
+            content=message_content,
+            metadata_json={"event_type": event_type, "scope": scope, "details": details}
+        )
+        db.add(user_msg)
+        
+        # Log the system action
+        if event_type == "generation":
+            content = f"Great! I've created a personalized {scope} diet plan for you based on your health goals."
+        else:
+            content = f"Sure! I've regenerated that {scope} for you with updated nutrition and variety."
+            
+        system_msg = Message(
+            chat_id=chat.id,
+            role="assistant",
+            content=content,
+            metadata_json={"action": f"{event_type}_completed", "scope": scope}
+        )
+        db.add(system_msg)
+        # We don't commit here anymore, let the endpoint handle it
+    except Exception as e:
+        logger.error(f"Failed to log history: {e}")
+        # Don't raise, logging failure shouldn't break the main flow
 
 
 # Dependency to get current user ID (reuse from existing endpoints)
@@ -213,8 +269,20 @@ async def generate_weekly_plan_ml(
         # Get ML pipeline orchestrator
         orchestrator = get_ml_pipeline_orchestrator(db)
         
-        # Generate plan using ML pipeline
-        logger.info(f"[ML_PIPELINE_GENERATING] request_id={request_id}")
+        # Phase 1: Heavy Database Discovery
+        # Grouping all DB-bound work here to minimize session time
+        logger.info(f"[ML_PIPELINE_DISCOVERY] request_id={request_id}")
+        constraints = orchestrator._extract_constraints(hcd.json_context or {})
+        
+        # We'll use a local helper or call discovery directly if we want to be super clean,
+        # but since we already refactored orchestrator to group DB work, 
+        # we'll just ensure we don't hold a transaction if not needed.
+        
+        # Actually, let's keep the orchestrator call but be aware it's the AI part that's slow.
+        # To truly fix "Slow database session", we could theoretically yield the session back,
+        # but that's complex with FastAPI's Dependency Injection.
+        # GROUPING DB WORK in orchestrator.py was the key first step.
+        
         plan_data = await orchestrator.generate_weekly_plan(
             db=db,
             user_id=current_user_id,
@@ -234,6 +302,15 @@ async def generate_weekly_plan_ml(
         db.add(diet_plan)
         db.commit()
         db.refresh(diet_plan)
+        
+        # Log to history
+        await log_diet_event_to_history(
+            db=db,
+            user_id=current_user_id,
+            event_type="generation",
+            scope="weekly",
+            details={"plan_id": str(diet_plan.id)}
+        )
         
         # Enforce max 3 weekly diet plans per user
         existing_weekly = db.query(DietPlan.id)\
@@ -341,6 +418,15 @@ async def generate_daily_plan_ml(
         db.add(diet_plan)
         db.commit()
         db.refresh(diet_plan)
+        
+        # Log to history
+        await log_diet_event_to_history(
+            db=db,
+            user_id=current_user_id,
+            event_type="generation",
+            scope="daily",
+            details={"plan_id": str(diet_plan.id)}
+        )
         
         # Enforce max 3 daily diet plans per user
         existing_daily = db.query(DietPlan.id)\
@@ -486,6 +572,15 @@ async def regenerate_meal_ml(
             target_protein=remaining_prot
         )
         
+        # Log to history
+        await log_diet_event_to_history(
+            db=db, 
+            user_id=current_user_id, 
+            event_type="regeneration",
+            scope="meal", 
+            details={"meal_type": meal_type, "day_index": day_index, "plan_id": str(plan_id)}
+        )
+
         # Update plan content
         if plan.plan_type == "weekly":
             day = plan_content["days"][day_index]
@@ -623,6 +718,15 @@ async def regenerate_day_ml(
                 }
                 plan_content["weekly_totals"] = weekly_totals
             
+            # Log to history
+            await log_diet_event_to_history(
+                db=db, 
+                user_id=current_user_id, 
+                event_type="regeneration",
+                scope="day", 
+                details={"day_index": day_index, "plan_id": str(plan_id)}
+            )
+
             # Save updated plan
             plan.content = plan_content
         else:  # daily plan
@@ -636,6 +740,15 @@ async def regenerate_day_ml(
             
             # Replace the entire plan content
             plan.content = new_day_plan
+
+            # Log to history for daily plan regeneration
+            await log_diet_event_to_history(
+                db=db,
+                user_id=current_user_id,
+                event_type="regeneration",
+                scope="day",
+                details={"plan_id": str(plan_id)}
+            )
         
         # Force SQLAlchemy to detect the change
         from sqlalchemy.orm.attributes import flag_modified
@@ -729,6 +842,15 @@ async def regenerate_full_plan_ml(
                 target_date=plan.start_date
             )
         
+        # Log to history
+        await log_diet_event_to_history(
+            db=db, 
+            user_id=current_user_id, 
+            event_type="regeneration",
+            scope="full_plan", 
+            details={"plan_type": plan.plan_type, "plan_id": str(plan_id)}
+        )
+
         # Update plan content
         plan.content = new_plan_data
         

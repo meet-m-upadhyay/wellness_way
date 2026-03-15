@@ -8,7 +8,8 @@ import {
   Salad,
   User,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  History as HistoryIcon
 } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
@@ -19,6 +20,7 @@ import LoginPage from './components/auth/LoginPage';
 import AccountDisabledPage from './components/auth/AccountDisabledPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminPage from './pages/AdminPage';
+import HistoryView from './pages/HistoryView';
 import { useUserStatusCheck } from './hooks/useUserStatusCheck';
 import './App.css';
 
@@ -99,6 +101,15 @@ function AppContent() {
             </ProtectedRoute>
           } />
 
+          <Route path="/history" element={
+            <ProtectedRoute requireProfileComplete={true}>
+              <Header />
+              <PageLayout>
+                <HistoryView />
+              </PageLayout>
+            </ProtectedRoute>
+          } />
+
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -169,6 +180,18 @@ function HomePage() {
                 <div className="text-left">
                   <h3 className="font-bold text-neutral-900 dark:text-white">Edit Profile</h3>
                   <p className="text-xs text-neutral-500">Update health metrics</p>
+                </div>
+              </Link>
+              <Link
+                to="/history"
+                className="group p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-purple-500/30 transition-all duration-300 flex items-center gap-4"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                  <HistoryIcon size={24} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-neutral-900 dark:text-white">History</h3>
+                  <p className="text-xs text-neutral-500">View past consultations</p>
                 </div>
               </Link>
             </>

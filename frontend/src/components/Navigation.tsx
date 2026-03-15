@@ -10,7 +10,8 @@ import {
   Settings,
   LogOut,
   Salad,
-  ChevronDown
+  ChevronDown,
+  History
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -51,17 +52,9 @@ const Navigation: React.FC<NavigationProps> = ({ className = '' }) => {
   const navigationItems = [
     { path: '/', label: 'Home', icon: <Home size={18} />, requiresProfile: false },
     { path: '/diet-plans', label: 'Diet Plans', icon: <Utensils size={18} />, requiresProfile: true },
+    { path: '/history', label: 'History', icon: <History size={18} />, requiresProfile: true },
     { path: '/profile-setup', label: 'Profile Setup', icon: <User size={18} />, requiresProfile: false },
   ];
-
-  if (user?.is_admin) {
-    navigationItems.push({
-      path: '/admin',
-      label: 'Admin Dashboard',
-      icon: <ShieldCheck size={18} />,
-      requiresProfile: false,
-    });
-  }
 
   const isActivePath = (path: string) => {
     if (path === '/') {
@@ -182,6 +175,17 @@ const Navigation: React.FC<NavigationProps> = ({ className = '' }) => {
                         <Settings size={18} />
                         Profile Settings
                       </Link>
+
+                      {user.is_admin && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-3 text-sm font-bold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-primary-600 dark:hover:text-primary-400 rounded-2xl transition-all duration-300 transform hover:translate-x-1"
+                        >
+                          <ShieldCheck size={18} />
+                          Admin Dashboard
+                        </Link>
+                      )}
                     </div>
 
                     <div className="px-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-1 pt-3">
@@ -323,6 +327,17 @@ const Navigation: React.FC<NavigationProps> = ({ className = '' }) => {
                   <Settings size={20} />
                   <span>Profile Settings</span>
                 </Link>
+
+                {user.is_admin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-base font-bold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-300 transform active:scale-[0.98] border border-transparent hover:border-neutral-100 dark:hover:border-neutral-800"
+                  >
+                    <ShieldCheck size={20} />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     handleLogout();

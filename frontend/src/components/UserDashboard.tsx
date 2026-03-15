@@ -1,5 +1,6 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 
 const UserDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -43,12 +44,20 @@ const UserDashboard: React.FC = () => {
             </div>
 
             {user.is_admin && (
-              <div className="px-6 py-4 sm:px-8 sm:grid sm:grid-cols-3 sm:gap-4 bg-wellness-light-elevated/50 dark:bg-wellness-dark-elevated/50">
+              <div className="px-6 py-4 sm:px-8 sm:grid sm:grid-cols-3 sm:gap-4 bg-red-50/30 dark:bg-red-900/10">
                 <dt className="text-sm font-medium text-red-600 dark:text-red-400">Admin Status</dt>
-                <dd className="mt-1 text-sm sm:mt-0 sm:col-span-2">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+                <dd className="mt-1 text-sm sm:mt-0 sm:col-span-2 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
                     🛡️ Administrator
                   </span>
+                  <Link
+                    to="/admin"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  >
+                    <ShieldCheck size={14} />
+                    Go to Admin Dashboard
+                    <ArrowRight size={14} />
+                  </Link>
                 </dd>
               </div>
             )}

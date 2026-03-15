@@ -72,14 +72,18 @@ export const PlanTypeSelector: React.FC<PlanTypeSelectorProps> = ({
             </div>
           </div>
 
-          {/* Weekly Plan Option */}
+          {/* Weekly Plan Option (Disabled for Maintenance) */}
           <div
-            className={`border-2 rounded-2xl p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] ${selectedType === 'weekly'
+            className={`relative border-2 rounded-2xl p-6 transition-all duration-200 ${selectedType === 'weekly'
               ? 'border-primary-500 dark:border-primary-400 bg-primary-50/50 dark:bg-primary-900/10 shadow-glow-emerald'
-              : 'border-wellness-light-border dark:border-wellness-dark-border hover:border-primary-300 dark:hover:border-primary-700 bg-white dark:bg-wellness-dark-card'
-              }`}
-            onClick={() => onSelect('weekly')}
+              : 'border-wellness-light-border dark:border-wellness-dark-border bg-white dark:bg-wellness-dark-card opacity-60 grayscale-[0.5]'
+              } cursor-not-allowed`}
           >
+            {/* Maintenance Badge */}
+            <div className="absolute -top-3 right-4 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-200 dark:border-amber-800/50 shadow-sm z-10 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Under Maintenance
+            </div>
             <div className="flex items-center mb-4">
               <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all duration-200 ${selectedType === 'weekly'
                 ? 'border-primary-500 bg-primary-500'

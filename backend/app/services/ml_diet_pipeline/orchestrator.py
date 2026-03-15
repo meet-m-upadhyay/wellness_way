@@ -249,33 +249,109 @@ class MLPipelineOrchestrator:
             # Extract user constraints
             constraints = self._extract_constraints(health_context)
             
-            # Generate 7 daily plans
+            # Step 1: Discover all 7 daily portfolios (DB-bound)
+            # This is fast and keeps the DB session busy only for a short time
             start = start_date or date.today()
-            days = []
+            daily_portfolios = []
             
-            # Track used templates across the week
-            used_template_ids = set()
+            # Variety Strategy: Only exclude ingredients from the PREVIOUS DAY
+            # This prevents pool depletion over a 7-day period while still ensuring daily variety.
+            previous_day_ingredients = set()
             
             for day_offset in range(7):
                 current_date = start + timedelta(days=day_offset)
+                logger.info(f"[ML_WEEKLY_DISCOVERY] day {day_offset + 1}/7: {current_date}")
                 
-                logger.info(f"[ML_WEEKLY_DAY] Generating day {day_offset + 1}/7: {current_date}")
-                
-                # Generate daily plan with exclusion for variety
-                daily_plan = await self.generate_daily_plan(
+                portfolio = self.discovery_engine.discover_daily_portfolio(
                     db=db,
-                    user_id=user_id,
-                    health_context=health_context,
-                    target_date=current_date,
-                    exclude_templates=used_template_ids # Reusing parameter name for ingredient names
+                    diet_type=constraints.diet_type.value,
+                    allergies=constraints.allergies,
+                    foods_to_avoid=constraints.foods_to_avoid,
+                    exclude_ingredients=previous_day_ingredients
                 )
                 
-                # Add used ingredients to exclusions
-                for meal in daily_plan.get("meals", []):
-                    for ing in meal.get("ingredients", []):
-                        used_template_ids.add(ing["name"])
+                # Pre-assemble raw meals for this day
+                meals_per_day = constraints.meals_per_day or 3
+                if meals_per_day != 3:
+                    meals_per_day = 3 # Legacy compatibility
                 
-                days.append(daily_plan)
+                raw_meals = self.daily_assembler.assemble_day(
+                    portfolio=portfolio,
+                    target_calories=constraints.calorie_target,
+                    target_protein=constraints.protein_target,
+                    meals_per_day=meals_per_day
+                )
+                
+                # Reset exclusions for the next day to ONLY include current day's ingredients
+                current_day_ingredients = set()
+                for meal in raw_meals:
+                    for ing in meal.get("ingredients", []):
+                        current_day_ingredients.add(ing["name"])
+                
+                previous_day_ingredients = current_day_ingredients
+                
+                daily_portfolios.append({
+                    "date": current_date,
+                    "raw_meals": raw_meals
+                })
+
+            # Step 2: AI Creative Generation (LLM-bound)
+            # This is slow and involves external API calls. We do it AFTER DB work.
+            logger.info(f"[ML_WEEKLY_AI_START] Starting AI generation for 7 days")
+            days = []
+            for item in daily_portfolios:
+                current_date = item["date"]
+                raw_meals = item["raw_meals"]
+                
+                logger.info(f"[ML_WEEKLY_AI_DAY] Generating text for: {current_date}")
+                
+                final_meals = []
+                for raw_meal in raw_meals:
+                    creative_text = await self.genai_service.generate_meal_text(
+                        ingredients=[
+                            {"name": ing["name"], "quantity": round(ing["quantity"]), "unit": ing["unit"]}
+                            for ing in raw_meal["ingredients"]
+                        ],
+                        meal_type=raw_meal["type"],
+                        diet_type=constraints.diet_type.value,
+                        cuisine=constraints.cuisine,
+                        reuse_ingredients=constraints.reuse_ingredients,
+                        allergies=list(constraints.allergies),
+                        foods_to_avoid=list(constraints.foods_to_avoid),
+                        budget_constraints=constraints.budget_constraints,
+                        lifestyle_constraints=constraints.lifestyle_constraints
+                    )
+                    
+                    steps = creative_text.get("steps", [])
+                    instructions_str = "\n".join([f"• {step.strip()}" for step in steps if step.strip()]) if isinstance(steps, list) else str(steps)
+
+                    raw_meal.update({
+                        "name": creative_text.get("meal_name", "Healthy Meal"),
+                        "description": creative_text.get("description", ""),
+                        "instructions": instructions_str,
+                        "prep_time": creative_text.get("prep_time_minutes", 10),
+                        "cook_time": creative_text.get("cook_time_minutes", 15),
+                        "servings": creative_text.get("servings", 1)
+                    })
+                    final_meals.append(raw_meal)
+
+                # Summary and Totals
+                daily_summary_text = self.genai_service.generate_daily_plan_text(
+                    meals=final_meals,
+                    diet_type=constraints.diet_type.value
+                )
+                daily_totals = self.nutrition_engine.calculate_daily_nutrition(final_meals)
+                
+                days.append({
+                    "plan_type": "daily",
+                    "date": str(current_date),
+                    "day_name": current_date.strftime("%A"),
+                    "meals": final_meals,
+                    "daily_totals": daily_totals,
+                    "summary": daily_summary_text.get("summary", ""),
+                    "notes": daily_summary_text.get("notes", ""),
+                    "generated_by": "ml_pipeline"
+                })
             
             # Calculate weekly totals
             weekly_totals = {
@@ -459,105 +535,121 @@ def get_groq_generator():
     settings = get_settings()
     api_key = settings.get_groq_api_key()
     model = settings.ai.groq_model
-    
     async def generate(payload):
         if not api_key:
-            return None # Fallback to service-level mock
+            return None 
             
-        action = payload.get("action", "generate_meal")
+        import asyncio
+        max_retries = 5
+        base_delay = 2.0 # Wait longer for 429s
+
+        for attempt in range(max_retries):
+            try:
+                action = payload.get("action", "generate_meal")
+                # Build prompt (logic remains same as before)
+                if action == "generate_supplement_note":
+                    # ... (omitted for brevity in this replacement chunk, but 
+                    # actually contains the prompt building logic from lines 470-493)
+                    missing_protein_g = payload.get("missing_protein_g", 0)
+                    diet = payload.get("diet_type", "any")
+                    allergy_list = payload.get("allergies", [])
+                    nutrition = payload.get("nutrition_targets", {})
+                    safety = payload.get("safety_constraints", {})
+                    prompt = f"""
+                    The user needs a short, friendly note suggesting how to achieve a remaining {missing_protein_g:.1f}g protein gap for their diet.
+                    Their diet type is {diet}.
+                    They are allergic to: {', '.join(allergy_list) if allergy_list else 'None'}.
+                    Nutrition targets: {json.dumps(nutrition)}
+                    Safety constraints: {json.dumps(safety)}
+                    
+                    STRICT rules:
+                    1. 1 scoop of protein powder = ~25g protein. Calculate: gap / 25, then round to the nearest 0.5 (e.g. 37g gap → 1.5 scoops, 55g gap → 2 scoops, 70g gap → 3 scoops).
+                    2. NEVER suggest more than 3 scoops. NEVER write fractional explanations like ".5 scoop each".
+                    3. If 3 scoops alone cannot cover the gap, also suggest whole foods the diet allows (eggs ~6g each, sprouts, high-protein yogurt).
+                    4. If the gap is too large to fill realistically, just say: "You're a bit low on protein today — don't worry, try balancing it tomorrow!"
+                    5. Choose a safe powder type based on allergies/diet (whey for non-vegan without milk allergy, pea protein for vegan/milk-allergic, etc).
+                    
+                    Keep it to 1-2 sentences. Do NOT include the word "Guidance" or hydration tips.
+                    Respond ONLY with a JSON object:
+                    {{ "note": "Note: ..." }}
+                    """
+                else:
+                    meal_type = payload.get("meal_type", "meal")
+                    ingredients = payload.get("ingredients", [])
+                    diet_type = payload.get("diet_type", "any")
+                    allergies = payload.get("allergies", [])
+                    foods_to_avoid = payload.get("foods_to_avoid", [])
+                    budget = payload.get("budget_constraints")
+                    lifestyle = payload.get("lifestyle_constraints")
+                    cuisine = payload.get("cuisine", "indian")
+                    reuse = payload.get("reuse_ingredients", False)
+                    
+                    constraints_text = f"\n- PREFERRED CUISINE: {cuisine}"
+                    if reuse:
+                        constraints_text += "\n- INGREDIENT REUSE: This plan prioritizes reusing core ingredients from previous meals to save time and reduce waste."
+                    
+                    if allergies:
+                        constraints_text += f"\n- MUST NOT contain any of these allergens: {', '.join(allergies)}"
+                    if foods_to_avoid:
+                        constraints_text += f"\n- MUST NOT contain any of these foods: {', '.join(foods_to_avoid)}"
+                    if budget:
+                        constraints_text += f"\n- Keep in mind budget constraints: {budget}"
+                    if lifestyle:
+                        constraints_text += f"\n- Keep in mind lifestyle constraints: {lifestyle}"
+                    
+                    prompt = f"""
+                    Generate a creative recipe name, description, and instructions for a {meal_type} with these ingredients:
+                    {json.dumps(ingredients)}
+                    The user follows a {diet_type} diet.
+                    {constraints_text}
+                    
+                    IMPORTANT RULES:
+                    1. Use VERY SIMPLE English. No difficult words.
+                    2. Keep instructions short and clear.
+                    3. Respond ONLY with a JSON object following this schema:
+                    {{
+                        "meal_name": "Simple Name",
+                        "description": "Very simple short description",
+                        "prep_time_minutes": 10,
+                        "cook_time_minutes": 15,
+                        "servings": 1,
+                        "steps": ["Short step 1", "Short step 2"]
+                    }}
+                    """
+
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        json={
+                            "model": model,
+                            "messages": [
+                                {"role": "system", "content": "You are a professional nutritionist and chef. You only respond with valid JSON."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            "response_format": {"type": "json_object"}
+                        },
+                        timeout=30.0
+                    )
+                    
+                    if response.status_code == 429:
+                        delay = base_delay * (2 ** attempt)
+                        logger.warning(f"[GROQ_429] Rate limited. Retrying in {delay}s... (Attempt {attempt + 1}/{max_retries})")
+                        await asyncio.sleep(delay)
+                        continue
+                        
+                    response.raise_for_status()
+                    result = response.json()
+                    content = result["choices"][0]["message"]["content"]
+                    return json.loads(content)
+                    
+            except Exception as e:
+                logging.getLogger(__name__).error(f"Groq generation failed: {e}")
+                if attempt == max_retries - 1:
+                    return None
+                await asyncio.sleep(1.0)
         
-        if action == "generate_supplement_note":
-            missing_protein_g = payload.get("missing_protein_g", 0)
-            diet = payload.get("diet_type", "any")
-            allergy_list = payload.get("allergies", [])
-            nutrition = payload.get("nutrition_targets", {})
-            safety = payload.get("safety_constraints", {})
-            
-            prompt = f"""
-            The user needs a short, friendly note suggesting how to achieve a remaining {missing_protein_g:.1f}g protein gap for their diet.
-            Their diet type is {diet}.
-            They are allergic to: {', '.join(allergy_list) if allergy_list else 'None'}.
-            Nutrition targets: {json.dumps(nutrition)}
-            Safety constraints: {json.dumps(safety)}
-            
-            STRICT rules:
-            1. 1 scoop of protein powder = ~25g protein. Calculate: gap / 25, then round to the nearest 0.5 (e.g. 37g gap → 1.5 scoops, 55g gap → 2 scoops, 70g gap → 3 scoops).
-            2. NEVER suggest more than 3 scoops. NEVER write fractional explanations like ".5 scoop each".
-            3. If 3 scoops alone cannot cover the gap, also suggest whole foods the diet allows (eggs ~6g each, sprouts, high-protein yogurt).
-            4. If the gap is too large to fill realistically, just say: "You're a bit low on protein today — don't worry, try balancing it tomorrow!"
-            5. Choose a safe powder type based on allergies/diet (whey for non-vegan without milk allergy, pea protein for vegan/milk-allergic, etc).
-            
-            Keep it to 1-2 sentences. Do NOT include the word "Guidance" or hydration tips.
-            Respond ONLY with a JSON object:
-            {{ "note": "Note: ..." }}
-            """
-        else:
-            meal_type = payload.get("meal_type", "meal")
-            ingredients = payload.get("ingredients", [])
-            diet_type = payload.get("diet_type", "any")
-            allergies = payload.get("allergies", [])
-            foods_to_avoid = payload.get("foods_to_avoid", [])
-            budget = payload.get("budget_constraints")
-            lifestyle = payload.get("lifestyle_constraints")
-            cuisine = payload.get("cuisine", "indian")
-            reuse = payload.get("reuse_ingredients", False)
-            
-            constraints_text = f"\n- PREFERRED CUISINE: {cuisine}"
-            if reuse:
-                constraints_text += "\n- INGREDIENT REUSE: This plan prioritizes reusing core ingredients from previous meals to save time and reduce waste."
-            
-            if allergies:
-                constraints_text += f"\n- MUST NOT contain any of these allergens: {', '.join(allergies)}"
-            if foods_to_avoid:
-                constraints_text += f"\n- MUST NOT contain any of these foods: {', '.join(foods_to_avoid)}"
-            if budget:
-                constraints_text += f"\n- Keep in mind budget constraints: {budget}"
-            if lifestyle:
-                constraints_text += f"\n- Keep in mind lifestyle constraints: {lifestyle}"
-        
-            
-            prompt = f"""
-            Generate a creative recipe name, description, and instructions for a {meal_type} with these ingredients:
-            {json.dumps(ingredients)}
-            The user follows a {diet_type} diet.
-            {constraints_text}
-            
-            IMPORTANT RULES:
-            1. Use VERY SIMPLE English. No difficult words.
-            2. Keep instructions short and clear.
-            3. Respond ONLY with a JSON object following this schema:
-            {{
-                "meal_name": "Simple Name",
-                "description": "Very simple short description",
-                "prep_time_minutes": 10,
-                "cook_time_minutes": 15,
-                "servings": 1,
-                "steps": ["Short step 1", "Short step 2"]
-            }}
-            """
-        
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    json={
-                        "model": model,
-                        "messages": [
-                            {"role": "system", "content": "You are a professional nutritionist and chef. You only respond with valid JSON."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        "response_format": {"type": "json_object"}
-                    },
-                    timeout=30.0
-                )
-                response.raise_for_status()
-                result = response.json()
-                content = result["choices"][0]["message"]["content"]
-                return json.loads(content)
-        except Exception as e:
-            logging.getLogger(__name__).error(f"Groq generation failed: {e}")
-            return None
+        return None
 
     return generate
 

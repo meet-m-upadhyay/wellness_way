@@ -10,6 +10,7 @@ from .food_datasets import FoodDataset
 from .registry_versions import RegistryVersion
 from .food_audit_log import FoodAuditLog
 from .food_embeddings import FoodEmbedding
+from .chat import Chat, Message
 
 __all__ = [
     "User",
@@ -22,4 +23,6 @@ __all__ = [
     "RegistryVersion",
     "FoodAuditLog",
     "FoodEmbedding",
+    "Chat",
+    "Message",
 ]

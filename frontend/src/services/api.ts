@@ -147,6 +147,23 @@ export interface DietPlanSummaryListResponse {
   total: number;
 }
 
+export interface Message {
+  id: string;
+  chat_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  metadata_json?: any;
+  created_at: string;
+}
+
+export interface Chat {
+  id: string;
+  user_id: string;
+  title?: string;
+  created_at: string;
+  messages?: Message[];
+}
+
 // Legacy interfaces for backward compatibility with existing components
 export interface LegacyMeal {
   name: string;
@@ -704,6 +721,43 @@ class ApiClient {
   // Database health check
   async databaseHealthCheck(): Promise<ApiResponse<{ status: string; database: string }>> {
     return this.request<{ status: string; database: string }>('/db-health');
+  }
+
+  // Chat API
+  async createChat(userId: string, title?: string): Promise<ApiResponse<Chat>> {
+    return this.request<Chat>('/chats/', {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify({ title }),
+    });
+  }
+
+  async getChats(userId: string): Promise<ApiResponse<Chat[]>> {
+    return this.request<Chat[]>('/chats/', {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+  }
+
+  async getChatDetail(chatId: string, userId: string): Promise<ApiResponse<Chat>> {
+    return this.request<Chat>(`/chats/${chatId}`, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+  }
+
+  async addMessage(chatId: string, role: string, content: string, userId: string, metadata?: any): Promise<ApiResponse<Message>> {
+    return this.request<Message>(`/chats/${chatId}/messages`, {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify({ role, content, metadata_json: metadata }),
+    });
   }
 
   // Delete diet plan

@@ -12,8 +12,8 @@ class SecurityHeaders:
     CSP_POLICY = {
         "production": (
             "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
             "font-src 'self' https:; "
             "connect-src 'self' https:; "
@@ -24,8 +24,8 @@ class SecurityHeaders:
         ),
         "development": (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
             "font-src 'self' https:; "
             "connect-src 'self' https: ws: wss:; "
