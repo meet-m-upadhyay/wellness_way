@@ -102,6 +102,18 @@ class SecuritySettings(BaseSettings):
         env="GOOGLE_CLIENT_SECRET"
     )
     
+    def __init__(self, **kwargs):
+        # Explicitly load environment variables for nested settings
+        import os
+        if 'google_client_id' not in kwargs and os.getenv('GOOGLE_CLIENT_ID'):
+            kwargs['google_client_id'] = os.getenv('GOOGLE_CLIENT_ID')
+        if 'google_client_secret' not in kwargs and os.getenv('GOOGLE_CLIENT_SECRET'):
+            kwargs['google_client_secret'] = os.getenv('GOOGLE_CLIENT_SECRET')
+        if 'jwt_secret_key' not in kwargs and os.getenv('JWT_SECRET_KEY'):
+            kwargs['jwt_secret_key'] = os.getenv('JWT_SECRET_KEY')
+        super().__init__(**kwargs)
+
+    
     password_min_length: int = Field(default=8, ge=6)
     bcrypt_rounds: int = Field(default=12, ge=10, le=15)
     
@@ -249,6 +261,36 @@ class CacheSettings(BaseSettings):
     health_context_ttl: int = Field(default=7200, ge=600)  # 2 hours
 
 
+class EmailSettings(BaseSettings):
+    """Email / SMTP configuration for notifications"""
+
+    model_config = ConfigDict(
+        case_sensitive=False,
+        extra="ignore",
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
+
+    smtp_host: str = Field(default="smtp.gmail.com", description="SMTP server host", env="SMTP_HOST")
+    smtp_port: int = Field(default=587, ge=1, le=65535, description="SMTP server port", env="SMTP_PORT")
+    smtp_user: Optional[str] = Field(default=None, description="SMTP username (email)", env="SMTP_USER")
+    smtp_password: Optional[SecretStr] = Field(default=None, description="SMTP password or app-password", env="SMTP_PASSWORD")
+    from_email: Optional[str] = Field(default=None, description="Sender email address", env="FROM_EMAIL")
+    admin_email: Optional[str] = Field(default=None, description="Admin email to receive notifications", env="ADMIN_EMAIL")
+    enable_notifications: bool = Field(default=False, description="Master switch for email notifications", env="ENABLE_EMAIL_NOTIFICATIONS")
+    app_base_url: str = Field(default="http://localhost:3000", description="Frontend base URL for links in emails", env="APP_BASE_URL")
+
+    def __init__(self, **kwargs):
+        import os
+        for key in ('smtp_user', 'smtp_password', 'from_email', 'admin_email', 'app_base_url'):
+            env_key = key.upper()
+            if key not in kwargs and os.getenv(env_key):
+                kwargs[key] = os.getenv(env_key)
+        if 'enable_notifications' not in kwargs and os.getenv('ENABLE_EMAIL_NOTIFICATIONS'):
+            kwargs['enable_notifications'] = os.getenv('ENABLE_EMAIL_NOTIFICATIONS', 'false').lower() in ('true', '1', 'yes')
+        super().__init__(**kwargs)
+
+
 class Settings(BaseSettings):
     """Main application settings"""
     
@@ -280,6 +322,7 @@ class Settings(BaseSettings):
     enable_ai_generation: bool = Field(default=True)
     enable_plan_regeneration: bool = Field(default=True)
     enable_analytics: bool = Field(default=False)
+    enable_ml_pipeline: bool = Field(default=False)
     
     # Nested settings
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
@@ -288,6 +331,7 @@ class Settings(BaseSettings):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
+    email: EmailSettings = Field(default_factory=EmailSettings)
     
     @validator('environment')
     def validate_environment(cls, v):

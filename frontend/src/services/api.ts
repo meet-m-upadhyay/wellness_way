@@ -51,6 +51,8 @@ export interface DietPreferences {
   allergies: string[];
   foods_to_avoid: string[];
   meals_per_day?: number;
+  cuisine: string;
+  reuse_ingredients: boolean;
   budget_constraints?: string;
   lifestyle_constraints?: string;
 }
@@ -96,6 +98,8 @@ export interface WeeklyPlanContent {
   start_date: string; // YYYY-MM-DD format
   days: DayPlan[];
   weekly_totals: Nutrition;
+  summary?: string;
+  notes?: string;
 }
 
 export interface DailyPlanContent {
@@ -104,6 +108,8 @@ export interface DailyPlanContent {
   day_name: string;
   meals: Meal[];
   daily_totals: Nutrition;
+  summary?: string;
+  notes?: string;
 }
 
 export interface BalanceGuidance {
@@ -141,6 +147,23 @@ export interface DietPlanSummaryListResponse {
   total: number;
 }
 
+export interface Message {
+  id: string;
+  chat_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  metadata_json?: any;
+  created_at: string;
+}
+
+export interface Chat {
+  id: string;
+  user_id: string;
+  title?: string;
+  created_at: string;
+  messages?: Message[];
+}
+
 // Legacy interfaces for backward compatibility with existing components
 export interface LegacyMeal {
   name: string;
@@ -169,6 +192,8 @@ export interface LegacyDailyPlan {
     total_carbs_g: number;
     total_fat_g: number;
   };
+  summary?: string;
+  notes?: string;
 }
 
 export interface LegacyWeeklyPlan {
@@ -180,13 +205,15 @@ export interface LegacyWeeklyPlan {
     avg_daily_carbs_g: number;
     avg_daily_fat_g: number;
   };
+  summary?: string;
+  notes?: string;
 }
 
 // Adapter functions to convert new interfaces to legacy format
 export function adaptMealToLegacy(meal: Meal): LegacyMeal {
   return {
     name: meal.name,
-    ingredients: meal.ingredients.map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`),
+    ingredients: meal.ingredients.map(ing => `${Math.round(ing.quantity)} ${ing.unit} ${ing.name}`),
     instructions: meal.instructions,
     nutrition: {
       calories: meal.nutrition.calories,
@@ -201,7 +228,7 @@ export function adaptMealToLegacy(meal: Meal): LegacyMeal {
 export function adaptDayPlanToLegacy(dayPlan: DayPlan): LegacyDailyPlan {
   const mealsByType: { [key: string]: Meal } = {};
   const snacks: Meal[] = [];
-  
+
   dayPlan.meals.forEach(meal => {
     if (meal.type === 'snack') {
       snacks.push(meal);
@@ -212,11 +239,11 @@ export function adaptDayPlanToLegacy(dayPlan: DayPlan): LegacyDailyPlan {
 
   // CRITICAL FIX: Calculate nutrition totals from actual meal data
   const calculatedNutrition = calculateNutritionTotals(dayPlan.meals);
-  
+
   // Check for discrepancies and log warnings
   const aiProtein = dayPlan.daily_totals.protein;
   const actualProtein = calculatedNutrition.total_protein_g;
-  
+
   if (Math.abs(aiProtein - actualProtein) > Math.max(aiProtein * 0.1, 5)) {
     console.warn(`Nutrition calculation mismatch detected: AI claimed ${aiProtein}g protein, actual ${actualProtein}g. Using calculated values.`);
   }
@@ -235,7 +262,7 @@ export function adaptDayPlanToLegacy(dayPlan: DayPlan): LegacyDailyPlan {
 
 export function adaptWeeklyPlanToLegacy(weeklyPlan: WeeklyPlanContent): LegacyWeeklyPlan {
   const adaptedDays = weeklyPlan.days.map(adaptDayPlanToLegacy);
-  
+
   // Calculate weekly nutrition from corrected daily values
   const weeklyNutrition = {
     avg_daily_calories: 0,
@@ -243,14 +270,14 @@ export function adaptWeeklyPlanToLegacy(weeklyPlan: WeeklyPlanContent): LegacyWe
     avg_daily_carbs_g: 0,
     avg_daily_fat_g: 0,
   };
-  
+
   adaptedDays.forEach(day => {
     weeklyNutrition.avg_daily_calories += day.daily_nutrition.total_calories;
     weeklyNutrition.avg_daily_protein_g += day.daily_nutrition.total_protein_g;
     weeklyNutrition.avg_daily_carbs_g += day.daily_nutrition.total_carbs_g;
     weeklyNutrition.avg_daily_fat_g += day.daily_nutrition.total_fat_g;
   });
-  
+
   // Calculate averages
   weeklyNutrition.avg_daily_calories = Math.round((weeklyNutrition.avg_daily_calories / 7) * 10) / 10;
   weeklyNutrition.avg_daily_protein_g = Math.round((weeklyNutrition.avg_daily_protein_g / 7) * 10) / 10;
@@ -261,13 +288,15 @@ export function adaptWeeklyPlanToLegacy(weeklyPlan: WeeklyPlanContent): LegacyWe
     start_date: weeklyPlan.start_date,
     days: adaptedDays,
     weekly_nutrition: weeklyNutrition, // Use calculated averages
+    summary: weeklyPlan.summary,
+    notes: weeklyPlan.notes,
   };
 }
 
 export function adaptDailyPlanToLegacy(dailyPlan: DailyPlanContent): LegacyDailyPlan {
   const mealsByType: { [key: string]: Meal } = {};
   const snacks: Meal[] = [];
-  
+
   dailyPlan.meals.forEach(meal => {
     if (meal.type === 'snack') {
       snacks.push(meal);
@@ -279,11 +308,11 @@ export function adaptDailyPlanToLegacy(dailyPlan: DailyPlanContent): LegacyDaily
   // CRITICAL FIX: Calculate nutrition totals from actual meal data
   // This prevents displaying incorrect AI-calculated totals
   const calculatedNutrition = calculateNutritionTotals(dailyPlan.meals);
-  
+
   // Check for discrepancies and log warnings
   const aiProtein = dailyPlan.daily_totals.protein;
   const actualProtein = calculatedNutrition.total_protein_g;
-  
+
   if (Math.abs(aiProtein - actualProtein) > Math.max(aiProtein * 0.1, 5)) {
     console.warn(`Nutrition calculation mismatch detected: AI claimed ${aiProtein}g protein, actual ${actualProtein}g. Using calculated values.`);
   }
@@ -297,6 +326,8 @@ export function adaptDailyPlanToLegacy(dailyPlan: DailyPlanContent): LegacyDaily
       snacks: snacks.length > 0 ? snacks.map(adaptMealToLegacy) : undefined,
     },
     daily_nutrition: calculatedNutrition, // Use calculated values instead of AI totals
+    summary: dailyPlan.summary,
+    notes: dailyPlan.notes,
   };
 }
 
@@ -384,7 +415,7 @@ class ApiClient {
                 const tokens = await refreshResponse.json();
                 localStorage.setItem('health_buddy_access_token', tokens.access_token);
                 localStorage.setItem('health_buddy_refresh_token', tokens.refresh_token);
-                
+
                 // Retry original request with new token
                 const retryResponse = await fetch(url, {
                   headers: {
@@ -448,7 +479,7 @@ class ApiClient {
     localStorage.removeItem('health_buddy_access_token');
     localStorage.removeItem('health_buddy_refresh_token');
     localStorage.removeItem('health_buddy_user');
-    
+
     // Redirect to login page
     window.location.href = '/login';
   }
@@ -459,7 +490,7 @@ class ApiClient {
     if (limit) params.append('limit', limit.toString());
     if (offset) params.append('offset', offset.toString());
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    
+
     return this.request<UserProfile[]>(`/users/profiles${queryString}`);
   }
 
@@ -526,7 +557,7 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(profile),
     });
-    
+
     if (response.data) {
       // Extract user_id from the profile response
       return {
@@ -537,7 +568,7 @@ class ApiClient {
         }
       };
     }
-    
+
     return response as ApiResponse<CompleteProfile & { user_id: string }>;
   }
 
@@ -556,7 +587,7 @@ class ApiClient {
   }
 
   async getHealthContext(userId: string, version?: number): Promise<ApiResponse<any>> {
-    const endpoint = version 
+    const endpoint = version
       ? `/health-context/${userId}/version/${version}`
       : `/health-context/${userId}/current`;
     return this.request<any>(endpoint);
@@ -567,7 +598,7 @@ class ApiClient {
     if (limit) params.append('limit', limit.toString());
     if (offset) params.append('offset', offset.toString());
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    
+
     return this.request<any>(`/health-context/${userId}/history${queryString}`);
   }
 
@@ -582,11 +613,13 @@ class ApiClient {
     planType: 'daily' | 'weekly',
     options?: { regenerate?: boolean; startDate?: string; targetDate?: string }
   ): Promise<ApiResponse<DietPlan>> {
-    const endpoint = planType === 'weekly' ? '/diet-plans/weekly' : '/diet-plans/daily';
-    
+    // ALWAYS use ML pipeline now
+    const baseEndpoint = '/diet-plans-ml';
+    const endpoint = planType === 'weekly' ? `${baseEndpoint}/weekly` : `${baseEndpoint}/daily`;
+
     // Prepare request body based on plan type
     let body: any = {};
-    
+
     if (planType === 'weekly') {
       if (options?.startDate) {
         body.start_date = options.startDate;
@@ -599,7 +632,7 @@ class ApiClient {
       }
       // If no target date provided, backend will default to today
     }
-    
+
     return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
@@ -610,7 +643,7 @@ class ApiClient {
   }
 
   async getDietPlan(planId: string, userId: string): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}`, {
+    return this.request<DietPlan>(`/diet-plans-ml/${planId}`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -622,8 +655,8 @@ class ApiClient {
     if (planType) params.append('plan_type', planType);
     if (limit) params.append('limit', limit.toString());
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    
-    return this.request<DietPlanSummaryListResponse>(`/diet-plans${queryString}`, {
+
+    return this.request<DietPlanSummaryListResponse>(`/diet-plans-ml${queryString}`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -636,20 +669,28 @@ class ApiClient {
     mealIndex: number,
     userId: string
   ): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}/regenerate-meal`, {
+    const endpoint = `/diet-plans-ml/${planId}/regenerate-meal-ml`;
+
+    return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         day_index: dayIndex,
-        meal_index: mealIndex 
+        meal_index: mealIndex
       }),
     });
   }
 
-  async regenerateDay(planId: string, dayIndex: number, userId: string): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}/regenerate-day`, {
+  async regenerateDay(
+    planId: string,
+    dayIndex: number,
+    userId: string
+  ): Promise<ApiResponse<DietPlan>> {
+    const endpoint = `/diet-plans-ml/${planId}/regenerate-day-ml`;
+
+    return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
@@ -658,8 +699,13 @@ class ApiClient {
     });
   }
 
-  async regenerateFullPlan(planId: string, userId: string): Promise<ApiResponse<DietPlan>> {
-    return this.request<DietPlan>(`/diet-plans/${planId}/regenerate`, {
+  async regenerateFullPlan(
+    planId: string,
+    userId: string
+  ): Promise<ApiResponse<DietPlan>> {
+    const endpoint = `/diet-plans-ml/${planId}/regenerate-ml`;
+
+    return this.request<DietPlan>(endpoint, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
@@ -677,9 +723,46 @@ class ApiClient {
     return this.request<{ status: string; database: string }>('/db-health');
   }
 
+  // Chat API
+  async createChat(userId: string, title?: string): Promise<ApiResponse<Chat>> {
+    return this.request<Chat>('/chats/', {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify({ title }),
+    });
+  }
+
+  async getChats(userId: string): Promise<ApiResponse<Chat[]>> {
+    return this.request<Chat[]>('/chats/', {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+  }
+
+  async getChatDetail(chatId: string, userId: string): Promise<ApiResponse<Chat>> {
+    return this.request<Chat>(`/chats/${chatId}`, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+  }
+
+  async addMessage(chatId: string, role: string, content: string, userId: string, metadata?: any): Promise<ApiResponse<Message>> {
+    return this.request<Message>(`/chats/${chatId}/messages`, {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify({ role, content, metadata_json: metadata }),
+    });
+  }
+
   // Delete diet plan
   async deleteDietPlan(planId: string, userId: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request<{ message: string }>(`/diet-plans/${planId}`, {
+    return this.request<{ message: string }>(`/diet-plans-ml/${planId}`, {
       method: 'DELETE',
       headers: {
         'X-User-Id': userId,

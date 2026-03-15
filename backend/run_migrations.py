@@ -5,27 +5,46 @@ Run Alembic migrations with explicit database URL
 import os
 import subprocess
 import sys
+from dotenv import load_dotenv
 
 def run_migrations():
-    # Set the database URL explicitly
-    os.environ["DATABASE_URL"] = "postgresql://wellnessway:password@localhost:5432/wellnessway_db"
+    # Load environment variables from .env file
+    load_dotenv()
     
-    print("Setting DATABASE_URL to localhost...")
-    print(f"DATABASE_URL: {os.environ['DATABASE_URL']}")
+    # Get DATABASE_URL from environment
+    db_url = os.getenv("DATABASE_URL")
+    
+    if not db_url:
+        print("❌ ERROR: DATABASE_URL not found in .env file!")
+        print("Please set DATABASE_URL in backend/.env")
+        return False
+    
+    # Set it in environment for Alembic
+    os.environ["DATABASE_URL"] = db_url
+    
+    # Mask password in output
+    display_url = db_url.split('@')[0].split(':')[0] + ":***@" + db_url.split('@')[1] if '@' in db_url else db_url
+    print(f"Connecting to: {display_url}")
+    print(f"Target: {db_url.split('@')[1] if '@' in db_url else 'unknown'}")
     
     # Run alembic upgrade
     try:
+        # Use the alembic CLI to avoid the local backend/alembic module shadowing
         result = subprocess.run([
-            sys.executable, "-m", "alembic", "upgrade", "head"
-        ], check=True, capture_output=True, text=True)
+            "alembic", "-c", "alembic.ini", "upgrade", "head"
+        ], check=True, capture_output=True, text=True, cwd=os.path.dirname(__file__))
         
-        print("✅ Migration successful!")
+        print("Migration successful!")
         print("STDOUT:", result.stdout)
         if result.stderr:
             print("STDERR:", result.stderr)
             
+    except FileNotFoundError:
+        print("ERROR: Alembic executable not found.")
+        print("Please activate your virtual environment or install dependencies.")
+        return False
     except subprocess.CalledProcessError as e:
-        print("❌ Migration failed!")
+        print("Migration failed!")
         print("STDOUT:", e.stdout)
         print("STDERR:", e.stderr)
         return False

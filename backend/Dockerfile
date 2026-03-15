@@ -1,35 +1,36 @@
-FROM python:3.11-slim
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim-bullseye
 
-# Set working directory
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV PORT 8080
+
+# Set work directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    postgresql-client \
-    curl \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    libgomp1 \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+# Install python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-ml.txt .
 
-# Copy application code and Alembic configuration
-COPY app/ ./app/
-COPY alembic/ ./alembic/
-COPY alembic.ini ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-ml.txt
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash wellnessway
-RUN chown -R wellnessway:wellnessway /app
-USER wellnessway
+# Copy the rest of the application code
+COPY . .
 
-# Expose port
-EXPOSE 8000
+# Expose the port the app runs on
+EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Command to run the application
+# We use start_backend.py which handles PORT env var and uvicorn startup
+CMD ["python", "start_backend.py"]

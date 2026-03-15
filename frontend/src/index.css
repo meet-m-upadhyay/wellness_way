@@ -2,72 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Wellness Theme Variables */
+/* Google Fonts - Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ============================================
+   Design System: CSS Custom Properties
+   ============================================ */
 :root {
-  /* Light theme colors */
-  --wellness-light-bg: #f8fafc;
-  --wellness-light-card: #ffffff;
-  --wellness-light-elevated: #f1f5f9;
-  --wellness-light-border: #e2e8f0;
-  --wellness-light-text: #1e293b;
-  --wellness-light-textSecondary: #475569;
-  --wellness-light-textMuted: #64748b;
+  /* Light theme */
+  --ww-bg: #f8fafb;
+  --ww-surface: #ffffff;
+  --ww-surface-elevated: #f1f4f8;
+  --ww-border: #e4e8ee;
+  --ww-text: #111827;
+  --ww-text-secondary: #4b5563;
+  --ww-text-muted: #6b7280;
+  --ww-accent: #10b981;
+  --ww-accent-hover: #059669;
+  --ww-accent-light: rgba(16, 185, 129, 0.08);
+  --ww-accent-secondary: #6366f1;
+  --ww-shadow: rgba(0, 0, 0, 0.04);
+  --ww-shadow-md: rgba(0, 0, 0, 0.08);
+  --ww-overlay: rgba(0, 0, 0, 0.4);
 }
 
 .dark {
-  /* Dark theme colors */
-  --wellness-light-bg: #0f172a;
-  --wellness-light-card: #1e293b;
-  --wellness-light-elevated: #334155;
-  --wellness-light-border: #475569;
-  --wellness-light-text: #f1f5f9;
-  --wellness-light-textSecondary: #cbd5e1;
-  --wellness-light-textMuted: #94a3b8;
+  /* Dark theme */
+  --ww-bg: #0c1222;
+  --ww-surface: #162032;
+  --ww-surface-elevated: #1e2d44;
+  --ww-border: #2a3a52;
+  --ww-text: #f0f4f8;
+  --ww-text-secondary: #94a3b8;
+  --ww-text-muted: #64748b;
+  --ww-accent: #34d399;
+  --ww-accent-hover: #10b981;
+  --ww-accent-light: rgba(52, 211, 153, 0.08);
+  --ww-accent-secondary: #818cf8;
+  --ww-shadow: rgba(0, 0, 0, 0.2);
+  --ww-shadow-md: rgba(0, 0, 0, 0.3);
+  --ww-overlay: rgba(0, 0, 0, 0.6);
 }
 
-/* Apply theme colors */
-.bg-wellness-light-bg {
-  background-color: var(--wellness-light-bg);
-}
-
-.bg-wellness-light-card {
-  background-color: var(--wellness-light-card);
-}
-
-.bg-wellness-light-elevated {
-  background-color: var(--wellness-light-elevated);
-}
-
-.border-wellness-light-border {
-  border-color: var(--wellness-light-border);
-}
-
-.text-wellness-light-text {
-  color: var(--wellness-light-text);
-}
-
-.text-wellness-light-textSecondary {
-  color: var(--wellness-light-textSecondary);
-}
-
-.text-wellness-light-textMuted {
-  color: var(--wellness-light-textMuted);
-}
-
-.placeholder-wellness-light-textMuted::placeholder {
-  color: var(--wellness-light-textMuted);
-}
-
+/* ============================================
+   Base Styles
+   ============================================ */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--ww-bg);
+  color: var(--ww-text);
+  letter-spacing: -0.01em;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ============================================
+   Utility Classes (Wellness Design System)
+   ============================================ */
+
+/* Dynamic theme backgrounds */
+.bg-ww-bg { background-color: var(--ww-bg); }
+.bg-ww-surface { background-color: var(--ww-surface); }
+.bg-ww-surface-elevated { background-color: var(--ww-surface-elevated); }
+.border-ww { border-color: var(--ww-border); }
+.text-ww { color: var(--ww-text); }
+.text-ww-secondary { color: var(--ww-text-secondary); }
+.text-ww-muted { color: var(--ww-text-muted); }
+
+/* Legacy compatibility classes */
+.bg-wellness-light-bg { background-color: var(--ww-bg); }
+.bg-wellness-light-card { background-color: var(--ww-surface); }
+.bg-wellness-light-elevated { background-color: var(--ww-surface-elevated); }
+.border-wellness-light-border { border-color: var(--ww-border); }
+.text-wellness-light-text { color: var(--ww-text); }
+.text-wellness-light-textSecondary { color: var(--ww-text-secondary); }
+.text-wellness-light-textMuted { color: var(--ww-text-muted); }
+.placeholder-wellness-light-textMuted::placeholder { color: var(--ww-text-muted); }
+
+/* Gradient backgrounds */
+.bg-gradient-wellness {
+  background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(99,102,241,0.05) 100%);
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.dark .glass {
+  background: rgba(22, 32, 50, 0.75);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

@@ -12,6 +12,20 @@ class GoogleTokenRequest(BaseModel):
     token: str = Field(..., description="Google OAuth ID token")
 
 
+class EmailSignupRequest(BaseModel):
+    """Request schema for email/password signup"""
+    email: EmailStr = Field(..., description="User email")
+    password: str = Field(..., min_length=8, description="User password")
+    confirm_password: str = Field(..., min_length=8, description="Password confirmation")
+    name: Optional[str] = Field(None, description="User display name")
+
+
+class EmailLoginRequest(BaseModel):
+    """Request schema for email/password login"""
+    email: EmailStr = Field(..., description="User email")
+    password: str = Field(..., description="User password")
+
+
 class TokenResponse(BaseModel):
     """Response schema for authentication tokens"""
     access_token: str = Field(..., description="JWT access token")

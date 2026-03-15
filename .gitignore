@@ -223,7 +223,9 @@ dist
 
 # Gatsby files
 .cache/
-public
+# Note: React apps need their public folder committed
+# Only ignore Gatsby's public folder if using Gatsby
+# public
 
 # Vuepress build output
 .vuepress/dist
@@ -300,3 +302,8 @@ test-results.xml
 secrets/
 .kiro/secrets/
 **/.env
+
+# Secret files for Notion (DO NOT COMMIT)
+ENVIRONMENT_SECRETS_GUIDE.md
+NOTION_SECRETS_TEMPLATE.md
+SECRETS_ONLY.txt

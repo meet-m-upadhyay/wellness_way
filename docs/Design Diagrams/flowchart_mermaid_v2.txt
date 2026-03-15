@@ -1,0 +1,64 @@
+graph TD
+    subgraph "Frontend Layer (React + Tailwind CSS)"
+        Dashboard["User Dashboard"]
+        DietPlans["Diet Plans View"]
+        HistoryView["History View (NEW)"]
+        API_Client["API Client (api.ts)"]
+    end
+
+    subgraph "Backend API Layer (FastAPI)"
+        Router["Main API Router"]
+        
+        subgraph "Chat Component"
+            Chat_API["Chat Endpoints (/chats)"]
+            Chat_Schema["Chat Pydantic Schemas"]
+        end
+        
+        subgraph "Diet & ML Component"
+            Diet_API["Diet ML Endpoints (/diet-plans-ml)"]
+            Orchestrator["ML Pipeline Orchestrator"]
+            GenAI["GenAI Service (LLM)"]
+        end
+    end
+
+    subgraph "Database Layer (PostgreSQL)"
+        Users_T["Users Table"]
+        HCD_T["Health Context Documents"]
+        Plans_T["Diet Plans Table"]
+        
+        subgraph "Conversation History (NEW)"
+            Chats_T["Chats Table"]
+            Messages_T["Messages Table"]
+        end
+    end
+
+    %% Frontend to Backend Connections
+    Dashboard & DietPlans & HistoryView <--> API_Client
+    API_Client <--> Router
+    
+    %% Router to Endpoints
+    Router <--> Chat_API
+    Router <--> Diet_API
+    
+    %% Diet Plan Logic & ML
+    Diet_API <--> Orchestrator
+    Orchestrator <--> GenAI
+    
+    %% Automatic Logging Flow (Critical Change)
+    Diet_API -- "Auto-Log Regeneration Events" --> Chat_API
+    
+    %% Database Associations
+    Chat_API <--> Chats_T
+    Chat_API <--> Messages_T
+    Chats_T -- "Foreign Key" --> Users_T
+    
+    Diet_API <--> Plans_T
+    Diet_API <--> HCD_T
+    
+    %% Future Context Flow
+    GenAI -. "Retrieve Context" .-> Messages_T
+    
+    style HistoryView fill:#f0fdf4,stroke:#10b981
+    style Chat_API fill:#f0fdf4,stroke:#10b981
+    style Chats_T fill:#fdf4ff,stroke:#a855f7
+    style Messages_T fill:#fdf4ff,stroke:#a855f7

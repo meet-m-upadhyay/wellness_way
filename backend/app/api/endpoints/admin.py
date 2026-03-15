@@ -2,8 +2,8 @@
 Admin API endpoints for managing user approvals
 """
 
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -12,8 +12,14 @@ from app.models.user import User, RegistrationRequest
 from app.schemas.admin import (
     RegistrationRequestResponse,
     PendingRequestsResponse,
-    ApprovalResponse
+    ApprovalResponse,
+    AdminActionRequest
 )
+from app.core.events import event_bus, ADMIN_ACTION_COMPLETED
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -43,6 +49,7 @@ async def get_pending_requests(
                 name=req.name,
                 google_id=req.google_id,
                 status=req.status,
+                admin_note=req.admin_note,
                 created_at=req.created_at,
                 updated_at=req.updated_at
             )
@@ -57,13 +64,36 @@ async def get_pending_requests(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get pending requests: {str(e)}"
+            detail=f"Failed to load pending requests: {str(e)}"
+        )
+
+
+@router.get("/pending-count")
+async def get_pending_count(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the count of pending registration requests
+    
+    **ADMIN ONLY**: This endpoint requires admin privileges.
+    """
+    try:
+        count = db.query(RegistrationRequest).filter(
+            RegistrationRequest.status == 'pending'
+        ).count()
+        return {"count": count}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get pending count: {str(e)}"
         )
 
 
 @router.post("/approve-user/{request_id}", response_model=ApprovalResponse)
 async def approve_user_request(
     request_id: str,
+    body: Optional[AdminActionRequest] = Body(None),
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -71,8 +101,11 @@ async def approve_user_request(
     Approve a user registration request
     
     **ADMIN ONLY**: This endpoint requires admin privileges.
+    Optionally accepts a JSON body with a "note" field.
     """
     try:
+        note = body.note if body else None
+
         # Find the registration request
         registration_request = db.query(RegistrationRequest).filter(
             RegistrationRequest.id == request_id
@@ -90,8 +123,9 @@ async def approve_user_request(
                 detail=f"Request is already {registration_request.status}"
             )
         
-        # Approve the request
+        # Approve the request and save note
         registration_request.approve()
+        registration_request.admin_note = note
         db.commit()
         
         # Create the user account
@@ -99,6 +133,7 @@ async def approve_user_request(
             email=registration_request.email,
             google_id=registration_request.google_id,
             name=registration_request.name,
+            password_hash=registration_request.password_hash,
             is_active=True,
             is_admin=False,
             approval_status='approved',
@@ -108,6 +143,15 @@ async def approve_user_request(
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+
+        # Publish event to notify user via email
+        await event_bus.publish(
+            ADMIN_ACTION_COMPLETED,
+            user_email=registration_request.email,
+            user_name=registration_request.name,
+            status="approved",
+            note=note,
+        )
         
         return ApprovalResponse(
             success=True,
@@ -127,6 +171,7 @@ async def approve_user_request(
 @router.post("/decline-user/{request_id}", response_model=ApprovalResponse)
 async def decline_user_request(
     request_id: str,
+    body: Optional[AdminActionRequest] = Body(None),
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -134,8 +179,11 @@ async def decline_user_request(
     Decline a user registration request
     
     **ADMIN ONLY**: This endpoint requires admin privileges.
+    Optionally accepts a JSON body with a "note" field.
     """
     try:
+        note = body.note if body else None
+
         # Find the registration request
         registration_request = db.query(RegistrationRequest).filter(
             RegistrationRequest.id == request_id
@@ -153,9 +201,19 @@ async def decline_user_request(
                 detail=f"Request is already {registration_request.status}"
             )
         
-        # Decline the request
+        # Decline the request and save note
         registration_request.decline()
+        registration_request.admin_note = note
         db.commit()
+
+        # Publish event to notify user via email
+        await event_bus.publish(
+            ADMIN_ACTION_COMPLETED,
+            user_email=registration_request.email,
+            user_name=registration_request.name,
+            status="declined",
+            note=note,
+        )
         
         return ApprovalResponse(
             success=True,
@@ -196,6 +254,7 @@ async def get_all_requests(
                 name=req.name,
                 google_id=req.google_id,
                 status=req.status,
+                admin_note=req.admin_note,
                 created_at=req.created_at,
                 updated_at=req.updated_at
             )

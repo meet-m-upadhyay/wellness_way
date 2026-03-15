@@ -47,18 +47,18 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
 
   if (showApproveConfirm) {
     return (
-      <div className="flex flex-col space-y-2 p-3 bg-green-50 border border-green-200 rounded-md">
+      <div className="flex flex-col space-y-2 p-3 bg-primary-50 dark:bg-primary-900/10 border border-primary-200/60 dark:border-primary-800/30 rounded-xl">
         <div className="text-sm text-green-800">
           <strong>Approve {userName}?</strong>
         </div>
-        <div className="text-xs text-green-700">
+        <div className="text-xs text-primary-700 dark:text-primary-300">
           This will allow {userEmail} to access the WellnessWay application.
         </div>
         <div className="flex space-x-2">
           <button
             onClick={handleApprove}
             disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-1 px-3 rounded-lg text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <div className="flex items-center">
@@ -72,7 +72,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
           <button
             onClick={() => setShowApproveConfirm(false)}
             disabled={loading}
-            className="bg-wellness-light-textMuted hover:bg-wellness-light-textSecondary text-wellness-light-card dark:bg-wellness-dark-textMuted dark:hover:bg-wellness-dark-textSecondary dark:text-wellness-dark-card font-bold py-1 px-3 rounded text-xs disabled:opacity-50 transition-colors"
+            className="bg-wellness-light-elevated hover:bg-wellness-light-border dark:bg-wellness-dark-elevated dark:hover:bg-wellness-dark-border text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary font-semibold py-1 px-3 rounded-lg text-xs disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
@@ -83,7 +83,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
 
   if (showDeclineConfirm) {
     return (
-      <div className="flex flex-col space-y-2 p-3 bg-red-50 border border-red-200 rounded-md">
+      <div className="flex flex-col space-y-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200/60 dark:border-red-800/30 rounded-xl">
         <div className="text-sm text-red-800">
           <strong>Decline {userName}?</strong>
         </div>
@@ -94,7 +94,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
           <button
             onClick={handleDecline}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded-lg text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <div className="flex items-center">
@@ -108,7 +108,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
           <button
             onClick={() => setShowDeclineConfirm(false)}
             disabled={loading}
-            className="bg-wellness-light-textMuted hover:bg-wellness-light-textSecondary text-wellness-light-card dark:bg-wellness-dark-textMuted dark:hover:bg-wellness-dark-textSecondary dark:text-wellness-dark-card font-bold py-1 px-3 rounded text-xs disabled:opacity-50 transition-colors"
+            className="bg-wellness-light-elevated hover:bg-wellness-light-border dark:bg-wellness-dark-elevated dark:hover:bg-wellness-dark-border text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary font-semibold py-1 px-3 rounded-lg text-xs disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
@@ -122,7 +122,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
       <button
         onClick={() => setShowApproveConfirm(true)}
         disabled={disabled}
-        className="bg-secondary-500 hover:bg-secondary-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold py-1 px-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
         title="Approve this user's registration request"
       >
         <div className="flex items-center">
@@ -132,11 +132,11 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
           Approve
         </div>
       </button>
-      
+
       <button
         onClick={() => setShowDeclineConfirm(true)}
         disabled={disabled}
-        className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
         title="Decline this user's registration request"
       >
         <div className="flex items-center">

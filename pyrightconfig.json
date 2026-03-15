@@ -1,0 +1,14 @@
+{
+    "include": [
+        "backend/app",
+        "backend/scripts"
+    ],
+    "executionEnvironments": [
+        {
+            "root": "backend",
+            "extraPaths": [
+                "backend"
+            ]
+        }
+    ]
+}

@@ -1,315 +1,238 @@
-# 📚 Supabase Migration Documentation Index
+# WellnessWay Documentation Index
 
-Welcome! This index helps you find the right documentation for your needs.
+**Last Updated**: February 22, 2026
 
----
-
-## 🎯 Quick Navigation
-
-### ⚡ I need to get started immediately
-👉 **5-minute setup**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-- Supabase setup in 5 minutes
-- Docker setup in 5 minutes  
-- Common issues and quick fixes
-
-### 📖 I need comprehensive instructions
-👉 **Complete guide**: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-- Step-by-step Supabase setup
-- Environment configuration
-- Database migration
-- Troubleshooting (17 issues covered)
-- Performance tuning
-
-### 👥 I'm managing a team migration
-👉 **Team checklist**: [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-- Pre-migration planning
-- Individual setup steps for each developer
-- Team lead tasks
-- Security checklist
-- Post-migration verification
-
-### 🔧 I need to understand the implementation
-👉 **Technical details**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-- What was created and why
-- Backward compatibility details
-- How everything works together
-- Performance considerations
-- Verification checklist
-
-### 📝 I need a file list
-👉 **Files overview**: [FILES_CREATED_SUMMARY.md](FILES_CREATED_SUMMARY.md)
-- All new files created
-- All modified files
-- File purposes and usage
-- Statistics and metrics
+Your central hub for all project documentation.
 
 ---
 
-## 📋 All Documentation Files
+## 🚀 START HERE
 
-### Setup Guides
+### New to the Project?
+1. **[QUICK_START.md](QUICK_START.md)** ⭐ - Get running in 5 minutes
+2. **[README.md](README.md)** - Project overview
+3. **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete guide
 
-| File | Purpose | Best For | Time |
-|------|---------|----------|------|
-| [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md) | Fast setup reference | Quick starters | 5 min |
-| [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md) | Complete setup guide | Detailed reference | 30 min |
-| [README.md](README.md) | Project overview | General reference | 15 min |
-
-### Team Management
-
-| File | Purpose | Best For | Time |
-|------|---------|----------|------|
-| [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md) | Team coordination | Team leads | 1 hour |
-
-### Technical Reference
-
-| File | Purpose | Best For | Time |
-|------|---------|----------|------|
-| [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md) | Implementation details | Architects, reviewers | 20 min |
-| [FILES_CREATED_SUMMARY.md](FILES_CREATED_SUMMARY.md) | File descriptions | Project understanding | 15 min |
-
-### Configuration Templates
-
-| File | Purpose | Usage |
-|------|---------|-------|
-| [.env.supabase.example](.env.supabase.example) | Supabase config template | `cp .env.supabase.example .env.supabase` |
-| [.env.example](.env.example) | Docker config template | `cp .env.example .env` (unchanged) |
-
-### Automation Scripts
-
-| File | Purpose | Usage |
-|------|---------|-------|
-| [backend/setup_supabase.py](backend/setup_supabase.py) | Setup verification | `python setup_supabase.py --help` |
+### For AI Agents / System Understanding
+1. **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)** - Complete system handover
+2. **[docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md)** - Quick reference
+3. **[spec.md](spec.md)** - Original specification
 
 ---
 
-## 🗺️ Reading Path by Role
+## 📁 Documentation Structure
 
-### 👨‍💻 Individual Developer
-
-1. **Start here**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-   - Pick your setup (Supabase or Docker)
-   - Follow 5-minute instructions
-   
-2. **Need details?**: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-   - Understand each step
-   - Learn troubleshooting
-
-3. **Need help?**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-common-issues)
-   - Quick issue resolution
-
----
-
-### 👔 Team Lead / Manager
-
-1. **Start here**: [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-   - Plan migration
-   - Manage team setup
-   - Track progress
-
-2. **Technical review**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-   - Understand what was done
-   - Verify compatibility
-
-3. **Documentation update**: [README.md](README.md)
-   - Share with team
-   - Reference documentation
+```
+wellness_way/
+├── QUICK_START.md                      ⭐ Start here!
+├── README.md                           Project overview
+├── spec.md                             Original specification
+├── DOCUMENTATION_INDEX.md              This file
+├── GOOGLE_OAUTH_SETUP.md              OAuth configuration
+├── NOTIFICATION_SYSTEM_ARCHITECTURE.md System architecture
+└── docs/
+    ├── PROJECT_DOCUMENTATION.md        Complete project guide
+    ├── SYSTEM_INTELLIGENCE_DOCUMENT.md Complete system handover
+    ├── SYSTEM_INTELLIGENCE_QUICK_REF.md Quick reference
+    ├── ENVIRONMENT_SETUP.md            Environment configuration
+    ├── SUPABASE_MIGRATION.md           Database migration guide
+    ├── CI_CD_SETUP.md                  Deployment guide
+    └── CLEANUP_PLAN.md                 Cleanup documentation
+```
 
 ---
 
-### 🏗️ Architect / Technical Lead
-
-1. **Implementation review**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-   - Verify architecture
-   - Check compatibility
-   - Review security
-
-2. **File overview**: [FILES_CREATED_SUMMARY.md](FILES_CREATED_SUMMARY.md)
-   - Understand all changes
-   - Review structure
-
-3. **Source code**: 
-   - [backend/setup_supabase.py](backend/setup_supabase.py) - Setup script
-   - [.env.supabase.example](.env.supabase.example) - Configuration
-
----
-
-### 🔧 DevOps / Infrastructure
-
-1. **Implementation**: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-   - Understand setup
-   - Performance tuning
-
-2. **Configuration**: [.env.supabase.example](.env.supabase.example)
-   - Environment variables
-   - Connection pooling
-
-3. **Automation**: [backend/setup_supabase.py](backend/setup_supabase.py)
-   - Setup verification
-   - Diagnostics
-
----
-
-### 🚀 First-Time User
-
-1. **Quick start**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-   - 5-minute setup guide
-   - Choose your path
-
-2. **Detailed guide**: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-   - In-depth instructions
-   - Step-by-step process
-
-3. **Troubleshooting**: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-common-issues)
-   - Quick fixes
-   - Issue resolution
-
----
-
-## 📚 Documentation by Topic
+## 📖 Documentation by Purpose
 
 ### Getting Started
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md) - Fast setup
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md) - Complete guide
-- [README.md](README.md) - Project overview
+- **[QUICK_START.md](QUICK_START.md)** - 5-minute setup guide
+- **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** - Detailed environment setup
+- **[README.md](README.md)** - Project overview
 
-### Supabase Setup
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#supabase-project-setup)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-choose-your-setup)
-- [.env.supabase.example](.env.supabase.example)
+### System Understanding
+- **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)** - Complete system documentation (1,878 lines)
+  - Architecture
+  - Database design
+  - API contracts
+  - Business logic flows
+  - ML pipeline details
+  - Extension guides
+- **[docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md)** - Quick reference
+- **[spec.md](spec.md)** - Original specification
 
-### Environment Configuration
-- [.env.supabase.example](.env.supabase.example)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#environment-configuration)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
+### Development
+- **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete development guide
+- **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** - Environment configuration
+- **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)** - OAuth setup
+- **[NOTIFICATION_SYSTEM_ARCHITECTURE.md](NOTIFICATION_SYSTEM_ARCHITECTURE.md)** - System architecture
 
-### Database Migration
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#database-migration)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-quick-start---supabase-5-minutes)
-- [backend/setup_supabase.py](backend/setup_supabase.py)
+### Database & Infrastructure
+- **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** - Supabase setup and migration
+- **[QUICK_START.md#database-setup](QUICK_START.md#database-setup)** - Quick database setup
 
-### Verification & Testing
-- [backend/setup_supabase.py](backend/setup_supabase.py) - Setup verification
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#verification)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-verify-setup)
-
-### Troubleshooting
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#troubleshooting)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-common-issues)
-- [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md#troubleshooting-during-setup)
-
-### Multi-Device Development
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#multi-device-development)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-multi-device-setup)
-- [README.md](README.md#multi-device-development)
-
-### Team Migration
-- [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-
-### Security
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#advanced-topics)
-- [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md#security-checklist)
-- [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-security-notes)
-
-### Performance
-- [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md#performance-considerations)
-- [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#connection-pooling)
+### Deployment
+- **[docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)** - CI/CD configuration
+- **[QUICK_START.md#deployment](QUICK_START.md#deployment)** - Deployment overview
 
 ---
 
-## 🔍 Find What You Need
+## 🎯 Quick Links by Task
 
-### Search by Scenario
+### "I want to run the app locally"
+→ **[QUICK_START.md](QUICK_START.md)**
 
-**Scenario**: "I want to use Supabase on my laptop"
-- Read: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-quick-start---supabase-5-minutes)
+### "I need to understand the entire system"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)**
 
-**Scenario**: "Our team needs to migrate from Docker"
-- Read: [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
+### "I want to add a new feature"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#13-how-to-extend-the-system](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#13-how-to-extend-the-system)**
 
-**Scenario**: "I need to configure environment variables"
-- Read: [.env.supabase.example](.env.supabase.example)
-- Reference: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#environment-configuration)
+### "I need to setup Google OAuth"
+→ **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)**
 
-**Scenario**: "My connection is failing"
-- Read: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#connection-issues)
-- Run: `python setup_supabase.py --test-connection`
+### "I need to setup Supabase"
+→ **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)**
 
-**Scenario**: "I need to verify my setup"
-- Run: `python setup_supabase.py --diagnose`
-- Read: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-verify-setup)
+### "I need environment variables"
+→ **[QUICK_START.md#environment-variables](QUICK_START.md#environment-variables)**
 
-**Scenario**: "I need to go back to Docker"
-- Read: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-quick-start---docker-local-5-minutes)
-- Reference: [README.md](README.md#switching-between-setups)
+### "I'm getting an error"
+→ **[QUICK_START.md#common-issues](QUICK_START.md#common-issues)**
+→ **[docs/PROJECT_DOCUMENTATION.md#troubleshooting](docs/PROJECT_DOCUMENTATION.md#troubleshooting)**
 
-**Scenario**: "I need to understand the migration"
-- Read: [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
+### "I need API documentation"
+→ http://localhost:8000/docs (when backend is running)
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts)**
 
-**Scenario**: "I want to work from multiple machines"
-- Read: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md#multi-device-development)
-- Reference: [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md#-multi-device-setup)
+### "I need to understand the ML pipeline"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline)**
 
----
-
-## 📊 File Statistics
-
-| Category | Count | Files |
-|----------|-------|-------|
-| New Documentation | 5 | QUICK_START_SUPABASE.md, docs/SUPABASE_MIGRATION.md, SUPABASE_MIGRATION_IMPLEMENTATION.md, SUPABASE_TEAM_MIGRATION_CHECKLIST.md, FILES_CREATED_SUMMARY.md |
-| Updated Documentation | 1 | README.md |
-| New Configuration | 1 | .env.supabase.example |
-| New Scripts | 1 | backend/setup_supabase.py |
-| Unchanged | Many | docker-compose.yml, .env.example, all app code, alembic migrations |
+### "I need to understand the database"
+→ **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design)**
 
 ---
 
-## ✅ What's Included
+## 🗂️ Files in Root Directory
 
-- ✅ Setup guides (quick and detailed)
-- ✅ Team migration checklist
-- ✅ Configuration templates
-- ✅ Automation script
-- ✅ Technical documentation
-- ✅ Troubleshooting guides
-- ✅ Security guidelines
-- ✅ Performance tuning
-- ✅ Multi-device support
-- ✅ 100% backward compatibility
+| File | Purpose | When to Read |
+|------|---------|--------------|
+| **QUICK_START.md** | 5-minute setup guide | First time setup |
+| **README.md** | Project overview | Understanding project |
+| **spec.md** | Original specification | Understanding requirements |
+| **DOCUMENTATION_INDEX.md** | This file | Finding documentation |
+| **GOOGLE_OAUTH_SETUP.md** | OAuth configuration | Setting up authentication |
+| **NOTIFICATION_SYSTEM_ARCHITECTURE.md** | System architecture | Understanding architecture |
 
 ---
 
-## 🚀 Get Started Now
+## 📚 Files in docs/ Directory
 
-**Choose your path:**
-
-1. **I'm in a hurry** → [QUICK_START_SUPABASE.md](QUICK_START_SUPABASE.md)
-2. **I need details** → [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
-3. **I'm a team lead** → [SUPABASE_TEAM_MIGRATION_CHECKLIST.md](SUPABASE_TEAM_MIGRATION_CHECKLIST.md)
-4. **I need technical details** → [SUPABASE_MIGRATION_IMPLEMENTATION.md](SUPABASE_MIGRATION_IMPLEMENTATION.md)
-
----
-
-## 💡 Tips
-
-- **Bookmark this page** for easy reference
-- **Share with your team** if coordinating migration
-- **Run `python setup_supabase.py --help`** to see script options
-- **Check troubleshooting first** before asking for help
-- **Keep `.env` files secure** - never commit them
+| File | Purpose | When to Read |
+|------|---------|--------------|
+| **PROJECT_DOCUMENTATION.md** | Complete project guide | Comprehensive understanding |
+| **SYSTEM_INTELLIGENCE_DOCUMENT.md** | Complete system handover | AI agent context / Deep dive |
+| **SYSTEM_INTELLIGENCE_QUICK_REF.md** | Quick reference | Quick lookups |
+| **ENVIRONMENT_SETUP.md** | Environment configuration | Detailed setup |
+| **SUPABASE_MIGRATION.md** | Database migration | Database setup |
+| **CI_CD_SETUP.md** | Deployment guide | Production deployment |
+| **CLEANUP_PLAN.md** | Cleanup documentation | Understanding cleanup |
 
 ---
 
-## 🆘 Need Help?
+## 🔍 Finding Information
 
-1. **Check troubleshooting sections**: Most common issues are covered
-2. **Run diagnostics**: `python setup_supabase.py --diagnose -v`
-3. **Search documentation**: Use Ctrl+F to find topics
-4. **Check project README**: [README.md](README.md)
+### By Topic
+
+**Authentication**
+- Setup: [GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)
+- Flow: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#authentication](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#authentication)
+
+**Database**
+- Setup: [QUICK_START.md#database-setup](QUICK_START.md#database-setup)
+- Schema: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#4-database-design)
+- Migration: [docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)
+
+**ML Pipeline**
+- Overview: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#ml-pipeline)
+- Templates: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#adding-new-ml-templates](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#adding-new-ml-templates)
+
+**API**
+- Endpoints: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#5-api-contracts)
+- Interactive: http://localhost:8000/docs
+
+**Frontend**
+- Setup: [QUICK_START.md#step-3-setup-frontend](QUICK_START.md#step-3-setup-frontend)
+- State: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#9-state-management](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#9-state-management)
+
+**Deployment**
+- Guide: [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
+- Quick: [QUICK_START.md#deployment](QUICK_START.md#deployment)
 
 ---
 
-**Happy coding!** 🎉
+## 🆘 Troubleshooting
 
-*Last updated: January 29, 2026*
+**Can't find what you're looking for?**
+1. Check [QUICK_START.md](QUICK_START.md) for common issues
+2. Search [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)
+3. Check [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)
+4. Review API docs: http://localhost:8000/docs
+
+**Still stuck?**
+- Check GitHub issues: https://github.com/meet-m-upadhyay/wellness_way/issues
+- Review backend logs for errors
+- Check browser console for frontend errors
+
+---
+
+## 📝 Documentation Maintenance
+
+### When to Update
+
+Update documentation when:
+- Adding new features
+- Changing architecture
+- Modifying database schema
+- Updating API contracts
+- Changing deployment process
+
+### What to Update
+
+| Change | Update These Files |
+|--------|-------------------|
+| New feature | PROJECT_DOCUMENTATION.md, SYSTEM_INTELLIGENCE_DOCUMENT.md |
+| New API endpoint | SYSTEM_INTELLIGENCE_DOCUMENT.md (API Contracts) |
+| Database change | SYSTEM_INTELLIGENCE_DOCUMENT.md (Database Design) |
+| Setup change | QUICK_START.md, ENVIRONMENT_SETUP.md |
+| Deployment change | CI_CD_SETUP.md |
+
+---
+
+## 🎓 Learning Path
+
+### For New Developers
+
+1. **Day 1**: Read [QUICK_START.md](QUICK_START.md), get app running
+2. **Day 2**: Read [README.md](README.md) and [spec.md](spec.md)
+3. **Day 3**: Read [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)
+4. **Week 1**: Deep dive into [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)
+5. **Ongoing**: Reference docs as needed
+
+### For AI Agents
+
+1. **First**: Read [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md) completely
+2. **Reference**: Use [docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md) for quick lookups
+3. **Extend**: Follow guides in Section 13 of SYSTEM_INTELLIGENCE_DOCUMENT.md
+
+---
+
+## 📞 Support
+
+- **Documentation**: This index and linked files
+- **API Docs**: http://localhost:8000/docs (when running)
+- **GitHub**: https://github.com/meet-m-upadhyay/wellness_way
+- **Issues**: https://github.com/meet-m-upadhyay/wellness_way/issues
+
+---
+
+**Start with [QUICK_START.md](QUICK_START.md) to get running in 5 minutes!** 🚀

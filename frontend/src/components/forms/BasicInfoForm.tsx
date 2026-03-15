@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../../services/api';
-import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Card from '../ui/Card';
@@ -119,71 +118,77 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   };
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-left">Basic Information</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-8 text-left">
-          Tell us about yourself so we can create a personalized diet plan.
-        </p>
+    <Card className="max-w-4xl mx-auto border-neutral-200 dark:border-neutral-800 shadow-xl shadow-neutral-200/50 dark:shadow-none rounded-3xl overflow-hidden">
+      <div className="p-8 sm:p-12 space-y-10">
+        <div className="space-y-2 text-left">
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white">Basic Information</h2>
+          <p className="text-neutral-500 dark:text-neutral-400">
+            Tell us about yourself so we can create a personalized diet plan.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-              Full Name *
-            </label>
-            <Input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
-              placeholder="Enter your full name"
-              error={errors.name}
-              required
-            />
-          </div>
-
-          {/* Age and Gender */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="age" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-                Age *
-              </label>
-              <Input
-                id="age"
-                type="number"
-                value={formData.age}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('age', parseInt(e.target.value) || 0)}
-                placeholder="25"
-                min="13"
-                max="120"
-                error={errors.age}
-                required
-              />
+        <form onSubmit={handleSubmit} className="space-y-12">
+          {/* Section 1: Personal Information */}
+          <div className="space-y-6 text-left">
+            <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-2 text-left">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-400 text-left">Personal Information</h3>
             </div>
 
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-                Gender *
-              </label>
-              <Select
-                id="gender"
-                value={formData.gender}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('gender', e.target.value)}
-                options={genderOptions}
-                error={errors.gender}
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <Input
+                  label="Full Name"
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
+                  placeholder="e.g. John Doe"
+                  error={errors.name}
+                  required
+                  fullWidth
+                />
+              </div>
+              <div>
+                <Input
+                  label="Age"
+                  id="age"
+                  type="number"
+                  value={formData.age}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('age', parseInt(e.target.value) || 0)}
+                  placeholder="25"
+                  min="13"
+                  max="120"
+                  error={errors.age}
+                  required
+                  fullWidth
+                />
+              </div>
+              <div>
+                <Select
+                  label="Gender"
+                  id="gender"
+                  value={formData.gender}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('gender', e.target.value)}
+                  options={genderOptions}
+                  error={errors.gender}
+                  required
+                  fullWidth
+                />
+              </div>
             </div>
           </div>
 
-          {/* Height and Weight */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="height" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-                Height (cm) *
-              </label>
+          {/* Section 2: Body Metrics */}
+          <div className="space-y-6 text-left">
+            <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-2 text-left">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-400 text-left">Body Metrics</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
+                label="Height (cm)"
                 id="height"
                 type="number"
                 value={formData.height_cm}
@@ -193,14 +198,10 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
                 max="250"
                 error={errors.height_cm}
                 required
+                fullWidth
               />
-            </div>
-
-            <div>
-              <label htmlFor="weight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-                Weight (kg) *
-              </label>
               <Input
+                label="Weight (kg)"
                 id="weight"
                 type="number"
                 value={formData.weight_kg}
@@ -211,85 +212,99 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
                 step="0.1"
                 error={errors.weight_kg}
                 required
+                fullWidth
               />
             </div>
           </div>
 
-          {/* Activity Level */}
-          <div>
-            <label htmlFor="activity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-              Activity Level *
-            </label>
-            <Select
-              id="activity"
-              value={formData.activity_level}
-              className='text-left'
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('activity_level', e.target.value)}
-              options={activityOptions}
-              error={errors.activity_level}
-              helperText={formData.activity_level ? getActivityDescription(formData.activity_level) : 'Select your typical activity level'}
-              required
-            />
-          </div>
+          {/* Section 3: Activity Level */}
+          <div className="space-y-6 text-left">
+            <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-2 text-left">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-400 text-left">Lifestyle</h3>
+            </div>
 
-          {/* Optional Body Composition */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 text-left">
-              Body Composition (Optional)
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 text-left">
-              These measurements help us create more accurate recommendations.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="bodyFat" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-                  Body Fat Percentage (%)
-                </label>
-                <Input
-                  id="bodyFat"
-                  type="number"
-                  value={formData.body_fat_percentage || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('body_fat_percentage', 
-                    e.target.value ? parseFloat(e.target.value) : undefined)}
-                  placeholder="15"
-                  min="3"
-                  max="50"
-                  step="0.1"
-                  error={errors.body_fat_percentage}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="muscleMass" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
-                  Muscle Mass (kg)
-                </label>
-                <Input
-                  id="muscleMass"
-                  type="number"
-                  value={formData.muscle_mass_kg || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('muscle_mass_kg', 
-                    e.target.value ? parseFloat(e.target.value) : undefined)}
-                  placeholder="35"
-                  min="10"
-                  max="100"
-                  step="0.1"
-                  error={errors.muscle_mass_kg}
-                />
-              </div>
+            <div>
+              <Select
+                label="Typical Activity Level"
+                id="activity"
+                value={formData.activity_level}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('activity_level', e.target.value)}
+                options={activityOptions}
+                error={errors.activity_level}
+                required
+                fullWidth
+              />
+              {formData.activity_level && (
+                <div className="mt-4 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-neutral-100 dark:border-neutral-800 flex items-start gap-3">
+                  <div className="mt-0.5 text-emerald-500">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed italic">
+                    {getActivityDescription(formData.activity_level)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end pt-6">
-            <Button
+          {/* Section 4: Optional Metrics */}
+          <div className="space-y-6 text-left">
+            <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-2 text-left">
+              <div className="h-2 w-2 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+              <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-400 text-left">Advanced Metrics (Optional)</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Body Fat Percentage (%)"
+                id="bodyFat"
+                type="number"
+                value={formData.body_fat_percentage || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('body_fat_percentage',
+                  e.target.value ? parseFloat(e.target.value) : undefined)}
+                placeholder="e.g. 15"
+                min="3"
+                max="50"
+                step="0.1"
+                error={errors.body_fat_percentage}
+                fullWidth
+              />
+              <Input
+                label="Muscle Mass (kg)"
+                id="muscleMass"
+                type="number"
+                value={formData.muscle_mass_kg || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('muscle_mass_kg',
+                  e.target.value ? parseFloat(e.target.value) : undefined)}
+                placeholder="e.g. 35"
+                min="10"
+                max="100"
+                step="0.1"
+                error={errors.muscle_mass_kg}
+                fullWidth
+              />
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex justify-end pt-8">
+            <button
               type="submit"
               disabled={isLoading}
-              className="px-8 py-2 flex items-center"
+              className="px-12 py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 hover:shadow-emerald-500/40 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
             >
-              Continue
-              {isLoading && <LoadingSpinner size="sm" className="ml-2" message=''/>}
-            </Button>
+              <span>Continue</span>
+              {isLoading ? (
+                <LoadingSpinner size="sm" className="opacity-80" message='' />
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              )}
+            </button>
           </div>
         </form>
       </div>

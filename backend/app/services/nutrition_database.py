@@ -13,7 +13,23 @@ from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from .ingredient_normalizer import get_ingredient_normalizer, UnknownIngredientError, ConfidenceLevel
+
+class ConfidenceLevel(Enum):
+    """Confidence level for ingredient normalization"""
+    EXACT = "exact"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    UNKNOWN = "unknown"
+
+
+class UnknownIngredientError(Exception):
+    """Raised when an ingredient cannot be normalized/resolved"""
+    def __init__(self, raw_name: str, normalized_attempt: str = None, removed_tokens: list = None):
+        self.raw_name = raw_name
+        self.normalized_attempt = normalized_attempt or raw_name
+        self.removed_tokens = removed_tokens or []
+        super().__init__(f"Unknown ingredient: {raw_name}")
 
 logger = logging.getLogger(__name__)
 
@@ -429,34 +445,14 @@ class NutritionDatabase:
         # MANDATORY LOG: Input to nutrition lookup
         logger.info(f"[NUTRITION_LOOKUP_INPUT] name='{food_name}' qty={weight_g} unit=g")
         
-        # MANDATORY: Normalize ingredient name first
-        normalizer = get_ingredient_normalizer()
+        # MANDATORY: Normalize ingredient name (minimal fallback)
+        canonical_name = normalize_ingredient_name_for_lookup(food_name)
         
-        try:
-            normalization_result = normalizer.normalize(food_name)
-            canonical_name = normalization_result.canonical_name
-            
-            logger.info(
-                "[NORMALIZED] '%s' -> '%s' (%s)",
-                food_name,
-                canonical_name,
-                normalization_result.confidence.value
-            )
-            
-            # Log removed tokens for debugging
-            if normalization_result.removed_tokens:
-                logger.debug(f"Removed tokens: {normalization_result.removed_tokens}")
-            
-        except UnknownIngredientError as e:
-            logger.error("[NORMALIZATION_FAILED] Ingredient normalization failed: %s", e)
-            # MANDATORY LOG: Nutrition lookup miss
-            logger.error(f"[NUTRITION_LOOKUP_MISS] ingredient={food_name}")
-            # Convert to IngredientResolutionError for adaptive retry classification
-            raise IngredientResolutionError(
-                ingredient_name=food_name,
-                failure_reason=f"Normalization failed: {e.normalized_attempt}",
-                normalization_attempt=e.normalized_attempt
-            )
+        logger.info(
+            "[NORMALIZED_FALLBACK] '%s' -> '%s'",
+            food_name,
+            canonical_name
+        )
         
         # Look up normalized ingredient in database
         # SAFE FIX: Apply name normalization for exact database key matching
@@ -516,7 +512,7 @@ class NutritionDatabase:
         raise UnknownIngredientError(
             raw_name=food_name,
             normalized_attempt=canonical_name,
-            removed_tokens=normalization_result.removed_tokens if 'normalization_result' in locals() else []
+            removed_tokens=[]
         )
     
     def search_foods(self, query: str) -> List[str]:

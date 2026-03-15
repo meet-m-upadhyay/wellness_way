@@ -1,0 +1,92 @@
+classDiagram
+    %% Core SQLAlchemy ORM Models
+    class DietPlan {
+      +UUID id
+      +UUID user_id
+      +UUID hcd_id
+      +String plan_type
+      +Date start_date
+      +JSON content
+      +DateTime created_at
+    }
+
+    class HealthContextDocument {
+      +UUID id
+      +UUID user_id
+      +Integer version
+      +Text content
+      +JSONB json_context
+      +Float bmr_calories
+      +Float tdee_calories
+      +Boolean is_active
+    }
+
+    class FoodItem {
+      +UUID id
+      +String canonical_name
+      +List~String~ diet_flags
+      +List~String~ allergen_flags
+      +JSON macros
+      +Boolean is_deprecated
+    }
+
+    %% Core Services / Engines
+    class MLPipelineOrchestrator {
+      +DiscoveryEngine discovery_engine
+      +DailyAssembler daily_assembler
+      +GenAIService genai_service
+      +NutritionEngine nutrition_engine
+      +ValidationEngine validation_engine
+      +generate_daily_plan(db, user_id, context, date) dict
+      +generate_weekly_plan(db, user_id, context, date) dict
+      -extract_constraints(context)
+    }
+
+    class DiscoveryEngine {
+      +discover_daily_portfolio(db, diet_type, allergies, excludes) dict
+    }
+
+    class DailyAssembler {
+      +assemble_day(portfolio, target_calories, target_protein) list
+    }
+
+    class GenAIService {
+      -Callable generator
+      +generate_meal_text(ingredients, meal_type, diet_type) dict
+      +generate_daily_plan_text(meals, diet_type) dict
+    }
+
+    class NutritionEngine {
+      +calculate_daily_nutrition(meals) dict
+    }
+
+    class ValidationEngine {
+      +validate_daily_plan(meals, diet_type, target_cals, target_protein) ValidationResult
+    }
+
+    %% Enums
+    class DietType {
+      <<enumeration>>
+      VEGETARIAN
+      VEGAN
+      NON_VEGETARIAN
+      EGGETARIAN
+    }
+
+    class MealSlot {
+      <<enumeration>>
+      BREAKFAST
+      LUNCH
+      DINNER
+      SNACK
+    }
+
+    %% Relationships
+    DietPlan "1" *-- "1" HealthContextDocument : belongs to
+    MLPipelineOrchestrator *-- DiscoveryEngine : uses
+    MLPipelineOrchestrator *-- DailyAssembler : uses
+    MLPipelineOrchestrator *-- GenAIService : uses
+    MLPipelineOrchestrator *-- NutritionEngine : uses
+    MLPipelineOrchestrator *-- ValidationEngine : uses
+    DiscoveryEngine ..> FoodItem : queries
+    MLPipelineOrchestrator ..> DietType : depends on

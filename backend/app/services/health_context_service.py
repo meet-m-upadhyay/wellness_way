@@ -58,13 +58,14 @@ class HealthContextService:
                 diet_preferences=hcd_data.diet_preferences
             )
             
-            # Get next version number
-            max_version = self.db.query(HealthContextDocument.version)\
+            # Get existing versions to compute next and enforce limits
+            existing_versions = self.db.query(HealthContextDocument.version)\
                 .filter(HealthContextDocument.user_id == user_id)\
                 .order_by(HealthContextDocument.version.desc())\
-                .first()
+                .all()
             
-            next_version = (max_version[0] + 1) if max_version else 1
+            existing_version_nums = [v[0] for v in existing_versions]
+            next_version = (existing_version_nums[0] + 1) if existing_version_nums else 1
             
             # Deactivate all existing HCDs for this user
             self.db.query(HealthContextDocument)\
@@ -86,6 +87,15 @@ class HealthContextService:
             )
             
             self.db.add(hcd)
+            
+            # Enforce max 3 versions per user (1 new + 2 old)
+            if len(existing_version_nums) >= 3:
+                versions_to_keep = existing_version_nums[:2]
+                self.db.query(HealthContextDocument)\
+                    .filter(HealthContextDocument.user_id == user_id)\
+                    .filter(HealthContextDocument.version.notin_(versions_to_keep))\
+                    .delete(synchronize_session=False)
+            
             self.db.commit()
             self.db.refresh(hcd)
             
