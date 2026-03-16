@@ -62,9 +62,10 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          # Use a single --set-env-vars flag with a pipe delimiter (^)
-          # This ensures ALL variables are set and none are overwritten by multiple flags
-          # Also adding memory boost for ML models
+          # NOTE: If "Check Deployment Logs" fails with permissions, ensure your service account 
+          # has the "Logs Viewer" (roles/logging.viewer) role in Google Cloud Console.
+          
+          # Use single delimited flag for robustness against commas in secrets
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
@@ -79,9 +80,10 @@ jobs:
       - name: Check Deployment Logs
         if: failure()
         run: |
-          echo "🔎 Deployment failed. Fetching startup logs for the latest revision..."
+          echo "🔎 Deployment failed or timed out. Attempting to fetch startup logs..."
           REVISION=$(gcloud run revisions list --service=${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=1 --format='value(name)')
-          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION" --limit 50 --format="table(textPayload)"
+          # This requires "Logs Viewer" role
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION" --limit 50 --format="table(textPayload)" || echo "❌ Failed to fetch logs. Please ensure Service Account has 'Logs Viewer' role."
 
       - name: Output Deployment Info
         run: |

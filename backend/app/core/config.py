@@ -158,14 +158,14 @@ class SecuritySettings(BaseSettings):
 
     @validator('secret_key')
     def validate_secret_key(cls, v):
-        if isinstance(v, str) and len(v) < 32:
-            raise ValueError('Secret key must be at least 32 characters long')
+        if isinstance(v, str) and len(v) < 16:
+            raise ValueError('Secret key must be at least 16 characters long')
         return v
     
     @validator('jwt_secret_key')
     def validate_jwt_secret_key(cls, v):
-        if isinstance(v, str) and len(v) < 32:
-            raise ValueError('JWT secret key must be at least 32 characters long')
+        if isinstance(v, str) and len(v) < 16:
+            raise ValueError('JWT secret key must be at least 16 characters long')
         return v
 
 
