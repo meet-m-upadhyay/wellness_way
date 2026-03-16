@@ -254,7 +254,7 @@ async def config_info():
             "max_overflow": settings.database.max_overflow
         },
         "security": {
-            "cors_origins": settings.security.cors_origins,
+            "cors_origins": settings.security.cors_origins_list,
             "token_expire_minutes": settings.security.access_token_expire_minutes
         }
     }

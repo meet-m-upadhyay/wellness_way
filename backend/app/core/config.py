@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 from pydantic import ConfigDict, Field, field_validator, model_validator, SecretStr
 from typing import Optional, Literal, List, Any
 import os
+import sys
 import secrets
 from pathlib import Path
 
@@ -104,6 +105,28 @@ class SecuritySettings(BaseSettings):
         env="GOOGLE_CLIENT_SECRET"
     )
     
+    password_min_length: int = Field(default=8, ge=6)
+    bcrypt_rounds: int = Field(default=12, ge=10, le=15)
+    
+    # CORS and Host settings — stored as semicolon-separated strings to
+    # prevent pydantic-settings from JSON-parsing the env var (which fails
+    # when gcloud corrupts commas in --set-env-vars).
+    cors_origins: str = Field(
+        default="http://localhost:3000;http://127.0.0.1:3000;https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev",
+        description="Allowed CORS origins (semicolon-separated)",
+        validation_alias="CORS_ORIGINS"
+    )
+    trusted_hosts: str = Field(
+        default="localhost;127.0.0.1;0.0.0.0;wellness-way-backend-1021198538658.us-central1.run.app",
+        description="Trusted hosts for middleware (semicolon-separated)",
+        validation_alias="TRUSTED_HOSTS"
+    )
+    cors_allow_credentials: bool = Field(default=True)
+    
+    # Rate limiting
+    rate_limit_requests: int = Field(default=100, ge=1)
+    rate_limit_window: int = Field(default=60, ge=1)
+    
     def __init__(self, **kwargs):
         # Explicitly load environment variables for nested settings
         import os
@@ -114,51 +137,35 @@ class SecuritySettings(BaseSettings):
         if 'jwt_secret_key' not in kwargs and os.getenv('JWT_SECRET_KEY'):
             kwargs['jwt_secret_key'] = os.getenv('JWT_SECRET_KEY')
         super().__init__(**kwargs)
-
     
-    password_min_length: int = Field(default=8, ge=6)
-    bcrypt_rounds: int = Field(default=12, ge=10, le=15)
+    @staticmethod
+    def _parse_origins_string(raw: str) -> List[str]:
+        """Parse a semicolon/comma-separated string (or JSON array) into a list."""
+        raw = raw.strip()
+        if not raw:
+            return []
+        # Try JSON array first
+        if raw.startswith('[') and raw.endswith(']'):
+            try:
+                import json
+                return json.loads(raw)
+            except Exception:
+                raw = raw.strip('[]"\' ')
+        # Split by semicolon (preferred) then comma
+        for sep in [';', ',']:
+            if sep in raw:
+                return [item.strip().strip('"\'') for item in raw.split(sep) if item.strip()]
+        return [raw]
     
-    # CORS and Host settings
-    cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000", "https://wellness-way.meetupadhyaykgp.workers.dev", "https://dev-wellness-way.meetupadhyaykgp.workers.dev"],
-        description="Allowed CORS origins",
-        env="CORS_ORIGINS"
-    )
-    trusted_hosts: List[str] = Field(
-        default=["localhost", "127.0.0.1", "0.0.0.0", "wellness-way-backend-1021198538658.us-central1.run.app"],
-        description="Trusted hosts for middleware",
-        env="TRUSTED_HOSTS"
-    )
-    cors_allow_credentials: bool = Field(default=True)
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Get CORS origins as a parsed list."""
+        return self._parse_origins_string(self.cors_origins)
     
-    # Rate limiting
-    rate_limit_requests: int = Field(default=100, ge=1)
-    rate_limit_window: int = Field(default=60, ge=1)
-    
-    @field_validator('cors_origins', 'trusted_hosts', mode='before')
-    @classmethod
-    def parse_list_from_string(cls, v: Any) -> List[str]:
-        """Robustly parse lists from environment variables."""
-        if isinstance(v, str):
-            v = v.strip()
-            if not v:
-                return []
-            
-            # Handle JSON-like brackets
-            if v.startswith('[') and v.endswith(']'):
-                try:
-                    import json
-                    return json.loads(v)
-                except:
-                    v = v.strip('[]"\' ')
-            
-            # Split by semicolon then comma
-            for sep in [';', ',']:
-                if sep in v:
-                    return [item.strip() for item in v.split(sep) if item.strip()]
-            return [v]
-        return v
+    @property
+    def trusted_hosts_list(self) -> List[str]:
+        """Get trusted hosts as a parsed list."""
+        return self._parse_origins_string(self.trusted_hosts)
 
     @field_validator('secret_key', 'jwt_secret_key', mode='after')
     @classmethod

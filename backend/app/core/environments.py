@@ -18,11 +18,7 @@ class DevelopmentConfig(Settings):
         # Development-specific overrides
         self.database.echo = True  # Enable SQL logging in development
         self.logging.level = "DEBUG"
-        self.security.cors_origins = [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:3001",  # Alternative dev port
-        ]
+        self.security.cors_origins = "http://localhost:3000;http://127.0.0.1:3000;http://localhost:3001"
         
         # Relaxed security for development
         self.security.access_token_expire_minutes = 60  # Longer tokens in dev
@@ -44,10 +40,7 @@ class StagingConfig(Settings):
         self.monitoring.sentry_sample_rate = 0.5  # Sample 50% of errors
         
         # More restrictive CORS for staging
-        self.security.cors_origins = [
-            "https://staging.wellnessway.com",
-            "https://staging-app.wellnessway.com"
-        ]
+        self.security.cors_origins = "https://staging.wellnessway.com;https://staging-app.wellnessway.com"
 
 
 class ProductionConfig(Settings):
@@ -67,12 +60,7 @@ class ProductionConfig(Settings):
         # Strict security for production
         self.security.bcrypt_rounds = 14  # Higher security
         self.security.access_token_expire_minutes = 15  # Shorter tokens
-        self.security.cors_origins = [
-            "https://wellnessway.com",
-            "https://app.wellnessway.com",
-            "https://wellness-way.meetupadhyaykgp.workers.dev",
-            "https://dev-wellness-way.meetupadhyaykgp.workers.dev"
-        ]
+        self.security.cors_origins = "https://wellnessway.com;https://app.wellnessway.com;https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev"
         
         # Production performance settings
         self.database.pool_size = 10

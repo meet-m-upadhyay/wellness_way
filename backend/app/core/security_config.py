@@ -225,7 +225,7 @@ def get_cors_config(is_production: bool) -> Dict:
     if is_production:
         settings = get_settings()
         return {
-            "allow_origins": settings.security.cors_origins,
+            "allow_origins": settings.security.cors_origins_list,
             "allow_credentials": True,
             "allow_methods": CORSConfig.ALLOWED_METHODS,
             "allow_headers": CORSConfig.PRODUCTION_ALLOWED_HEADERS,
