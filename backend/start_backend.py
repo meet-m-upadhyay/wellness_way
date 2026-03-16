@@ -46,4 +46,11 @@ def start_backend():
     )
 
 if __name__ == "__main__":
-    start_backend()
+    try:
+        start_backend()
+    except Exception as e:
+        import traceback
+        import sys
+        print(f"❌ CRITICAL STARTUP ERROR: {str(e)}")
+        traceback.print_exc(file=sys.stdout)
+        sys.exit(1)

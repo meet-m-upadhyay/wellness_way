@@ -66,8 +66,6 @@ jobs:
             FROM_EMAIL=${{ secrets.FROM_EMAIL }}
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             APP_BASE_URL=${{ secrets.APP_BASE_URL }}
-            CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
-            TRUSTED_HOSTS=${{ secrets.TRUSTED_HOSTS }}
             ENVIRONMENT=production
             DEBUG=false
 

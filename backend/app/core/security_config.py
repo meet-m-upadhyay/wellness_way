@@ -134,12 +134,13 @@ class RateLimitConfig:
 class TrustedHostConfig:
     """Trusted host configuration"""
     
-    PRODUCTION_HOSTS = settings.security.trusted_hosts + ["*"]
+    PRODUCTION_HOSTS = ["*"]
     
     DEVELOPMENT_HOSTS = [
         "localhost",
         "127.0.0.1",
         "0.0.0.0",
+        "wellness-way-backend-1021198538658.us-central1.run.app",
         "*"  # Allow all in development
     ]
 
