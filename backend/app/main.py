@@ -31,10 +31,13 @@ async def lifespan(app: FastAPI):
     # Import models to ensure they are registered
     from app.models import user, health_context, diet_plan
     
-    # Create tables if in development mode
+    # Create tables if in development mode (DO NOT block startup in production)
     if settings.is_development:
-        Base.metadata.create_all(bind=engine)
-        logging.info("Database tables created/verified")
+        try:
+            Base.metadata.create_all(bind=engine)
+            logging.info("Database tables created/verified")
+        except Exception as e:
+            logging.error(f"Failed to create tables: {e}")
     
     # Setup logging
     setup_logging()
