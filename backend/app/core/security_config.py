@@ -1,7 +1,7 @@
 """
 Security configuration and constants
 """
-from app.core.config import settings
+from app.core.config import get_settings
 
 from typing import Dict, List
 
@@ -61,7 +61,7 @@ class SecurityHeaders:
 class CORSConfig:
     """CORS configuration for different environments"""
     
-    PRODUCTION_ALLOWED_ORIGINS = settings.security.cors_origins
+    # Origins are now accessed lazily in get_cors_config()
     
     DEVELOPMENT_ALLOWED_ORIGINS = [
         "http://localhost:3000",
@@ -223,8 +223,9 @@ def get_cors_config(is_production: bool) -> Dict:
         CORS configuration dictionary
     """
     if is_production:
+        settings = get_settings()
         return {
-            "allow_origins": CORSConfig.PRODUCTION_ALLOWED_ORIGINS,
+            "allow_origins": settings.security.cors_origins,
             "allow_credentials": True,
             "allow_methods": CORSConfig.ALLOWED_METHODS,
             "allow_headers": CORSConfig.PRODUCTION_ALLOWED_HEADERS,

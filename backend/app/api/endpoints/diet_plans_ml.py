@@ -29,7 +29,7 @@ from app.schemas.diet_plan import (
 )
 from app.models.diet_plan import DietPlan
 from app.models.chat import Chat, Message
-from app.core.config import settings
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -9,15 +9,18 @@ from typing import Generator
 import logging
 import time
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 # Database engine configuration (Lazy)
 _engine = None
 
+# Compatibility property (variable that will be set by get_engine)
+engine = None
+
 def get_engine():
-    global _engine
+    global _engine, engine
     if _engine is None:
         settings = get_settings()
         engine_kwargs = {
@@ -35,43 +38,30 @@ def get_engine():
             engine_kwargs["poolclass"] = QueuePool
             
         _engine = create_engine(settings.get_database_url(), **engine_kwargs)
+        engine = _engine
         
-        # Add listeners to the new engine
+        # Add connection event listeners for monitoring (Bound to specific engine)
         @event.listens_for(_engine, "connect")
         def set_sqlite_pragma(dbapi_connection, connection_record):
+            """Set SQLite pragmas for better performance (if using SQLite)"""
             if "sqlite" in get_settings().get_database_url():
                 cursor = dbapi_connection.cursor()
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
+
+        @event.listens_for(_engine, "checkout")
+        def receive_checkout(dbapi_connection, connection_record, connection_proxy):
+            """Log database connection checkout"""
+            if get_settings().logging.level == "DEBUG":
+                logger.debug("Database connection checked out")
+
+        @event.listens_for(_engine, "checkin")
+        def receive_checkin(dbapi_connection, connection_record):
+            """Log database connection checkin"""
+            if get_settings().logging.level == "DEBUG":
+                logger.debug("Database connection checked in")
+
     return _engine
-
-# Compatibility property
-@property
-def engine():
-    return get_engine()
-
-# Add connection event listeners for monitoring
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """Set SQLite pragmas for better performance (if using SQLite)"""
-    if "sqlite" in settings.get_database_url():
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-
-
-@event.listens_for(engine, "checkout")
-def receive_checkout(dbapi_connection, connection_record, connection_proxy):
-    """Log database connection checkout"""
-    if settings.logging.level == "DEBUG":
-        logger.debug("Database connection checked out")
-
-
-@event.listens_for(engine, "checkin")
-def receive_checkin(dbapi_connection, connection_record):
-    """Log database connection checkin"""
-    if settings.logging.level == "DEBUG":
-        logger.debug("Database connection checked in")
 
 
 # Create SessionLocal class (Lazy)

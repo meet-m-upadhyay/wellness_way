@@ -6,7 +6,7 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database.connection import engine, Base, SessionLocal
-from app.core.config import settings
+from app.core.config import get_settings
 
 # Import all models to ensure they are registered
 from app.models import User, HealthGoals, DietPreferences, HealthContextDocument, DietPlan
@@ -115,7 +115,8 @@ if __name__ == "__main__":
     init_db()
     
     # Create sample data if in debug mode
-    if settings.debug:
+    # Create sample data if in debug mode
+    if get_settings().debug:
         create_sample_data()
     
     print("Database initialization completed successfully!")
