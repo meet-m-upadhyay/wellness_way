@@ -61,40 +61,21 @@ jobs:
           docker push $IMAGE
 
       - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE_NAME }}
-          region: ${{ env.REGION }}
-          image: us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+        run: |
+          # Use shell variables instead of direct ${{ }} expansion to avoid shell injection issues
+          # Semicolon is our delimiter for gcloud (using ^;^) and our backend parser
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --timeout 300 \
+            --set-env-vars "^;^ENVIRONMENT=production;DEBUG=false;DATABASE_URL=$DATABASE_URL;SUPABASE_URL=$SUPABASE_URL;SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY;GROQ_API_KEY=$GROQ_API_KEY" \
+            --set-env-vars "^;^OPENAI_API_KEY=$OPENAI_API_KEY;AI_PROVIDER=$AI_PROVIDER;SECRET_KEY=$SECRET_KEY;JWT_SECRET_KEY=$JWT_SECRET_KEY;GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+            --set-env-vars "^;^GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET;REDIS_URL=$REDIS_URL;ENABLE_ML_PIPELINE=$ENABLE_ML_PIPELINE;ENABLE_EMAIL_NOTIFICATIONS=$ENABLE_EMAIL_NOTIFICATIONS" \
+            --set-env-vars "^;^SMTP_HOST=$SMTP_HOST;SMTP_PORT=$SMTP_PORT;SMTP_USER=$SMTP_USER;SMTP_PASSWORD=$SMTP_PASSWORD;FROM_EMAIL=$FROM_EMAIL;ADMIN_EMAIL=$ADMIN_EMAIL" \
+            --set-env-vars "^;^APP_BASE_URL=$APP_BASE_URL;CORS_ORIGINS=$CORS_ORIGINS;TRUSTED_HOSTS=$TRUSTED_HOSTS"
 
-          # Using block scalar '|' for multi-line env_vars
-          # Use semicolons if list secrets contain commas to avoid gcloud parsing issues
-          env_vars: |
-            ENVIRONMENT=production
-            DEBUG=false
-            DATABASE_URL=${{ env.DATABASE_URL }}
-            SUPABASE_URL=${{ env.SUPABASE_URL }}
-            SUPABASE_ANON_KEY=${{ env.SUPABASE_ANON_KEY }}
-            GROQ_API_KEY=${{ env.GROQ_API_KEY }}
-            OPENAI_API_KEY=${{ env.OPENAI_API_KEY }}
-            AI_PROVIDER=${{ env.AI_PROVIDER }}
-            SECRET_KEY=${{ env.SECRET_KEY }}
-            JWT_SECRET_KEY=${{ env.JWT_SECRET_KEY }}
-            GOOGLE_CLIENT_ID=${{ env.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ env.GOOGLE_CLIENT_SECRET }}
-            REDIS_URL=${{ env.REDIS_URL }}
-            ENABLE_ML_PIPELINE=${{ env.ENABLE_ML_PIPELINE }}
-            ENABLE_EMAIL_NOTIFICATIONS=${{ env.ENABLE_EMAIL_NOTIFICATIONS }}
-            SMTP_HOST=${{ env.SMTP_HOST }}
-            SMTP_PORT=${{ env.SMTP_PORT }}
-            SMTP_USER=${{ env.SMTP_USER }}
-            SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
-            FROM_EMAIL=${{ env.FROM_EMAIL }}
-            ADMIN_EMAIL=${{ env.ADMIN_EMAIL }}
-            APP_BASE_URL=${{ env.APP_BASE_URL }}
-            CORS_ORIGINS=${{ env.CORS_ORIGINS }}
-            TRUSTED_HOSTS=${{ env.TRUSTED_HOSTS }}
-
-      - name: Output Cloud Run URL
-        run: echo "${{ steps.deploy.outputs.url }}"
+      - name: Output Deployment Info
+        run: |
+          gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format 'value(status.url)'
