@@ -73,5 +73,6 @@ Add these secrets to your GitHub repository (**Settings** -> **Secrets and varia
 ---
 
 ## Post-Deployment
-- Once the backend is live, update the `VITE_API_URL` in Cloudflare Pages and redeploy the frontend.
+- Once the backend is live, update the `REACT_APP_API_URL` in Cloudflare Pages (Builds & deployments section) and redeploy the frontend.
+- Make sure to use your actual Cloud Run URL, NOT the example one.
 
