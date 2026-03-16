@@ -134,6 +134,28 @@ class SecuritySettings(BaseSettings):
     rate_limit_requests: int = Field(default=100, ge=1)
     rate_limit_window: int = Field(default=60, ge=1)
     
+    @validator('cors_origins', 'trusted_hosts', pre=True)
+    def parse_list_from_string(cls, v):
+        """Robustly parse lists from environment variables, handling JSON truncation and semicolon separation."""
+        if isinstance(v, str):
+            if not v.strip():
+                return []
+            
+            # Clean up potential truncation debris if it looks like a broken JSON list
+            if v.startswith('[') or v.endswith(']'):
+                try:
+                    import json
+                    return json.loads(v)
+                except Exception:
+                    # JSON failed (likely truncated by gcloud due to commas)
+                    # Strip brackets and quotes to recover what we can
+                    v = v.strip('[]"\' ')
+            
+            # Split by semicolon (safest for gcloud) or comma
+            delimiter = ';' if ';' in v else ','
+            return [item.strip() for item in v.split(delimiter) if item.strip()]
+        return v
+
     @validator('secret_key')
     def validate_secret_key(cls, v):
         if isinstance(v, str) and len(v) < 32:
