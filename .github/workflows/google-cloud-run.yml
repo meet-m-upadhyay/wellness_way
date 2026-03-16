@@ -31,11 +31,11 @@ jobs:
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build and Push Container
+      - name: Build Docker Image
         run: |
-          DOCKER_TAG="us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          docker build -t $DOCKER_TAG ./backend
-          docker push $DOCKER_TAG
+          IMAGE=us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker build -t $IMAGE -f backend/Dockerfile backend
+          docker push $IMAGE
 
       - name: Deploy to Cloud Run
         id: deploy
@@ -44,7 +44,9 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          # Pass environment variables from secrets
+
+          # Using block scalar '|' for multi-line env_vars
+          # IMPORTANT: Using semicolons for lists because gcloud uses comma as its primary delimiter
           env_vars: |
             ENVIRONMENT=production
             DEBUG=false
@@ -71,5 +73,5 @@ jobs:
             CORS_ORIGINS=https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev;http://localhost:3000
             TRUSTED_HOSTS=wellness-way-backend-1021198538658.us-central1.run.app;localhost;0.0.0.0;127.0.0.1
 
-      - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+      - name: Output Cloud Run URL
+        run: echo "${{ steps.deploy.outputs.url }}"
