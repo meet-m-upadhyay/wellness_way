@@ -194,7 +194,7 @@ def get_security_headers(is_production: bool) -> Dict[str, str]:
         "Content-Security-Policy": SecurityHeaders.CSP_POLICY["production" if is_production else "development"],
         "Permissions-Policy": SecurityHeaders.PERMISSIONS_POLICY,
     }
-    
+    if is_production:
         headers.update({
             "Strict-Transport-Security": SecurityHeaders.HSTS_POLICY,
             "Expect-CT": "max-age=86400, enforce",
