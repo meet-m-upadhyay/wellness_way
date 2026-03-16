@@ -23,17 +23,16 @@ load_dotenv(backend_dir / '.env')
 # --- NUCLEAR DIAGNOSTIC BLOCK ---
 import sys
 import os
-print(f"DEBUG: Process started. PID: {os.getpid()}", file=sys.stderr, flush=True)
-print(f"DEBUG: PORT env: {os.environ.get('PORT')}", file=sys.stderr, flush=True)
-print(f"DEBUG: ENVIRONMENT: {os.environ.get('ENVIRONMENT')}", file=sys.stderr, flush=True)
+import time
 
-# Import secure key manager
-try:
-    from app.core.secrets import get_secure_api_key
-except ImportError:
-    # Fallback if secrets module not available
-    def get_secure_api_key(provider: str, encoded_key: Optional[str] = None) -> Optional[str]:
-        return os.getenv(f"{provider.upper()}_API_KEY")
+print(f"🚦 [DIAGNOSTIC] PID: {os.getpid()} | Time: {time.ctime()}", file=sys.stderr, flush=True)
+print(f"🚦 [DIAGNOSTIC] PORT: {os.environ.get('PORT')}", file=sys.stderr, flush=True)
+print(f"🚦 [DIAGNOSTIC] CORS_ORIGINS (raw): {os.environ.get('CORS_ORIGINS')}", file=sys.stderr, flush=True)
+print(f"🚦 [DIAGNOSTIC] DATABASE_URL (raw length): {len(os.environ.get('DATABASE_URL', ''))}", file=sys.stderr, flush=True)
+
+# Define secure key fallback at module level to avoid imports
+def get_secure_api_key(provider: str, encoded_key: Optional[str] = None) -> Optional[str]:
+    return os.getenv(f"{provider.upper()}_API_KEY")
 
 
 class DatabaseSettings(BaseSettings):

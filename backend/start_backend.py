@@ -34,12 +34,16 @@ def start_backend():
         
         print(f"🚦 [STARTUP] Phase 2: Environment={env}, Port={port}", flush=True)
         
-        # Start uvicorn immediately
+        # CRITICAL: Import the app object directly here (forcing any validation errors to show)
+        print("🚦 [STARTUP] Phase 3: Importing app.main:app...", flush=True)
+        from app.main import app
+        
+        # Start uvicorn with the app object directly
         import uvicorn
-        print("🚦 [STARTUP] Phase 3: Launching uvicorn...", flush=True)
+        print("🚦 [STARTUP] Phase 4: Launching uvicorn...", flush=True)
         
         uvicorn.run(
-            "app.main:app",
+            app,
             host="0.0.0.0",
             port=port,
             reload=False,
