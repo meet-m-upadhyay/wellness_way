@@ -314,7 +314,7 @@ class Settings(BaseSettings):
     
     # API Configuration
     api_host: str = Field(default="0.0.0.0")
-    api_port: int = Field(default=8000, ge=1024, le=65535)
+    api_port: int = Field(default=8000, ge=1024, le=65535, env="PORT")
     api_prefix: str = Field(default="/api/v1")
     
     # Application metadata
