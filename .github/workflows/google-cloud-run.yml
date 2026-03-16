@@ -62,39 +62,19 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          # Use shell variables ($VAR) instead of direct GitHub expression expansion to avoid shell injection issues
-          # Semicolon is our delimiter for gcloud (using ^;^) and our backend parser
-          # This is the ONLY way to prevent commas in secrets from truncating your config!
+          # Use a single --set-env-vars flag with a pipe delimiter (^)
+          # This ensures ALL variables are set and none are overwritten by multiple flags
+          # Also adding memory boost for ML models
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
             --timeout 300 \
-            --set-env-vars "^|^ENVIRONMENT=production" \
-            --set-env-vars "^|^DEBUG=false" \
-            --set-env-vars "^|^DATABASE_URL=$DATABASE_URL" \
-            --set-env-vars "^|^SUPABASE_URL=$SUPABASE_URL" \
-            --set-env-vars "^|^SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" \
-            --set-env-vars "^|^GROQ_API_KEY=$GROQ_API_KEY" \
-            --set-env-vars "^|^OPENAI_API_KEY=$OPENAI_API_KEY" \
-            --set-env-vars "^|^AI_PROVIDER=$AI_PROVIDER" \
-            --set-env-vars "^|^SECRET_KEY=$SECRET_KEY" \
-            --set-env-vars "^|^JWT_SECRET_KEY=$JWT_SECRET_KEY" \
-            --set-env-vars "^|^GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
-            --set-env-vars "^|^GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" \
-            --set-env-vars "^|^REDIS_URL=$REDIS_URL" \
-            --set-env-vars "^|^ENABLE_ML_PIPELINE=$ENABLE_ML_PIPELINE" \
-            --set-env-vars "^|^ENABLE_EMAIL_NOTIFICATIONS=$ENABLE_EMAIL_NOTIFICATIONS" \
-            --set-env-vars "^|^SMTP_HOST=$SMTP_HOST" \
-            --set-env-vars "^|^SMTP_PORT=$SMTP_PORT" \
-            --set-env-vars "^|^SMTP_USER=$SMTP_USER" \
-            --set-env-vars "^|^SMTP_PASSWORD=$SMTP_PASSWORD" \
-            --set-env-vars "^|^FROM_EMAIL=$FROM_EMAIL" \
-            --set-env-vars "^|^ADMIN_EMAIL=$ADMIN_EMAIL" \
-            --set-env-vars "^|^APP_BASE_URL=$APP_BASE_URL" \
-            --set-env-vars "^|^CORS_ORIGINS=$CORS_ORIGINS" \
-            --set-env-vars "^|^TRUSTED_HOSTS=$TRUSTED_HOSTS"
+            --memory 2Gi \
+            --cpu 1 \
+            --cpu-boost \
+            --set-env-vars "^|^ENVIRONMENT=production|DEBUG=false|DATABASE_URL=$DATABASE_URL|SUPABASE_URL=$SUPABASE_URL|SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY|GROQ_API_KEY=$GROQ_API_KEY|OPENAI_API_KEY=$OPENAI_API_KEY|AI_PROVIDER=$AI_PROVIDER|SECRET_KEY=$SECRET_KEY|JWT_SECRET_KEY=$JWT_SECRET_KEY|GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET|REDIS_URL=$REDIS_URL|ENABLE_ML_PIPELINE=$ENABLE_ML_PIPELINE|ENABLE_EMAIL_NOTIFICATIONS=$ENABLE_EMAIL_NOTIFICATIONS|SMTP_HOST=$SMTP_HOST|SMTP_PORT=$SMTP_PORT|SMTP_USER=$SMTP_USER|SMTP_PASSWORD=$SMTP_PASSWORD|FROM_EMAIL=$FROM_EMAIL|ADMIN_EMAIL=$ADMIN_EMAIL|APP_BASE_URL=$APP_BASE_URL|CORS_ORIGINS=$CORS_ORIGINS|TRUSTED_HOSTS=$TRUSTED_HOSTS"
 
       - name: Output Deployment Info
         run: |
