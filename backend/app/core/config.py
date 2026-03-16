@@ -124,7 +124,7 @@ class SecuritySettings(BaseSettings):
         env="CORS_ORIGINS"
     )
     trusted_hosts: List[str] = Field(
-        default=["localhost", "127.0.0.1", "0.0.0.0"],
+        default=["localhost", "127.0.0.1", "0.0.0.0", "wellness-way-backend-1021198538658.us-central1.run.app"],
         description="Trusted hosts for middleware",
         env="TRUSTED_HOSTS"
     )
