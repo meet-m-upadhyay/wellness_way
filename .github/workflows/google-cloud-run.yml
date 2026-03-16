@@ -46,6 +46,8 @@ jobs:
           image: us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           # Pass environment variables from secrets
           env_vars: |
+            ENVIRONMENT=production
+            DEBUG=false
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
@@ -66,8 +68,6 @@ jobs:
             FROM_EMAIL=${{ secrets.FROM_EMAIL }}
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             APP_BASE_URL=${{ secrets.APP_BASE_URL }}
-            ENVIRONMENT=production
-            DEBUG=false
 
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
