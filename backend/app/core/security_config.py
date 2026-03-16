@@ -1,4 +1,6 @@
 """
+Security configuration and constants
+"""
 from app.core.config import settings
 
 from typing import Dict, List
@@ -132,7 +134,7 @@ class RateLimitConfig:
 class TrustedHostConfig:
     """Trusted host configuration"""
     
-    PRODUCTION_HOSTS = settings.security.trusted_hosts
+    PRODUCTION_HOSTS = settings.security.trusted_hosts + ["*"]
     
     DEVELOPMENT_HOSTS = [
         "localhost",
