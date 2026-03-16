@@ -37,6 +37,7 @@ def start_backend():
         # CRITICAL: Import the app object directly here (forcing any validation errors to show)
         print("🚦 [STARTUP] Phase 3: Importing app.main:app...", flush=True)
         from app.main import app
+        print("🚦 [STARTUP] Phase 3.5: app.main:app imported successfully!", flush=True)
         
         # Start uvicorn with the app object directly
         import uvicorn

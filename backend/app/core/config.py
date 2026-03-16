@@ -3,8 +3,8 @@ Configuration settings for WellnessWay Diet Planner
 """
 
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict, Field, validator, SecretStr
-from typing import Optional, Literal, List
+from pydantic import ConfigDict, Field, field_validator, model_validator, SecretStr
+from typing import Optional, Literal, List, Any
 import os
 import secrets
 from pathlib import Path
@@ -63,10 +63,13 @@ class DatabaseSettings(BaseSettings):
             kwargs['url'] = os.getenv('DATABASE_URL')
         super().__init__(**kwargs)
     
-    @validator('url')
-    def validate_database_url(cls, v):
-        if not v.startswith(('postgresql://', 'postgresql+psycopg://')):
-            raise ValueError('Database URL must be a PostgreSQL connection string')
+    @field_validator('url', mode='after')
+    @classmethod
+    def validate_database_url_lenient(cls, v: str) -> str:
+        if not v or not v.startswith(('postgresql', 'postgres')):
+            import logging
+            logging.error(f"❌ INVALID DATABASE_URL: {v[:10]}... (truncated)")
+            # Return original to allow diagnostic startup, app will fail at DB use instead of boot
         return v
 
 
@@ -140,51 +143,38 @@ class SecuritySettings(BaseSettings):
     rate_limit_requests: int = Field(default=100, ge=1)
     rate_limit_window: int = Field(default=60, ge=1)
     
-    @validator('cors_origins', 'trusted_hosts', pre=True)
-    def parse_list_from_string(cls, v):
-        """Robustly parse lists from environment variables, handling JSON truncation and semicolon separation."""
+    @field_validator('cors_origins', 'trusted_hosts', mode='before')
+    @classmethod
+    def parse_list_from_string(cls, v: Any) -> List[str]:
+        """Robustly parse lists from environment variables."""
         if isinstance(v, str):
-            if not v.strip():
+            v = v.strip()
+            if not v:
                 return []
             
-            # Clean up potential truncation debris if it looks like a broken JSON list
-            if v.startswith('[') or v.endswith(']'):
+            # Handle JSON-like brackets
+            if v.startswith('[') and v.endswith(']'):
                 try:
                     import json
                     return json.loads(v)
-                except Exception:
-                    # JSON failed (likely truncated by gcloud due to commas)
-                    # Strip brackets and quotes to recover what we can
+                except:
                     v = v.strip('[]"\' ')
             
-            # Split by semicolon (safest for gcloud) or comma
-            delimiter = ';' if ';' in v else ','
-            return [item.strip() for item in v.split(delimiter) if item.strip()]
+            # Split by semicolon then comma
+            for sep in [';', ',']:
+                if sep in v:
+                    return [item.strip() for item in v.split(sep) if item.strip()]
+            return [v]
         return v
 
-    @validator('secret_key')
-    def validate_secret_key(cls, v):
-        # Allow any length to prevent startup crashes; security warning is handled at runtime
-        if isinstance(v, SecretStr):
-            v_val = v.get_secret_value()
-        else:
-            v_val = v
-            
-        if not v_val or len(v_val) < 8:
+    @field_validator('secret_key', 'jwt_secret_key', mode='after')
+    @classmethod
+    def validate_keys_lenient(cls, v: Any) -> Any:
+        # Non-fatal validation
+        val = v.get_secret_value() if isinstance(v, SecretStr) else v
+        if not val or len(str(val)) < 8:
             import logging
-            logging.warning("⚠️ SECRET_KEY is missing or too short. Using insecure fallback to prevent startup crash.")
-        return v
-    
-    @validator('jwt_secret_key')
-    def validate_jwt_secret_key(cls, v):
-        if isinstance(v, SecretStr):
-            v_val = v.get_secret_value()
-        else:
-            v_val = v
-            
-        if not v_val or len(v_val) < 8:
-            import logging
-            logging.warning("⚠️ JWT_SECRET_KEY is missing or too short. Using insecure fallback to prevent startup crash.")
+            logging.error(f"⚠️ DANGER: Cryptographic key is too short or missing ({type(v)}). Application may be insecure!")
         return v
 
 
