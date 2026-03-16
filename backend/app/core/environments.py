@@ -69,7 +69,8 @@ class ProductionConfig(Settings):
         self.security.access_token_expire_minutes = 15  # Shorter tokens
         self.security.cors_origins = [
             "https://wellnessway.com",
-            "https://app.wellnessway.com"
+            "https://app.wellnessway.com",
+            "https://wellness-way.meetupadhyaykgp.workers.dev"
         ]
         
         # Production performance settings
