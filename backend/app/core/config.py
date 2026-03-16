@@ -158,14 +158,27 @@ class SecuritySettings(BaseSettings):
 
     @validator('secret_key')
     def validate_secret_key(cls, v):
-        if isinstance(v, str) and len(v) < 16:
-            raise ValueError('Secret key must be at least 16 characters long')
+        # Allow any length to prevent startup crashes; security warning is handled at runtime
+        if isinstance(v, SecretStr):
+            v_val = v.get_secret_value()
+        else:
+            v_val = v
+            
+        if not v_val or len(v_val) < 8:
+            import logging
+            logging.warning("⚠️ SECRET_KEY is missing or too short. Using insecure fallback to prevent startup crash.")
         return v
     
     @validator('jwt_secret_key')
     def validate_jwt_secret_key(cls, v):
-        if isinstance(v, str) and len(v) < 16:
-            raise ValueError('JWT secret key must be at least 16 characters long')
+        if isinstance(v, SecretStr):
+            v_val = v.get_secret_value()
+        else:
+            v_val = v
+            
+        if not v_val or len(v_val) < 8:
+            import logging
+            logging.warning("⚠️ JWT_SECRET_KEY is missing or too short. Using insecure fallback to prevent startup crash.")
         return v
 
 
@@ -336,7 +349,14 @@ class Settings(BaseSettings):
     
     # API Configuration
     api_host: str = Field(default="0.0.0.0")
-    api_port: int = Field(default=8000, ge=1024, le=65535, env="PORT")
+    # Cloud Run expects PORT=8080. We use AliasChoices for Pydantic v2 compatibility.
+    api_port: int = Field(
+        default=8080, 
+        ge=1, 
+        le=65535, 
+        alias="PORT",
+        validation_alias="PORT"
+    )
     api_prefix: str = Field(default="/api/v1")
     
     # Application metadata

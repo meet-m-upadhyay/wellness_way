@@ -80,10 +80,16 @@ jobs:
       - name: Check Deployment Logs
         if: failure()
         run: |
-          echo "🔎 Deployment failed or timed out. Attempting to fetch startup logs..."
+          echo "🔎 Deployment failed or timed out. Fetching startup logs for diagnosis..."
+          # Get the revision name from the service description (more reliable if log read fails)
           REVISION=$(gcloud run revisions list --service=${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=1 --format='value(name)')
-          # This requires "Logs Viewer" role
-          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION" --limit 50 --format="table(textPayload)" || echo "❌ Failed to fetch logs. Please ensure Service Account has 'Logs Viewer' role."
+          echo "📍 Revision: $REVISION"
+          
+          echo "--- Application Logs (Stdout/Stderr) ---"
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION AND logName:stdout" --limit 50 --format="table(textPayload)" || echo "⚠️ Could not fetch stdout logs."
+          
+          echo "--- System Logs (Startup Failures) ---"
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION AND logName:system" --limit 50 --format="table(textPayload)" || echo "⚠️ Could not fetch system logs."
 
       - name: Output Deployment Info
         run: |
