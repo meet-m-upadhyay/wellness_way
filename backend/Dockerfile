@@ -31,4 +31,5 @@ COPY . .
 EXPOSE 8080
 
 # Run the app
-CMD ["python", "start_backend.py"]
+# Use shell form to allow $PORT expansion from Cloud Run
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
