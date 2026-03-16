@@ -68,7 +68,7 @@ jobs:
             FROM_EMAIL=${{ secrets.FROM_EMAIL }}
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             APP_BASE_URL=${{ secrets.APP_BASE_URL }}
-            CORS_ORIGINS=https://wellness-way.meetupadhyaykgp.workers.dev;http://localhost:3000
+            CORS_ORIGINS=https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev;http://localhost:3000
             TRUSTED_HOSTS=wellness-way-backend-1021198538658.us-central1.run.app;localhost;0.0.0.0;127.0.0.1
 
       - name: Show Output
