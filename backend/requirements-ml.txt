@@ -1,13 +1,10 @@
 # ML Pipeline Dependencies
 # Install with: pip install -r requirements-ml.txt
 
+# PyTorch (CPU version for Cloud Run)
+torch==2.2.2+cpu
+
 # Sentence Transformers for ingredient canonicalization
 sentence-transformers>=2.2.2
-
-# PyTorch (required by sentence-transformers)
-# CPU version - for GPU, see: https://pytorch.org/get-started/locally/
-torch>=2.0.0
-
-# Optional: For future ML model upgrades
-# lightgbm>=4.0.0  # For ML template selector upgrade
-# scikit-learn>=1.3.0  # For logistic regression
+transformers
+scikit-learn
