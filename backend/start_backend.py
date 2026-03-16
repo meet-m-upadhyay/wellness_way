@@ -34,14 +34,27 @@ try:
     print("🚦 [BOOT] Level 5: Importing app.main (The Critical Phase)", flush=True)
     import app.main
     
+    # Checkpoint 5.5: main.py loaded
+    print(f"🚦 [BOOT] Level 5.5: app.main imported (App ID: {id(app.main.app)})", flush=True)
+    
     print("🚦 [BOOT] Level 6: Launching Uvicorn", flush=True)
     import uvicorn
+    
+    # Checkpoint 6.5: uvicorn loaded
+    print("🚦 [BOOT] Level 6.5: uvicorn imported", flush=True)
+    
+    # Nuclear check for ENV before launch
+    settings = app.main.get_settings()
+    print(f"🚦 [BOOT] Level 7: Settings loaded (ENV={settings.environment})", flush=True)
+    
     uvicorn.run(
-        app.main.app,
+        "app.main:app", # Use string import for better process management
         host="0.0.0.0",
         port=port,
         log_level="info",
-        workers=1
+        workers=1,
+        loop="auto",
+        proxy_headers=True
     )
 
 except Exception as e:

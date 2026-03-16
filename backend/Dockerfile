@@ -31,5 +31,5 @@ COPY . .
 EXPOSE 8080
 
 # Run the app
-# Use the diagnostic wrapper for better log flushing and error capture
-CMD ["python", "start_backend.py"]
+# Use shell form for variable expansion and -u for unbuffered logs
+CMD python -u start_backend.py

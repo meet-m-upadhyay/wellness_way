@@ -20,15 +20,8 @@ repo_root = backend_dir.parent
 load_dotenv(repo_root / '.env')
 load_dotenv(backend_dir / '.env')
 
-# --- NUCLEAR DIAGNOSTIC BLOCK ---
-import sys
-import os
-import time
-
-print(f"🚦 [DIAGNOSTIC] PID: {os.getpid()} | Time: {time.ctime()}", file=sys.stderr, flush=True)
-print(f"🚦 [DIAGNOSTIC] PORT: {os.environ.get('PORT')}", file=sys.stderr, flush=True)
-print(f"🚦 [DIAGNOSTIC] CORS_ORIGINS (raw): {os.environ.get('CORS_ORIGINS')}", file=sys.stderr, flush=True)
-print(f"🚦 [DIAGNOSTIC] DATABASE_URL (raw length): {len(os.environ.get('DATABASE_URL', ''))}", file=sys.stderr, flush=True)
+# --- NUCLEAR DIAGNOSTIC BLOCK REMOVED ---
+# All diagnostics moved to runtime to ensure clean import
 
 # Define secure key fallback at module level to avoid imports
 def get_secure_api_key(provider: str, encoded_key: Optional[str] = None) -> Optional[str]:
@@ -380,7 +373,8 @@ class Settings(BaseSettings):
     cache: CacheSettings = Field(default_factory=CacheSettings)
     email: EmailSettings = Field(default_factory=EmailSettings)
     
-    @validator('environment')
+    @field_validator('environment')
+    @classmethod
     def validate_environment(cls, v):
         if v == "production":
             # Additional production validations can be added here
@@ -465,20 +459,28 @@ class Settings(BaseSettings):
             return self.security.google_client_secret.get_secret_value()
         return None
     
-    def setup_logging_directory(self) -> None:
-        """Ensure logging directory exists"""
-        if self.logging.enable_file_logging:
-            log_path = Path(self.logging.log_file_path)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-
-
-# Global settings instance
-settings = Settings()
-
-# Ensure logging directory exists on import
-settings.setup_logging_directory()
-
+# Global settings instance (Lazy)
+_settings: Optional[Settings] = None
 
 def get_settings() -> Settings:
-    """Get global settings instance"""
-    return settings
+    """Get global settings instance (Lazy singleton with thread safety)"""
+    global _settings
+    if _settings is None:
+        try:
+            # Instantiate settings (triggers Pydantic validation)
+            _settings = Settings()
+            
+            # Ensure logging directory exists
+            if _settings.logging.enable_file_logging:
+                from pathlib import Path # Import Path here to avoid circular dependency if Settings is imported early
+                log_path = Path(_settings.logging.log_file_path)
+                try:
+                    log_path.parent.mkdir(parents=True, exist_ok=True)
+                except Exception as e:
+                    # Don't crash on directory creation failure in production
+                    print(f"⚠️ [CONFIG] Failed to create logging directory: {e}", file=sys.stderr)
+        except Exception as e:
+            print(f"❌ [CONFIG] Critical error during Settings instantiation: {e}", file=sys.stderr)
+            raise
+            
+    return _settings

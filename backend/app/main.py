@@ -274,4 +274,3 @@ if __name__ == "__main__":
         reload=settings.debug and settings.is_development,
         log_level=settings.logging.level.lower()
     )
-```
