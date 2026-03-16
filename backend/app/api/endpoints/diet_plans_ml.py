@@ -141,7 +141,7 @@ async def parse_weekly_request(request: Request) -> GenerateWeeklyPlanRequest:
 
 
 def ensure_ml_pipeline_enabled() -> None:
-    if not settings.enable_ml_pipeline:
+    if not get_settings().enable_ml_pipeline:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="ML pipeline is disabled",

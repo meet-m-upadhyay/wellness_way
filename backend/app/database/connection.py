@@ -13,14 +13,12 @@ from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Database engine configuration (Lazy)
+# Internal state for lazy initialization
 _engine = None
-
-# Compatibility property (variable that will be set by get_engine)
-engine = None
+_SessionLocal = None
 
 def get_engine():
-    global _engine, engine
+    global _engine
     if _engine is None:
         settings = get_settings()
         engine_kwargs = {
@@ -38,7 +36,6 @@ def get_engine():
             engine_kwargs["poolclass"] = QueuePool
             
         _engine = create_engine(settings.get_database_url(), **engine_kwargs)
-        engine = _engine
         
         # Add connection event listeners for monitoring (Bound to specific engine)
         @event.listens_for(_engine, "connect")

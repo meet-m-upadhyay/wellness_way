@@ -16,7 +16,7 @@ from app.core.config import get_settings
 from app.core.security_config import get_security_headers, get_cors_config, get_trusted_hosts
 
 # Import database configuration
-from app.database.connection import engine, Base
+from app.database.connection import get_engine, Base
 
 # Import security middleware
 from app.middleware.security import SecurityMiddleware, RateLimitMiddleware, AdvancedRateLimitMiddleware
@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     # Create tables if in development mode (DO NOT block startup in production)
     if get_settings().is_development:
         try:
-            Base.metadata.create_all(bind=engine)
+            Base.metadata.create_all(bind=get_engine())
             logging.info("Database tables created/verified")
         except Exception as e:
             logging.error(f"Failed to create tables: {e}")
@@ -206,8 +206,8 @@ async def health_check():
 async def database_health_check():
     """Database health check endpoint"""
     try:
-        from app.database.connection import SessionLocal
-        db = SessionLocal()
+        from app.database.connection import get_session_local
+        db = get_session_local()()
         # Simple query to test database connection
         from sqlalchemy import text
         db.execute(text("SELECT 1"))
