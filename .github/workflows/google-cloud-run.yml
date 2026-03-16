@@ -10,6 +10,29 @@ env:
   REGION: us-central1 # Change to your preferred region
   SERVICE_NAME: wellness-way-backend
   REPOSITORY: wellness-way-repo
+  # Map secrets to env for better troubleshooting and safe expansion
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  REDIS_URL: ${{ secrets.REDIS_URL }}
+  ENABLE_ML_PIPELINE: ${{ secrets.ENABLE_ML_PIPELINE }}
+  ENABLE_EMAIL_NOTIFICATIONS: ${{ secrets.ENABLE_EMAIL_NOTIFICATIONS }}
+  SMTP_HOST: ${{ secrets.SMTP_HOST }}
+  SMTP_PORT: ${{ secrets.SMTP_PORT }}
+  SMTP_USER: ${{ secrets.SMTP_USER }}
+  SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+  FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+  ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+  APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+  CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+  TRUSTED_HOSTS: ${{ secrets.TRUSTED_HOSTS }}
 
 jobs:
   deploy:
@@ -46,32 +69,32 @@ jobs:
           image: us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
           # Using block scalar '|' for multi-line env_vars
-          # IMPORTANT: Using semicolons for lists because gcloud uses comma as its primary delimiter
+          # Use semicolons if list secrets contain commas to avoid gcloud parsing issues
           env_vars: |
             ENVIRONMENT=production
             DEBUG=false
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-            SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
-            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            AI_PROVIDER=${{ secrets.AI_PROVIDER }}
-            SECRET_KEY=${{ secrets.SECRET_KEY }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            REDIS_URL=${{ secrets.REDIS_URL }}
-            ENABLE_ML_PIPELINE=${{ secrets.ENABLE_ML_PIPELINE }}
-            ENABLE_EMAIL_NOTIFICATIONS=${{ secrets.ENABLE_EMAIL_NOTIFICATIONS }}
-            SMTP_HOST=${{ secrets.SMTP_HOST }}
-            SMTP_PORT=${{ secrets.SMTP_PORT }}
-            SMTP_USER=${{ secrets.SMTP_USER }}
-            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
-            FROM_EMAIL=${{ secrets.FROM_EMAIL }}
-            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
-            APP_BASE_URL=${{ secrets.APP_BASE_URL }}
-            CORS_ORIGINS=${{secrets.CORS_ORIGINS}}
-            TRUSTED_HOSTS=${{secrets.TRUSTED_HOSTS}}
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            SUPABASE_URL=${{ env.SUPABASE_URL }}
+            SUPABASE_ANON_KEY=${{ env.SUPABASE_ANON_KEY }}
+            GROQ_API_KEY=${{ env.GROQ_API_KEY }}
+            OPENAI_API_KEY=${{ env.OPENAI_API_KEY }}
+            AI_PROVIDER=${{ env.AI_PROVIDER }}
+            SECRET_KEY=${{ env.SECRET_KEY }}
+            JWT_SECRET_KEY=${{ env.JWT_SECRET_KEY }}
+            GOOGLE_CLIENT_ID=${{ env.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ env.GOOGLE_CLIENT_SECRET }}
+            REDIS_URL=${{ env.REDIS_URL }}
+            ENABLE_ML_PIPELINE=${{ env.ENABLE_ML_PIPELINE }}
+            ENABLE_EMAIL_NOTIFICATIONS=${{ env.ENABLE_EMAIL_NOTIFICATIONS }}
+            SMTP_HOST=${{ env.SMTP_HOST }}
+            SMTP_PORT=${{ env.SMTP_PORT }}
+            SMTP_USER=${{ env.SMTP_USER }}
+            SMTP_PASSWORD=${{ env.SMTP_PASSWORD }}
+            FROM_EMAIL=${{ env.FROM_EMAIL }}
+            ADMIN_EMAIL=${{ env.ADMIN_EMAIL }}
+            APP_BASE_URL=${{ env.APP_BASE_URL }}
+            CORS_ORIGINS=${{ env.CORS_ORIGINS }}
+            TRUSTED_HOSTS=${{ env.TRUSTED_HOSTS }}
 
       - name: Output Cloud Run URL
         run: echo "${{ steps.deploy.outputs.url }}"

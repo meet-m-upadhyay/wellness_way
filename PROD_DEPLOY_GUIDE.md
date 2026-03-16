@@ -61,8 +61,11 @@ Add these secrets to your GitHub repository (**Settings** -> **Secrets and varia
 | `FROM_EMAIL` | Sender email |
 | `ADMIN_EMAIL` | Admin email |
 | `APP_BASE_URL` | Your frontend URL (e.g., `https://wellness-way.pages.dev`) |
-| `CORS_ORIGINS` | Comma-separated list of allowed origins (e.g., `["https://wellness-way.meetupadhyaykgp.workers.dev", "https://dev-wellness-way.meetupadhyaykgp.workers.dev", "http://localhost:3000"]`) |
-| `TRUSTED_HOSTS` | Comma-separated list of trusted hosts (e.g., `["wellness-way-backend-1021198538658.us-central1.run.app", "localhost"]`) |
+| `CORS_ORIGINS` | Semicolon-separated list of allowed origins (e.g., `https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev;http://localhost:3000`) |
+| `TRUSTED_HOSTS` | Semicolon-separated list of trusted hosts (e.g., `wellness-way-backend-1021198538658.us-central1.run.app;localhost;0.0.0.0;127.0.0.1`) |
+
+> [!IMPORTANT]
+> Use **semicolons (;)** instead of commas (,) in these secrets. Commas confuse the `gcloud` deployment command and will cause other environment variables to be skipped!
 
 ## STEP 4: Trigger Deployment
 
@@ -76,3 +79,15 @@ Add these secrets to your GitHub repository (**Settings** -> **Secrets and varia
 - Once the backend is live, update the `REACT_APP_API_URL` in Cloudflare Pages (Builds & deployments section) and redeploy the frontend.
 - Make sure to use your actual Cloud Run URL, NOT the example one.
 
+## 4. Definitive Fix for Semicolons in Secrets
+
+The "PORT=8080" crash occurred because commas in your `CORS_ORIGINS` secret confused the deployment script, causing it to skip 17 other critical variables (like AI keys).
+
+1.  Go to **GitHub Settings** -> **Secrets and variables** -> **Actions**.
+2.  Edit `CORS_ORIGINS`. Ensure it uses **semicolons** and NO brackets/quotes:
+    `https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev;http://localhost:3000`
+3.  Edit `TRUSTED_HOSTS`. Ensure it uses **semicolons**:
+    `wellness-way-backend-1021198538658.us-central1.run.app;localhost;0.0.0.0;127.0.0.1`
+
+## 5. Verification
+After the new backend deployment succeeds, check the "Configuration" tab in Cloud Run. You should see all variables (from `DATABASE_URL` down to `TRUSTED_HOSTS`) correctly listed with their values.
