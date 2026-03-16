@@ -70,11 +70,19 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --timeout 300 \
+            --timeout 3600 \
             --memory 2Gi \
             --cpu 1 \
             --cpu-boost \
+            --startup-cpu-boost \
             --set-env-vars "^|^ENVIRONMENT=production|DEBUG=false|DATABASE_URL=$DATABASE_URL|SUPABASE_URL=$SUPABASE_URL|SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY|GROQ_API_KEY=$GROQ_API_KEY|OPENAI_API_KEY=$OPENAI_API_KEY|AI_PROVIDER=$AI_PROVIDER|SECRET_KEY=$SECRET_KEY|JWT_SECRET_KEY=$JWT_SECRET_KEY|GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET|REDIS_URL=$REDIS_URL|ENABLE_ML_PIPELINE=$ENABLE_ML_PIPELINE|ENABLE_EMAIL_NOTIFICATIONS=$ENABLE_EMAIL_NOTIFICATIONS|SMTP_HOST=$SMTP_HOST|SMTP_PORT=$SMTP_PORT|SMTP_USER=$SMTP_USER|SMTP_PASSWORD=$SMTP_PASSWORD|FROM_EMAIL=$FROM_EMAIL|ADMIN_EMAIL=$ADMIN_EMAIL|APP_BASE_URL=$APP_BASE_URL|CORS_ORIGINS=$CORS_ORIGINS|TRUSTED_HOSTS=$TRUSTED_HOSTS"
+
+      - name: Check Deployment Logs
+        if: failure()
+        run: |
+          echo "🔎 Deployment failed. Fetching startup logs for the latest revision..."
+          REVISION=$(gcloud run revisions list --service=${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=1 --format='value(name)')
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION" --limit 50 --format="table(textPayload)"
 
       - name: Output Deployment Info
         run: |

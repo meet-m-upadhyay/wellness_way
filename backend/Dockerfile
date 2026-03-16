@@ -31,5 +31,5 @@ COPY . .
 EXPOSE 8080
 
 # Run the app
-# Use shell form to allow $PORT expansion from Cloud Run
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+# Use exec form as recommended for proper signal handling
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
