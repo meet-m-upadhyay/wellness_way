@@ -7,37 +7,51 @@ import sys
 from dotenv import load_dotenv
 
 def start_backend():
-    # Load .env file (for local dev mostly)
-    load_dotenv()
+    import sys
+    import os
     
-    # Set default environment based on context
-    is_cloud_run = os.environ.get("K_SERVICE") or os.environ.get("PORT") == "8080"
-    os.environ["ENVIRONMENT"] = os.environ.get("ENVIRONMENT", "production" if is_cloud_run else "development")
+    # Force line buffering
+    print("🚦 [STARTUP] Phase 1: Initializing entry point...", flush=True)
     
-    # Get port from environment (Cloud Run sets PORT=8080)
-    port = int(os.environ.get("PORT", 8080))
-    
-    print("🚀 Booting WellnessWay Backend...")
-    print(f"📍 Target Port: {port}")
-    print(f"🌍 Environment: {os.environ.get('ENVIRONMENT')}")
-    
-    # Start uvicorn immediately
-    import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=False,
-        log_level="info",
-        workers=1 # Cloud Run works best with single worker per container
-    )
-
-if __name__ == "__main__":
+    # Ensure app directory is in path
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    if app_dir not in sys.path:
+        sys.path.insert(0, app_dir)
+        
     try:
-        start_backend()
+        # Load .env file (for local dev mostly)
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        # Set default environment based on context
+        is_cloud_run = os.environ.get("K_SERVICE") or os.environ.get("PORT") == "8080"
+        env = os.environ.get("ENVIRONMENT", "production" if is_cloud_run else "development")
+        os.environ["ENVIRONMENT"] = env
+        
+        # Get port from environment (Cloud Run sets PORT=8080)
+        port_raw = os.environ.get("PORT", "8080")
+        port = int(port_raw)
+        
+        print(f"🚦 [STARTUP] Phase 2: Environment={env}, Port={port}", flush=True)
+        
+        # Start uvicorn immediately
+        import uvicorn
+        print("🚦 [STARTUP] Phase 3: Launching uvicorn...", flush=True)
+        
+        uvicorn.run(
+            "app.main:app",
+            host="0.0.0.0",
+            port=port,
+            reload=False,
+            log_level="info",
+            workers=1,
+            loop="asyncio"
+        )
     except Exception as e:
         import traceback
-        import sys
-        print(f"❌ CRITICAL STARTUP ERROR: {str(e)}")
-        traceback.print_exc(file=sys.stdout)
+        print(f"❌ [CRITICAL] STARTUP ERROR: {str(e)}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
         sys.exit(1)
+
+if __name__ == "__main__":
+    start_backend()

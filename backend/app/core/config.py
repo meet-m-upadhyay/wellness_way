@@ -20,6 +20,13 @@ repo_root = backend_dir.parent
 load_dotenv(repo_root / '.env')
 load_dotenv(backend_dir / '.env')
 
+# --- NUCLEAR DIAGNOSTIC BLOCK ---
+import sys
+import os
+print(f"DEBUG: Process started. PID: {os.getpid()}", file=sys.stderr, flush=True)
+print(f"DEBUG: PORT env: {os.environ.get('PORT')}", file=sys.stderr, flush=True)
+print(f"DEBUG: ENVIRONMENT: {os.environ.get('ENVIRONMENT')}", file=sys.stderr, flush=True)
+
 # Import secure key manager
 try:
     from app.core.secrets import get_secure_api_key
@@ -251,7 +258,8 @@ class LoggingSettings(BaseSettings):
     
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
     format: Literal["json", "text"] = Field(default="json")
-    enable_file_logging: bool = Field(default=True)
+    # Disable file logging in production to prevent buffering/permission issues
+    enable_file_logging: bool = Field(default=os.getenv("ENVIRONMENT") != "production")
     log_file_path: str = Field(default="logs/app.log")
     max_file_size_mb: int = Field(default=10, ge=1, le=100)
     backup_count: int = Field(default=5, ge=1, le=20)
@@ -343,13 +351,16 @@ class Settings(BaseSettings):
     )
     
     # Environment
-    environment: Literal["development", "staging", "production"] = Field(default="development")
-    debug: bool = Field(default=True)
+    environment: Literal["development", "staging", "production"] = Field(
+        default="production", # Default to production for safety
+        validation_alias="ENVIRONMENT"
+    )
+    debug: bool = Field(default=False, validation_alias="DEBUG")
     testing: bool = Field(default=False)
     
     # API Configuration
     api_host: str = Field(default="0.0.0.0")
-    # Cloud Run expects PORT=8080. We use AliasChoices for Pydantic v2 compatibility.
+    # Cloud Run expects PORT=8080. Alias ensures it takes precedence.
     api_port: int = Field(
         default=8080, 
         ge=1, 
