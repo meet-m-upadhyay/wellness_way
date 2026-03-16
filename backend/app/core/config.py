@@ -119,7 +119,7 @@ class SecuritySettings(BaseSettings):
     
     # CORS and Host settings
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000", "https://wellness-way.meetupadhyaykgp.workers.dev"],
+        default=["http://localhost:3000", "http://127.0.0.1:3000", "https://wellness-way.meetupadhyaykgp.workers.dev", "https://dev-wellness-way.meetupadhyaykgp.workers.dev"],
         description="Allowed CORS origins",
         env="CORS_ORIGINS"
     )

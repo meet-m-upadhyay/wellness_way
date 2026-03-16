@@ -70,7 +70,8 @@ class ProductionConfig(Settings):
         self.security.cors_origins = [
             "https://wellnessway.com",
             "https://app.wellnessway.com",
-            "https://wellness-way.meetupadhyaykgp.workers.dev"
+            "https://wellness-way.meetupadhyaykgp.workers.dev",
+            "https://dev-wellness-way.meetupadhyaykgp.workers.dev"
         ]
         
         # Production performance settings
