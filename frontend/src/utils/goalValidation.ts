@@ -29,12 +29,6 @@ export interface GoalValidationResult {
   minHealthyWeight: number;
 }
 
-/** Calculate BMI from weight (kg) and height (cm) */
-function calculateBMI(weightKg: number, heightCm: number): number {
-  const heightM = heightCm / 100;
-  return weightKg / (heightM * heightM);
-}
-
 /** Calculate the minimum healthy weight for a given height (BMI = 18.5) */
 function minHealthyWeight(heightCm: number): number {
   const heightM = heightCm / 100;
