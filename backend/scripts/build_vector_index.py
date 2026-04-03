@@ -4,7 +4,7 @@ import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app.database.connection import SessionLocal
+from app.database.connection import get_session_local
 from app.models.food_items import FoodItem
 from app.models.food_embeddings import FoodEmbedding
 from app.services.ml_diet_pipeline.embeddings.generator import EmbeddingGenerator
@@ -12,6 +12,7 @@ from app.services.ml_diet_pipeline.embeddings.faiss_index import FaissIndex
 from app.services.ml_diet_pipeline.embeddings.text_normalizer import normalize_text
 
 def build_index():
+    SessionLocal = get_session_local()
     db = SessionLocal()
     try:
         # Get all foods

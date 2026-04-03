@@ -131,7 +131,8 @@ class MLPipelineOrchestrator:
                 target_calories=constraints.calorie_target,
                 target_protein=constraints.protein_target,
                 primary_goal=constraints.primary_goal,
-                meals_per_day=meals_per_day
+                meals_per_day=meals_per_day,
+                cuisine=constraints.cuisine
             )
             
             # STEP 3: Creative Generation (Recipes)
@@ -290,7 +291,8 @@ class MLPipelineOrchestrator:
                     target_calories=constraints.calorie_target,
                     target_protein=constraints.protein_target,
                     primary_goal=constraints.primary_goal,
-                    meals_per_day=meals_per_day
+                    meals_per_day=meals_per_day,
+                    cuisine=constraints.cuisine
                 )
                 
                 # Reset exclusions for the next day to ONLY include current day's ingredients
@@ -439,7 +441,8 @@ class MLPipelineOrchestrator:
             target_calories=meal_target_cal,
             target_protein=meal_target_prot,
             primary_goal=constraints.primary_goal,
-            meals_per_day=1
+            meals_per_day=1,
+            cuisine=constraints.cuisine
         )
         
         target_meal = raw_meals[0]

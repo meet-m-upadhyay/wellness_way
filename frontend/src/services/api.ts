@@ -656,7 +656,7 @@ class ApiClient {
     if (limit) params.append('limit', limit.toString());
     const queryString = params.toString() ? `?${params.toString()}` : '';
 
-    return this.request<DietPlanSummaryListResponse>(`/diet-plans-ml${queryString}`, {
+    return this.request<DietPlanSummaryListResponse>(`/diet-plans-ml/${queryString}`, {
       headers: {
         'X-User-Id': userId,
       },
