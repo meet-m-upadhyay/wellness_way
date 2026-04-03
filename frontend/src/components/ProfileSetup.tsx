@@ -480,6 +480,7 @@ export const ProfileSetup: React.FC = () => {
                 <GoalsForm
                   key={user?.id || 'no-user'}
                   initialData={profileData.healthGoals}
+                  userProfile={profileData.userProfile}
                   onSubmit={handleGoalsSubmit}
                   onBack={goBack}
                   isLoading={isLoading}

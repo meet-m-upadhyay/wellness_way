@@ -99,10 +99,18 @@ class DiscoveryEngine:
             score = 1.0
             name = item.canonical_name.lower()
             
-            # Cuisine prioritization
+            # Cuisine prioritization - strict boundary enforcement
             item_cuisines = [c.lower() for c in item.cuisine_tags] if item.cuisine_tags else []
-            if cuisine in name or cuisine in item_cuisines:
-                score += 3.0
+            
+            if item_cuisines:
+                # Item has explicit cuisine tags
+                if cuisine in item_cuisines:
+                    # Matches requested cuisine - strong boost
+                    score += 5.0
+                else:
+                    # Tagged for a DIFFERENT cuisine - heavy penalty
+                    score -= 10.0
+            # Items with no cuisine tags (generic foods like "Banana", "Oats") stay neutral at score=1.0
             
             # Goal logic prioritization
             macros = item.macros or {}
@@ -130,9 +138,9 @@ class DiscoveryEngine:
             
             if protein_pct > 0.25:
                 categorized["protein"].append(item)
-            elif any(x in name for x in ["rice", "bread", "oats", "quinoa", "potato", "pasta", "tortilla", "poha", "upma"]):
+            elif any(x in name for x in ["rice", "bread", "oats", "quinoa", "potato", "pasta", "tortilla", "poha", "upma", "roti", "paratha", "naan", "pita", "couscous", "bulgur", "orzo", "focaccia", "dalia", "chapati", "idli", "dosa", "puri", "khichdi", "spaghetti", "penne", "risotto", "ciabatta", "gnocchi", "polenta", "tabbouleh"]):
                 categorized["starch"].append(item)
-            elif any(x in name for x in ["oil", "butter", "avocado", "nut", "seed", "tahini", "ghee"]):
+            elif any(x in name for x in ["oil", "butter", "avocado", "nut", "seed", "tahini", "ghee", "olive", "pesto", "balsamic", "vinaigrette"]):
                 categorized["fat"].append(item)
             else:
                 categorized["vegetables"].append(item)

@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Any
 from app.models.food_items import FoodItem
+from app.services.ml_diet_pipeline.meal_templates import get_template_registry
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ class DailyAssembler:
 
     def __init__(self):
         """Initialize daily assembler"""
-        logger.info("[DAILY_ASSEMBLER_INIT] Initialized dynamic daily assembler")
+        self.template_registry = get_template_registry()
+        logger.info("[DAILY_ASSEMBLER_INIT] Initialized dynamic daily assembler with templates")
 
     def assemble_day(
         self,
@@ -24,14 +26,15 @@ class DailyAssembler:
         target_calories: float,
         target_protein: float,
         primary_goal: str = "maintain",
-        meals_per_day: int = 3
+        meals_per_day: int = 3,
+        cuisine: str = "indian"
     ) -> List[Dict[str, Any]]:
         """
         Calculates portions using a Multi-Stage Protien-First Scaler.
         """
         logger.info(
             f"[ASSEMBLER_START] target_cal={target_calories} target_prot={target_protein} "
-            f"goal={primary_goal} meals={meals_per_day}"
+            f"goal={primary_goal} meals={meals_per_day} cuisine={cuisine}"
         )
         
         meals = []
@@ -39,11 +42,25 @@ class DailyAssembler:
             meal_target_cal = target_calories / meals_per_day
             meal_target_prot = target_protein / meals_per_day
             
-            # 1. Picking Ingredients for this meal
-            main_protein = portfolio["protein"][i % len(portfolio["protein"])] if portfolio["protein"] else None
-            main_starch = portfolio["starch"][i % len(portfolio["starch"])] if portfolio["starch"] else None
-            main_fat = portfolio["fat"][i % len(portfolio["fat"])] if portfolio["fat"] else None
-            meal_veggies = [portfolio["vegetables"][(i + j) % len(portfolio["vegetables"])] for j in range(min(2, len(portfolio["vegetables"])))] if portfolio["vegetables"] else []
+            meal_type = self._get_meal_type(i, meals_per_day)
+            
+            # Fetch a culinary archetype for this meal slot
+            template = self.template_registry.get_template(cuisine, meal_type)
+            template_components = template.get("components", {})
+            
+            # 1. Picking Ingredients matching the culinary archetype
+            main_protein = self.template_registry.select_best_ingredient(portfolio.get("protein", []), template_components.get("protein", []))
+            main_starch = self.template_registry.select_best_ingredient(portfolio.get("starch", []), template_components.get("starch", []))
+            main_fat = self.template_registry.select_best_ingredient(portfolio.get("fat", []), template_components.get("fat", []))
+            
+            # For vegetables/fruits category, we pick up to two matching ones
+            meal_veggies = []
+            available_veggies = portfolio.get("vegetables", [])
+            for _ in range(min(2, len(available_veggies))):
+                veg = self.template_registry.select_best_ingredient(available_veggies, template_components.get("vegetables", []))
+                # Deduplicate based on object canonical_name to prevent inserting identical duplicated elements
+                if veg and not any(v.canonical_name == veg.canonical_name for v in meal_veggies):
+                    meal_veggies.append(veg)
             
             meal_quantity_map = {}
             
@@ -94,8 +111,8 @@ class DailyAssembler:
                 scale_factor = meal_target_cal / final_meal_cal
                 if primary_goal == "fat loss":
                     # Lean optimization: Reduce starch/fat first before protein
-                    if main_starch: meal_quantity_map[main_starch] *= (scale_factor * 0.8)
-                    if main_fat: meal_quantity_map[main_fat] *= (scale_factor * 0.8)
+                    if main_starch in meal_quantity_map: meal_quantity_map[main_starch] *= (scale_factor * 0.8)
+                    if main_fat in meal_quantity_map: meal_quantity_map[main_fat] *= (scale_factor * 0.8)
                 else:
                     for k in meal_quantity_map:
                         meal_quantity_map[k] *= scale_factor
@@ -119,9 +136,17 @@ class DailyAssembler:
                 for k in meal_macros:
                     meal_macros[k] += item_macros.get(k, 0)
 
+            archetype_name = template["name"]
+            if "{" in archetype_name:
+                archetype_name = archetype_name.format(
+                    starch=main_starch.canonical_name if main_starch else "Starch",
+                    protein=main_protein.canonical_name if main_protein else "Protein"
+                )
+
             meals.append({
                 "meal_index": i + 1,
-                "type": self._get_meal_type(i, meals_per_day),
+                "type": meal_type,
+                "archetype": archetype_name,
                 "ingredients": meal_ingredients,
                 "nutrition": meal_macros
             })
@@ -137,3 +162,4 @@ class DailyAssembler:
 def get_daily_assembler() -> DailyAssembler:
     """Get singleton instance"""
     return DailyAssembler()
+

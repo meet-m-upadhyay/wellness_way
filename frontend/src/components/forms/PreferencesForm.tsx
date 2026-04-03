@@ -366,10 +366,8 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('cuisine', e.target.value)}
                   options={[
                     { value: 'indian', label: 'Indian' },
-                    { value: 'continental', label: 'Continental' },
                     { value: 'mediterranean', label: 'Mediterranean' },
-                    { value: 'asian', label: 'Asian' },
-                    { value: 'mexican', label: 'Mexican' },
+                    { value: 'italian', label: 'Italian' },
                   ]}
                   fullWidth
                 />
