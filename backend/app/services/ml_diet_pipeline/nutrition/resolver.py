@@ -194,10 +194,24 @@ class NutritionResolver:
         # --- Step 1: cache ---
         cached = self._cache_lookup(ingredient_name)
         if cached is not None:
-            logger.info(
-                f"[DEBUG][NUTRITION_CACHE_HIT] ingredient={ingredient_name}"
-            )
-            return self._food_item_to_resolved(cached)
+            # Sanity check cached macros too — bad API results may have been cached
+            cached_macros = cached.macros or {}
+            if category == "protein" and cached_macros.get("protein", 0) < self._MIN_PROTEIN_PER_100G:
+                logger.warning(
+                    f"[DEBUG][NUTRITION_CACHE_BAD_MACROS] ingredient={ingredient_name} "
+                    f"protein_per100={cached_macros.get('protein', 0)} — skipping bad cache"
+                )
+                # Deprecate the bad cached entry so it's not returned again
+                cached.is_deprecated = True
+                try:
+                    self._db.commit()
+                except Exception:
+                    self._db.rollback()
+            else:
+                logger.info(
+                    f"[DEBUG][NUTRITION_CACHE_HIT] ingredient={ingredient_name}"
+                )
+                return self._food_item_to_resolved(cached)
 
         # --- Step 2 & 3: API lookup ---
         api_result = await self._api_lookup(ingredient_name)
@@ -290,13 +304,31 @@ class NutritionResolver:
         return True
 
     def _cache_lookup(self, name: str) -> Optional[FoodItem]:
-        """Fuzzy ILIKE cache lookup for an api_verified food item."""
+        """Fuzzy ILIKE cache lookup. Checks all items (verified and manual).
+
+        Prefers api_verified=True, but falls back to manual entries which
+        often have better macros for Indian foods than USDA search results.
+        """
         try:
-            return (
+            # Try verified items first
+            verified = (
                 self._db.query(FoodItem)
                 .filter(
                     FoodItem.canonical_name.ilike(f"%{name}%"),
                     FoodItem.api_verified.is_(True),
+                    FoodItem.is_deprecated.is_(False),
+                )
+                .first()
+            )
+            if verified is not None:
+                return verified
+
+            # Fall back to any item (including manual/unverified)
+            return (
+                self._db.query(FoodItem)
+                .filter(
+                    FoodItem.canonical_name.ilike(f"%{name}%"),
+                    FoodItem.is_deprecated.is_(False),
                 )
                 .first()
             )
