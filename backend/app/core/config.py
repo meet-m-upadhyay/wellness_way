@@ -253,8 +253,8 @@ class NutritionAPISettings(BaseSettings):
     )
 
     # Primary provider
-    provider: str = Field(default="calorieninjas", description="Primary nutrition API provider")
-    calorieninjas_api_key: Optional[str] = Field(default=None, description="CalorieNinjas API key")
+    provider: str = Field(default="api_ninjas", description="Primary nutrition API provider")
+    api_ninjas_api_key: Optional[str] = Field(default=None, description="API Ninjas API key")
 
     # Fallback provider
     fallback_provider: str = Field(default="usda", description="Fallback nutrition API provider")
@@ -265,8 +265,8 @@ class NutritionAPISettings(BaseSettings):
 
     def __init__(self, **kwargs):
         import os
-        if 'calorieninjas_api_key' not in kwargs and os.getenv('CALORIENINJAS_API_KEY'):
-            kwargs['calorieninjas_api_key'] = os.getenv('CALORIENINJAS_API_KEY')
+        if 'api_ninjas_api_key' not in kwargs and os.getenv('API_NINJAS_API_KEY'):
+            kwargs['api_ninjas_api_key'] = os.getenv('API_NINJAS_API_KEY')
         if 'usda_api_key' not in kwargs and os.getenv('USDA_API_KEY'):
             kwargs['usda_api_key'] = os.getenv('USDA_API_KEY')
         if 'enable_llm_meal_suggestions' not in kwargs and os.getenv('ENABLE_LLM_MEAL_SUGGESTIONS'):

@@ -1,4 +1,4 @@
-"""CalorieNinjas nutrition API provider"""
+"""API Ninjas nutrition API provider (replaces CalorieNinjas which is shutting down)"""
 
 from __future__ import annotations
 
@@ -11,18 +11,18 @@ from .base import NutritionProvider, NutritionResult
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://api.calorieninjas.com/v1/nutrition"
+API_URL = "https://api.api-ninjas.com/v1/nutrition"
 
 
-class CalorieNinjasProvider(NutritionProvider):
-    """CalorieNinjas API — free tier: 10,000 requests/month."""
+class APINinjasProvider(NutritionProvider):
+    """API Ninjas Nutrition API — free tier: 10,000 requests/month."""
 
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key
 
     @property
     def source_name(self) -> str:
-        return "calorieninjas"
+        return "api_ninjas"
 
     async def lookup(self, ingredient_name: str) -> Optional[NutritionResult]:
         try:
@@ -35,21 +35,21 @@ class CalorieNinjasProvider(NutritionProvider):
                 )
 
             if response.status_code == 429:
-                logger.warning("[DEBUG][NUTRITION_RATE_LIMITED] provider=calorieninjas")
+                logger.warning("[DEBUG][NUTRITION_RATE_LIMITED] provider=api_ninjas")
                 return None
 
             if response.status_code != 200:
                 logger.error(
-                    f"[DEBUG][NUTRITION_PROVIDER_ERROR] provider=calorieninjas "
+                    f"[DEBUG][NUTRITION_PROVIDER_ERROR] provider=api_ninjas "
                     f"status={response.status_code} ingredient={ingredient_name}"
                 )
                 return None
 
-            data = response.json()
-            items = data.get("items", [])
-            if not items:
+            # API Ninjas returns a direct JSON array, not {"items": [...]}
+            items = response.json()
+            if not isinstance(items, list) or not items:
                 logger.info(
-                    f"[DEBUG][NUTRITION_NOT_FOUND] provider=calorieninjas ingredient={ingredient_name}"
+                    f"[DEBUG][NUTRITION_NOT_FOUND] provider=api_ninjas ingredient={ingredient_name}"
                 )
                 return None
 
@@ -68,8 +68,12 @@ class CalorieNinjasProvider(NutritionProvider):
             )
 
         except httpx.TimeoutException:
-            logger.error(f"[DEBUG][NUTRITION_TIMEOUT] provider=calorieninjas ingredient={ingredient_name}")
+            logger.error(f"[DEBUG][NUTRITION_TIMEOUT] provider=api_ninjas ingredient={ingredient_name}")
             return None
         except Exception as e:
-            logger.error(f"[DEBUG][NUTRITION_PROVIDER_ERROR] provider=calorieninjas error={e}")
+            logger.error(f"[DEBUG][NUTRITION_PROVIDER_ERROR] provider=api_ninjas error={e}")
             return None
+
+
+# Backward-compatible alias
+CalorieNinjasProvider = APINinjasProvider

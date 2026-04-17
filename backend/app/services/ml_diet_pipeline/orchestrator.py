@@ -850,7 +850,7 @@ def build_ml_pipeline_components(db):
     if settings.nutrition_api.enable_llm_meal_suggestions:
         from app.services.ml_diet_pipeline.suggestion.service import LLMMealSuggester
         from app.services.ml_diet_pipeline.nutrition.resolver import NutritionResolver
-        from app.services.ml_diet_pipeline.nutrition.providers.calorieninjas import CalorieNinjasProvider
+        from app.services.ml_diet_pipeline.nutrition.providers.calorieninjas import APINinjasProvider
         from app.services.ml_diet_pipeline.nutrition.providers.usda import USDAProvider
 
         meal_suggester = LLMMealSuggester(generator=get_groq_generator())
@@ -858,9 +858,9 @@ def build_ml_pipeline_components(db):
         primary_provider = None
         fallback_provider = None
 
-        cn_key = settings.nutrition_api.calorieninjas_api_key
-        if cn_key:
-            primary_provider = CalorieNinjasProvider(api_key=cn_key)
+        api_key = settings.nutrition_api.api_ninjas_api_key
+        if api_key:
+            primary_provider = APINinjasProvider(api_key=api_key)
 
         usda_key = settings.nutrition_api.usda_api_key
         if usda_key:
