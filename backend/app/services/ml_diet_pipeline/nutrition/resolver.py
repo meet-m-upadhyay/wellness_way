@@ -106,6 +106,10 @@ class NutritionResolver:
         self._fallback = fallback_provider
         self._llm = llm_generator
 
+    # Minimum protein per 100g for a "protein" category item to be accepted.
+    # If USDA returns paneer with 2g protein, the search clearly matched wrong.
+    _MIN_PROTEIN_PER_100G = 5.0
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -198,13 +202,20 @@ class NutritionResolver:
         # --- Step 2 & 3: API lookup ---
         api_result = await self._api_lookup(ingredient_name)
         if api_result is not None:
-            logger.info(
-                f"[DEBUG][NUTRITION_API_HIT] ingredient={ingredient_name} "
-                f"source={api_result.source}"
-            )
-            return self._cache_and_return(
-                api_result, diet_flags, cuisine_tags, allergen_flags
-            )
+            if self._macros_sane(api_result, category):
+                logger.info(
+                    f"[DEBUG][NUTRITION_API_HIT] ingredient={ingredient_name} "
+                    f"source={api_result.source}"
+                )
+                return self._cache_and_return(
+                    api_result, diet_flags, cuisine_tags, allergen_flags
+                )
+            else:
+                logger.warning(
+                    f"[DEBUG][NUTRITION_BAD_MATCH] ingredient={ingredient_name} "
+                    f"category={category} protein_per100={api_result.protein} "
+                    f"source={api_result.source} — rejecting, trying next"
+                )
 
         # --- Step 4: simplification loop ---
         current_name = ingredient_name
@@ -227,7 +238,7 @@ class NutritionResolver:
                 return self._food_item_to_resolved(cached)
 
             api_result = await self._api_lookup(simplified)
-            if api_result is not None:
+            if api_result is not None and self._macros_sane(api_result, category):
                 logger.info(
                     f"[DEBUG][NUTRITION_API_HIT_SIMPLIFIED] "
                     f"ingredient={simplified} source={api_result.source}"
@@ -250,7 +261,7 @@ class NutritionResolver:
                 return self._food_item_to_resolved(cached)
 
             api_result = await self._api_lookup(substitute_name)
-            if api_result is not None:
+            if api_result is not None and self._macros_sane(api_result, category):
                 return self._cache_and_return(
                     api_result, diet_flags, cuisine_tags, allergen_flags
                 )
@@ -264,6 +275,19 @@ class NutritionResolver:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def _macros_sane(self, result: NutritionResult, category: Optional[str]) -> bool:
+        """Reject API results that are obviously wrong for their category.
+
+        Example: USDA returns 2g protein/100g for 'paneer' — clearly a bad
+        search match since real paneer has ~20g protein/100g.
+        """
+        if category == "protein" and result.protein < self._MIN_PROTEIN_PER_100G:
+            return False
+        # Basic sanity: calories should be positive for any real food
+        if result.calories <= 0:
+            return False
+        return True
 
     def _cache_lookup(self, name: str) -> Optional[FoodItem]:
         """Fuzzy ILIKE cache lookup for an api_verified food item."""

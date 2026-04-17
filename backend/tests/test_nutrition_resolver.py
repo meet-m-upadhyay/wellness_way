@@ -233,8 +233,11 @@ class TestResolveOneLLMSubstitution:
         fallback = AsyncMock()
         fallback.lookup = AsyncMock(return_value=None)
 
-        llm = AsyncMock()
-        llm.suggest_substitute = AsyncMock(return_value="Tofu")
+        # LLM generator is an async callable returning {"substitute": "Tofu"}
+        async def mock_llm_generator(payload):
+            if payload.get("action") == "suggest_substitute":
+                return {"substitute": "Tofu"}
+            return None
 
         # Make API return result for the LLM substitute
         async def _primary_for_substitute(name):
@@ -247,13 +250,12 @@ class TestResolveOneLLMSubstitution:
             db=db,
             primary_provider=primary,
             fallback_provider=fallback,
-            llm_generator=llm,
+            llm_generator=mock_llm_generator,
         )
-        result = await resolver.resolve_one("Obscure Regional Cheese")
+        result = await resolver.resolve_one("Obscure Regional Cheese", category="protein")
 
         assert result is not None
         assert result.canonical_name == "Tofu"
-        llm.suggest_substitute.assert_awaited_once()
 
 
 # ---------------------------------------------------------------------------
