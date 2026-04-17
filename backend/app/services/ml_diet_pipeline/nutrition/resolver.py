@@ -389,14 +389,24 @@ class NutritionResolver:
         if self._llm is None:
             return None
         try:
-            substitute = await self._llm.suggest_substitute(
-                original_name=original_name,
-                diet_flags=diet_flags,
-                cuisine_tags=cuisine_tags,
-                category=category,
-            )
-            if substitute and isinstance(substitute, str):
-                return substitute.strip()
+            import json
+            diet_str = ", ".join(diet_flags) if diet_flags else "any"
+            cuisine_str = ", ".join(cuisine_tags) if cuisine_tags else "any"
+            payload = {
+                "action": "suggest_substitute",
+                "original_ingredient": original_name,
+                "diet_type": diet_str,
+                "cuisine": cuisine_str,
+                "category": category or "protein",
+            }
+            raw = await self._llm(payload)
+            if raw and isinstance(raw, dict) and "substitute" in raw:
+                substitute = raw["substitute"]
+                logger.info(
+                    f"[DEBUG][NUTRITION_LLM_SUBSTITUTE] original=\"{original_name}\" "
+                    f"substitute=\"{substitute}\""
+                )
+                return substitute.strip() if isinstance(substitute, str) else None
             return None
         except Exception as exc:
             logger.error(

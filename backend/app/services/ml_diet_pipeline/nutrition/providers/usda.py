@@ -35,7 +35,7 @@ class USDAProvider(NutritionProvider):
 
     async def lookup(self, ingredient_name: str) -> Optional[NutritionResult]:
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 response = await client.get(
                     SEARCH_URL,
                     params={

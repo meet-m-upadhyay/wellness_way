@@ -26,7 +26,7 @@ class APINinjasProvider(NutritionProvider):
 
     async def lookup(self, ingredient_name: str) -> Optional[NutritionResult]:
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 response = await client.get(
                     API_URL,
                     params={"query": ingredient_name},
@@ -54,15 +54,22 @@ class APINinjasProvider(NutritionProvider):
                 return None
 
             item = items[0]
-            serving_g = item.get("serving_size_g") or 100.0
+
+            def safe_float(val, default=0.0):
+                try:
+                    return float(val)
+                except (TypeError, ValueError):
+                    return default
+
+            serving_g = safe_float(item.get("serving_size_g"), 100.0)
 
             return NutritionResult.from_serving(
                 name=item.get("name", ingredient_name),
-                calories=item.get("calories", 0),
-                protein=item.get("protein_g", 0),
-                fat=item.get("fat_total_g", 0),
-                carbohydrates=item.get("carbohydrates_total_g", 0),
-                fiber=item.get("fiber_g", 0),
+                calories=safe_float(item.get("calories")),
+                protein=safe_float(item.get("protein_g")),
+                fat=safe_float(item.get("fat_total_g")),
+                carbohydrates=safe_float(item.get("carbohydrates_total_g")),
+                fiber=safe_float(item.get("fiber_g")),
                 serving_size_g=serving_g,
                 source=self.source_name,
             )

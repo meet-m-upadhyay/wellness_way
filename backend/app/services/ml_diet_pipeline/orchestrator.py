@@ -858,13 +858,15 @@ def build_ml_pipeline_components(db):
         primary_provider = None
         fallback_provider = None
 
-        api_key = settings.nutrition_api.api_ninjas_api_key
-        if api_key:
-            primary_provider = APINinjasProvider(api_key=api_key)
-
+        # USDA is primary — fully free, all fields, lab-verified data
         usda_key = settings.nutrition_api.usda_api_key
         if usda_key:
-            fallback_provider = USDAProvider(api_key=usda_key)
+            primary_provider = USDAProvider(api_key=usda_key)
+
+        # API Ninjas as fallback (free tier has premium-gated fields)
+        api_key = settings.nutrition_api.api_ninjas_api_key
+        if api_key:
+            fallback_provider = APINinjasProvider(api_key=api_key)
 
         nutrition_resolver = NutritionResolver(
             db=db,
