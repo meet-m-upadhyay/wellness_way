@@ -58,7 +58,11 @@ npm run deploy      # build + wrangler deploy (Cloudflare Workers)
 - **Config**: `core/config.py` — Pydantic v2 `BaseSettings` with nested settings classes (Database, Security, AI, Logging, etc.). Loads `.env` from repo root then `backend/.env`.
 - **Routing**: `api/router.py` aggregates endpoint modules. All routes under `/api/v1`.
 - **Auth**: Google OAuth + email/password with JWT (30 min access, 7 day refresh). Admin approval system for new users.
-- **ML Diet Pipeline** (`services/ml_diet_pipeline/`): The core feature. `orchestrator.py` coordinates: template selection (discovery_engine) -> nutrition lookup -> portion scaling -> safety validation -> store plan. GenAI integration exists but is **disabled** — all diet plan generation is deterministic math.
+- **ML Diet Pipeline** (`services/ml_diet_pipeline/`): The core feature. Two paths controlled by `ENABLE_LLM_MEAL_SUGGESTIONS` env var:
+  - **Hybrid path (new)**: LLM suggests ingredients -> nutrition API (USDA/API Ninjas) verifies macros -> cache in `food_items` -> assembler calculates portions. Falls back to template path on any failure.
+  - **Template path (fallback)**: `discovery_engine.py` queries `food_items` DB -> `daily_assembler.py` scales portions -> `genai/service.py` names meals.
+  - Both paths share: `daily_assembler.py` (protein-first portion scaler), `validation/engine.py`, `nutrition/engine.py`, `genai/service.py`.
+  - New components: `suggestion/service.py` (LLM meal suggester), `nutrition/resolver.py` (cache + API + name simplification), `nutrition/providers/` (pluggable API providers).
 - **Models**: SQLAlchemy ORM in `models/`. Key entities: User (with health metrics), HealthGoals, DietPreferences, HealthContextDocument (immutable versioned snapshots), DietPlan (JSON content), Chat/Message.
 - **Database**: `database/connection.py` manages engine/sessions. Supabase PostgreSQL in prod, local Postgres for dev.
 
@@ -117,5 +121,9 @@ Copy `.env.example` or `.env.supabase.example` to `.env` in the repo root. Key v
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — OAuth
 - `CORS_ORIGINS` — semicolon-separated allowed origins
 - `REACT_APP_API_URL` — backend URL for frontend (e.g., `http://localhost:8000/api/v1`)
+- `ENABLE_LLM_MEAL_SUGGESTIONS` — `true` to use hybrid LLM+API path, `false` for template-only (default)
+- `USDA_API_KEY` — USDA FoodData Central API key (free, primary nutrition provider)
+- `API_NINJAS_API_KEY` — API Ninjas key (free, fallback nutrition provider)
+- `GROQ_API_KEY` — Groq LLM key (used for meal suggestions and recipe naming)
 
 API docs available at `http://localhost:8000/docs` when backend is running.
