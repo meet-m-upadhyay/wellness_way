@@ -27,7 +27,8 @@ class DailyAssembler:
         target_protein: float,
         primary_goal: str = "maintain",
         meals_per_day: int = 3,
-        cuisine: str = "indian"
+        cuisine: str = "indian",
+        diet_type: str = None,
     ) -> List[Dict[str, Any]]:
         """
         Calculates portions using a Multi-Stage Protien-First Scaler.
@@ -49,15 +50,15 @@ class DailyAssembler:
             template_components = template.get("components", {})
             
             # 1. Picking Ingredients matching the culinary archetype
-            main_protein = self.template_registry.select_best_ingredient(portfolio.get("protein", []), template_components.get("protein", []))
-            main_starch = self.template_registry.select_best_ingredient(portfolio.get("starch", []), template_components.get("starch", []))
-            main_fat = self.template_registry.select_best_ingredient(portfolio.get("fat", []), template_components.get("fat", []))
-            
+            main_protein = self.template_registry.select_best_ingredient(portfolio.get("protein", []), template_components.get("protein", []), diet_type=diet_type)
+            main_starch = self.template_registry.select_best_ingredient(portfolio.get("starch", []), template_components.get("starch", []), diet_type=diet_type)
+            main_fat = self.template_registry.select_best_ingredient(portfolio.get("fat", []), template_components.get("fat", []), diet_type=diet_type)
+
             # For vegetables/fruits category, we pick up to two matching ones
             meal_veggies = []
             available_veggies = portfolio.get("vegetables", [])
             for _ in range(min(2, len(available_veggies))):
-                veg = self.template_registry.select_best_ingredient(available_veggies, template_components.get("vegetables", []))
+                veg = self.template_registry.select_best_ingredient(available_veggies, template_components.get("vegetables", []), diet_type=diet_type)
                 # Deduplicate based on object canonical_name to prevent inserting identical duplicated elements
                 if veg and not any(v.canonical_name == veg.canonical_name for v in meal_veggies):
                     meal_veggies.append(veg)

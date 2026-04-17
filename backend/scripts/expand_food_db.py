@@ -25,12 +25,26 @@ def expand_food_database():
     db = SessionLocal()
 
     new_items_data = [
-        # PROTEIN - INDIAN
-        {"name": "Paneer (Low Fat)", "macros": {"calories": 200, "protein": 20, "fat": 12, "carbohydrates": 4, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"]},
-        {"name": "Soya Chunks", "macros": {"calories": 345, "protein": 52, "fat": 0.5, "carbohydrates": 33, "fiber": 13}, "diet_flags": ["vegan", "vegetarian", "eggetarian"]},
-        {"name": "Masoor Dal (Cooked)", "macros": {"calories": 116, "protein": 9, "fat": 0.4, "carbohydrates": 20, "fiber": 8}, "diet_flags": ["vegan", "vegetarian", "eggetarian"]},
-        {"name": "Chickpeas (Boiled)", "macros": {"calories": 164, "protein": 9, "fat": 2.6, "carbohydrates": 27, "fiber": 7.6}, "diet_flags": ["vegan", "vegetarian", "eggetarian"]},
-        {"name": "Tandoori Chicken Breast", "macros": {"calories": 165, "protein": 31, "fat": 3.6, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"]},
+        # PROTEIN - INDIAN (Vegetarian / Vegan)
+        {"name": "Paneer (Low Fat)", "macros": {"calories": 200, "protein": 20, "fat": 12, "carbohydrates": 4, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Soya Chunks", "macros": {"calories": 345, "protein": 52, "fat": 0.5, "carbohydrates": 33, "fiber": 13}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Masoor Dal (Cooked)", "macros": {"calories": 116, "protein": 9, "fat": 0.4, "carbohydrates": 20, "fiber": 8}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Chickpeas (Boiled)", "macros": {"calories": 164, "protein": 9, "fat": 2.6, "carbohydrates": 27, "fiber": 7.6}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
+
+        # PROTEIN - INDIAN (Non-Vegetarian)
+        {"name": "Tandoori Chicken Breast", "macros": {"calories": 165, "protein": 31, "fat": 3.6, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Chicken Curry (Boneless)", "macros": {"calories": 185, "protein": 25, "fat": 8, "carbohydrates": 4, "fiber": 1}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Chicken Tikka", "macros": {"calories": 150, "protein": 28, "fat": 3.5, "carbohydrates": 2, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Butter Chicken (Murgh Makhani)", "macros": {"calories": 240, "protein": 20, "fat": 15, "carbohydrates": 8, "fiber": 1}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Mutton Curry (Lean)", "macros": {"calories": 220, "protein": 24, "fat": 12, "carbohydrates": 3, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Keema (Chicken Mince)", "macros": {"calories": 175, "protein": 22, "fat": 9, "carbohydrates": 3, "fiber": 0.5}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Fish Tikka", "macros": {"calories": 140, "protein": 24, "fat": 4, "carbohydrates": 2, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Prawn Curry (Indian)", "macros": {"calories": 160, "protein": 20, "fat": 7, "carbohydrates": 5, "fiber": 1}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+
+        # PROTEIN - INDIAN (Eggetarian)
+        {"name": "Egg Curry", "macros": {"calories": 180, "protein": 14, "fat": 11, "carbohydrates": 6, "fiber": 1}, "diet_flags": ["eggetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Boiled Eggs", "macros": {"calories": 155, "protein": 13, "fat": 11, "carbohydrates": 1, "fiber": 0}, "diet_flags": ["eggetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Masala Omelette", "macros": {"calories": 190, "protein": 14, "fat": 14, "carbohydrates": 3, "fiber": 0.5}, "diet_flags": ["eggetarian"], "cuisine_tags": ["indian"]},
         
         # STARCH - INDIAN
         {"name": "Bajra Roti", "macros": {"calories": 116, "protein": 3.3, "fat": 1.4, "carbohydrates": 22, "fiber": 3.4}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
@@ -64,7 +78,10 @@ def expand_food_database():
         {"name": "Kadhi (Yogurt Curry)", "macros": {"calories": 60, "protein": 3, "fat": 2, "carbohydrates": 8, "fiber": 1}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
         {"name": "Chole (Spiced Chickpeas)", "macros": {"calories": 180, "protein": 9, "fat": 4, "carbohydrates": 28, "fiber": 8}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
         {"name": "Fish Curry (Indian)", "macros": {"calories": 150, "protein": 18, "fat": 6, "carbohydrates": 5, "fiber": 1}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Chicken Biryani (Boneless)", "macros": {"calories": 220, "protein": 18, "fat": 8, "carbohydrates": 22, "fiber": 1}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Tandoori Fish", "macros": {"calories": 135, "protein": 22, "fat": 4, "carbohydrates": 2, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["indian"]},
         {"name": "Egg Bhurji", "macros": {"calories": 170, "protein": 13, "fat": 12, "carbohydrates": 2, "fiber": 0}, "diet_flags": ["eggetarian"], "cuisine_tags": ["indian"]},
+        {"name": "Egg Paratha", "macros": {"calories": 280, "protein": 12, "fat": 14, "carbohydrates": 28, "fiber": 2}, "diet_flags": ["eggetarian"], "cuisine_tags": ["indian"]},
 
         # ── MORE INDIAN STARCH ──
         {"name": "Idli (Steamed Rice Cake)", "macros": {"calories": 40, "protein": 2, "fat": 0.2, "carbohydrates": 8, "fiber": 0.5}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
@@ -78,16 +95,25 @@ def expand_food_database():
         {"name": "Karela (Bitter Gourd)", "macros": {"calories": 20, "protein": 1, "fat": 0.2, "carbohydrates": 4, "fiber": 3}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
         {"name": "Raita (Yogurt Side)", "macros": {"calories": 45, "protein": 3, "fat": 1.5, "carbohydrates": 5, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["indian"]},
 
-        # ── MEDITERRANEAN PROTEIN ──
+        # ── MEDITERRANEAN PROTEIN (Veg) ──
         {"name": "Falafel (Baked)", "macros": {"calories": 180, "protein": 7, "fat": 8, "carbohydrates": 22, "fiber": 4}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
         {"name": "Feta Cheese", "macros": {"calories": 264, "protein": 14, "fat": 21, "carbohydrates": 4, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
-        {"name": "Grilled Chicken (Mediterranean)", "macros": {"calories": 165, "protein": 31, "fat": 3.6, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
-        {"name": "Grilled Salmon Fillet", "macros": {"calories": 208, "protein": 20, "fat": 13, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
         {"name": "Tzatziki (Yogurt Dip)", "macros": {"calories": 50, "protein": 3, "fat": 2.5, "carbohydrates": 4, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
         {"name": "Halloumi Cheese", "macros": {"calories": 321, "protein": 22, "fat": 25, "carbohydrates": 3, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
         {"name": "Stuffed Grape Leaves (Dolma)", "macros": {"calories": 90, "protein": 2, "fat": 5, "carbohydrates": 10, "fiber": 2}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
-        {"name": "Shakshuka Egg", "macros": {"calories": 200, "protein": 14, "fat": 12, "carbohydrates": 10, "fiber": 2}, "diet_flags": ["eggetarian"], "cuisine_tags": ["mediterranean"]},
         {"name": "Labneh (Strained Yogurt)", "macros": {"calories": 80, "protein": 5, "fat": 5, "carbohydrates": 4, "fiber": 0}, "diet_flags": ["vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
+
+        # ── MEDITERRANEAN PROTEIN (Non-Veg) ──
+        {"name": "Grilled Chicken (Mediterranean)", "macros": {"calories": 165, "protein": 31, "fat": 3.6, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
+        {"name": "Grilled Salmon Fillet", "macros": {"calories": 208, "protein": 20, "fat": 13, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
+        {"name": "Lamb Kofta (Grilled)", "macros": {"calories": 215, "protein": 22, "fat": 13, "carbohydrates": 3, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
+        {"name": "Grilled Shrimp (Mediterranean)", "macros": {"calories": 120, "protein": 24, "fat": 2, "carbohydrates": 1, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
+        {"name": "Baked Sea Bass", "macros": {"calories": 130, "protein": 24, "fat": 3, "carbohydrates": 0, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
+        {"name": "Chicken Souvlaki", "macros": {"calories": 170, "protein": 28, "fat": 5, "carbohydrates": 3, "fiber": 0}, "diet_flags": ["non-vegetarian"], "cuisine_tags": ["mediterranean"]},
+
+        # ── MEDITERRANEAN PROTEIN (Egg) ──
+        {"name": "Shakshuka Egg", "macros": {"calories": 200, "protein": 14, "fat": 12, "carbohydrates": 10, "fiber": 2}, "diet_flags": ["eggetarian"], "cuisine_tags": ["mediterranean"]},
+        {"name": "Mediterranean Egg Scramble", "macros": {"calories": 185, "protein": 14, "fat": 12, "carbohydrates": 5, "fiber": 1}, "diet_flags": ["eggetarian"], "cuisine_tags": ["mediterranean"]},
 
         # ── MEDITERRANEAN STARCH ──
         {"name": "Whole Wheat Pita Bread", "macros": {"calories": 170, "protein": 6, "fat": 2, "carbohydrates": 35, "fiber": 5}, "diet_flags": ["vegan", "vegetarian", "eggetarian"], "cuisine_tags": ["mediterranean"]},
