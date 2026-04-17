@@ -27,6 +27,7 @@ class FoodItem(Base):
     cuisine_tags = Column(JSONB, nullable=False, default=list)
 
     is_deprecated = Column(Boolean, default=False, nullable=False)
+    api_verified = Column(Boolean, default=False, nullable=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
