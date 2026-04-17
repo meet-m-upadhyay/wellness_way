@@ -242,6 +242,38 @@ class AISettings(BaseSettings):
     enable_content_filtering: bool = Field(default=True)
 
 
+class NutritionAPISettings(BaseSettings):
+    """Nutrition API configuration for macro verification"""
+
+    model_config = ConfigDict(
+        case_sensitive=False,
+        extra="ignore",
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
+
+    # Primary provider
+    provider: str = Field(default="calorieninjas", description="Primary nutrition API provider")
+    calorieninjas_api_key: Optional[str] = Field(default=None, description="CalorieNinjas API key")
+
+    # Fallback provider
+    fallback_provider: str = Field(default="usda", description="Fallback nutrition API provider")
+    usda_api_key: Optional[str] = Field(default=None, description="USDA FoodData Central API key")
+
+    # Feature flag
+    enable_llm_meal_suggestions: bool = Field(default=False, description="Enable LLM-based meal suggestions")
+
+    def __init__(self, **kwargs):
+        import os
+        if 'calorieninjas_api_key' not in kwargs and os.getenv('CALORIENINJAS_API_KEY'):
+            kwargs['calorieninjas_api_key'] = os.getenv('CALORIENINJAS_API_KEY')
+        if 'usda_api_key' not in kwargs and os.getenv('USDA_API_KEY'):
+            kwargs['usda_api_key'] = os.getenv('USDA_API_KEY')
+        if 'enable_llm_meal_suggestions' not in kwargs and os.getenv('ENABLE_LLM_MEAL_SUGGESTIONS'):
+            kwargs['enable_llm_meal_suggestions'] = os.getenv('ENABLE_LLM_MEAL_SUGGESTIONS', '').lower() == 'true'
+        super().__init__(**kwargs)
+
+
 class LoggingSettings(BaseSettings):
     """Logging configuration settings"""
     
@@ -375,6 +407,7 @@ class Settings(BaseSettings):
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     ai: AISettings = Field(default_factory=AISettings)
+    nutrition_api: NutritionAPISettings = Field(default_factory=NutritionAPISettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
