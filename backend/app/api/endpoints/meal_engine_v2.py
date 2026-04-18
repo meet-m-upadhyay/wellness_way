@@ -6,9 +6,12 @@ Runs alongside existing v1 routes — feature-flagged via enable_meal_engine_v2.
 
 import json
 import logging
+import uuid
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -99,6 +102,49 @@ def _to_response(meal, goal: str, config: ConfigLoader) -> V2SingleMealResponse:
         prep_time_minutes=meal.prep_time_minutes,
         quality_warning=meal.quality_warning,
     )
+
+
+def _save_v2_plan(db: Session, user_id: str, plan_response: V2DailyPlanResponse) -> str:
+    """Save a V2 plan to the diet_plans table. Returns the plan ID."""
+    plan_id = str(uuid.uuid4())
+
+    # Get active HCD id
+    hcd_row = db.execute(
+        text("SELECT id FROM health_context_documents WHERE user_id = :uid AND is_active = true ORDER BY version DESC LIMIT 1"),
+        {"uid": user_id},
+    ).fetchone()
+    hcd_id = str(hcd_row.id) if hcd_row else user_id
+
+    content = plan_response.model_dump()
+
+    # Delete old V2 plans for this user (keep max 3)
+    db.execute(
+        text("""
+            DELETE FROM diet_plans WHERE id IN (
+                SELECT id FROM diet_plans
+                WHERE user_id = :uid AND engine_version = 'v2'
+                ORDER BY created_at DESC
+                OFFSET 2
+            )
+        """),
+        {"uid": user_id},
+    )
+
+    db.execute(
+        text("""
+            INSERT INTO diet_plans (id, user_id, hcd_id, plan_type, start_date, content, engine_version)
+            VALUES (:id, :uid, :hcd_id, 'daily', :start_date, :content, 'v2')
+        """),
+        {
+            "id": plan_id,
+            "uid": user_id,
+            "hcd_id": hcd_id,
+            "start_date": date.today().isoformat(),
+            "content": json.dumps(content),
+        },
+    )
+    db.commit()
+    return plan_id
 
 
 async def _parse_request(raw_request: Request) -> V2MealRequest:
@@ -211,9 +257,43 @@ async def generate_daily_plan(
     # Macro display order based on goal
     macro_order = config.goal_macro_order.get(ctx["primary_goal"], ["calories", "protein", "carbs", "fat", "fiber"])
 
-    return V2DailyPlanResponse(
+    plan_response = V2DailyPlanResponse(
         meals=[_to_response(m, ctx["primary_goal"], config) for m in generated_meals],
         daily_totals=daily_totals,
         goal=ctx["primary_goal"],
         macro_display_order=macro_order,
     )
+
+    # Save to DB
+    try:
+        plan_id = _save_v2_plan(db, user_id, plan_response)
+        plan_response.id = plan_id
+    except Exception as e:
+        logger.warning("Failed to save V2 plan to DB: %s", e)
+
+    return plan_response
+
+
+@router.get("/latest", response_model=Optional[V2DailyPlanResponse])
+async def get_latest_v2_plan(
+    db: Session = Depends(get_db),
+    x_user_id: Optional[str] = Header(None),
+):
+    """Get the latest V2 plan for the user."""
+    user_id = x_user_id or "f53f6cb3-4b52-47ca-9cdb-bb61ece32610"
+
+    row = db.execute(
+        text("""
+            SELECT id, content FROM diet_plans
+            WHERE user_id = :uid AND engine_version = 'v2'
+            ORDER BY created_at DESC LIMIT 1
+        """),
+        {"uid": user_id},
+    ).fetchone()
+
+    if not row:
+        return None
+
+    content = row.content if isinstance(row.content, dict) else json.loads(row.content)
+    content["id"] = str(row.id)
+    return V2DailyPlanResponse(**content)

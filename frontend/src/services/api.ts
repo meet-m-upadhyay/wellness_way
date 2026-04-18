@@ -400,10 +400,12 @@ export interface V2SingleMeal {
 }
 
 export interface V2DailyPlanResponse {
+  id?: string;
   meals: V2SingleMeal[];
   daily_totals: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
   goal: string;
   macro_display_order: string[];
+  engine_version?: string;
 }
 
 /** Convert a V2 meal to LegacyMeal for existing components. */
@@ -774,6 +776,12 @@ class ApiClient {
         meal_type: mealType,
         cuisine: cuisine || 'indian',
       }),
+    });
+  }
+
+  async getLatestV2Plan(userId: string): Promise<ApiResponse<V2DailyPlanResponse | null>> {
+    return this.request<V2DailyPlanResponse | null>('/v2/meal-engine/latest', {
+      headers: { 'X-User-Id': userId },
     });
   }
 

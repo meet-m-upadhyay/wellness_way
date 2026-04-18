@@ -41,15 +41,8 @@ export const DietPlans: React.FC = () => {
   const [useV2Engine, setUseV2Engine] = useState(() => {
     return localStorage.getItem('wellness_v2_engine') === 'true';
   });
-  const [v2Plan, setV2Plan] = useState<LegacyDailyPlan | null>(() => {
-    try {
-      const saved = localStorage.getItem('wellness_v2_plan');
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
-  const [v2ScoreInfo, setV2ScoreInfo] = useState<string | null>(() => {
-    return localStorage.getItem('wellness_v2_score_info');
-  });
+  const [v2Plan, setV2Plan] = useState<LegacyDailyPlan | null>(null);
+  const [v2ScoreInfo, setV2ScoreInfo] = useState<string | null>(null);
 
   const urlUserId = searchParams.get('userId');
   const currentUserId = user?.id || urlUserId;
@@ -113,25 +106,54 @@ export const DietPlans: React.FC = () => {
     }
   }, [currentUserId, loadingUser, navigate]);
 
+  const loadV1Plan = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await apiClient.getUserDietPlans(currentUserId, undefined, 1);
+      if (response.data && response.data.plans.length > 0) {
+        const latestPlanSummary = response.data.plans[0];
+        const planResponse = await apiClient.getDietPlan(latestPlanSummary.id, currentUserId);
+        if (planResponse.data) {
+          setCurrentPlan(planResponse.data);
+          setSelectedPlanType(planResponse.data.plan_type as 'daily' | 'weekly');
+          console.log('Loaded V1 plan:', planResponse.data.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading V1 plan:', err);
+    }
+  };
+
+  const loadV2Plan = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await apiClient.getLatestV2Plan(currentUserId);
+      if (response.data) {
+        const adapted = adaptV2DailyToLegacy(response.data);
+        setV2Plan(adapted);
+        const scores = response.data.meals.map(m =>
+          `${m.dish_name}: ${m.score.total.toFixed(0)}/100 (${m.score.band})`
+        ).join(' | ');
+        setV2ScoreInfo(scores);
+        setSelectedPlanType('daily');
+        console.log('Loaded V2 plan:', response.data.id);
+      }
+    } catch (err) {
+      console.error('Error loading V2 plan:', err);
+    }
+  };
+
   useEffect(() => {
     const loadLatestPlan = async () => {
       if (!currentUserId || loadingUser) return;
       setLoadingExistingPlan(true);
       try {
-        const response = await apiClient.getUserDietPlans(currentUserId, undefined, 1);
-        if (response.data && response.data.plans.length > 0) {
-          const latestPlanSummary = response.data.plans[0];
-          const planResponse = await apiClient.getDietPlan(latestPlanSummary.id, currentUserId);
-          if (planResponse.data) {
-            setCurrentPlan(planResponse.data);
-            setSelectedPlanType(planResponse.data.plan_type as 'daily' | 'weekly');
-            console.log('Loaded existing diet plan:', planResponse.data.id);
-          }
+        // Load both V1 and V2 plans, show the one matching current toggle
+        if (useV2Engine) {
+          await loadV2Plan();
         } else {
-          console.log('No existing diet plans found for user');
+          await loadV1Plan();
         }
-      } catch (err) {
-        console.error('Error loading existing diet plan:', err);
       } finally {
         setLoadingExistingPlan(false);
       }
@@ -157,13 +179,10 @@ export const DietPlans: React.FC = () => {
         if (response.data) {
           const adapted = adaptV2DailyToLegacy(response.data);
           setV2Plan(adapted);
-          localStorage.setItem('wellness_v2_plan', JSON.stringify(adapted));
-          // Build score info string for display
           const scores = response.data.meals.map(m =>
             `${m.dish_name}: ${m.score.total.toFixed(0)}/100 (${m.score.band})`
           ).join(' | ');
           setV2ScoreInfo(scores);
-          localStorage.setItem('wellness_v2_score_info', scores);
         }
       } else {
         // V1 Engine path (existing)
@@ -273,8 +292,6 @@ export const DietPlans: React.FC = () => {
     setCurrentPlan(null);
     setV2Plan(null);
     setV2ScoreInfo(null);
-    localStorage.removeItem('wellness_v2_plan');
-    localStorage.removeItem('wellness_v2_score_info');
     setSelectedPlanType(null);
     setError(null);
     setSafetyViolation(null);
@@ -361,7 +378,20 @@ export const DietPlans: React.FC = () => {
                 type="checkbox"
                 className="sr-only peer"
                 checked={useV2Engine}
-                onChange={(e) => { setUseV2Engine(e.target.checked); localStorage.setItem('wellness_v2_engine', String(e.target.checked)); handleStartOver(); }}
+                onChange={async (e) => {
+                  const isV2 = e.target.checked;
+                  setUseV2Engine(isV2);
+                  localStorage.setItem('wellness_v2_engine', String(isV2));
+                  setError(null);
+                  // Load the other engine's plan instead of resetting
+                  if (isV2) {
+                    await loadV2Plan();
+                  } else {
+                    setV2Plan(null);
+                    setV2ScoreInfo(null);
+                    await loadV1Plan();
+                  }
+                }}
               />
               <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-accent-600 transition-colors duration-200"></div>
               <div className="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform duration-200 peer-checked:translate-x-5 shadow-sm"></div>

@@ -52,7 +52,9 @@ class V2SingleMealResponse(BaseModel):
 
 class V2DailyPlanResponse(BaseModel):
     """Response for daily plan generation."""
+    id: Optional[str] = None  # diet_plans.id after saving
     meals: List[V2SingleMealResponse]
     daily_totals: Dict[str, float]
     goal: str
     macro_display_order: List[str]
+    engine_version: str = "v2"
