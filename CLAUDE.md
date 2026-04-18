@@ -70,7 +70,8 @@ npm run deploy      # build + wrangler deploy (Cloudflare Workers)
   - **Pipeline**: Archetype-first LLM prompt → IngredientMatcher (exact/alias/canonical/fuzzy/embedding) → NutritionRouter (IFCT→Edamam→USDA, cuisine-aware) → UnitNormalizer → MealScorer (6 deterministic dimensions + LLM-judge) → auto-retry on low scores.
   - **Config**: JSON files in `meal_engine/config/` for archetypes, scoring weights, unit conversions, pairing rules, canonical food defaults. Hot-reload in dev mode.
   - **DB tables**: `v2_ingredients`, `v2_regions`, `v2_pairing_rules`, `v2_ingredient_embeddings`, `v2_external_nutrition_cache`.
-  - **API**: `POST /v2/meal-engine/generate-meal`, `POST /v2/meal-engine/generate-daily`.
+  - **API**: `POST /v2/meal-engine/generate-meal`, `POST /v2/meal-engine/generate-daily`, `GET /v2/meal-engine/latest`.
+  - **Plan persistence**: V2 plans saved to `diet_plans` table with `engine_version='v2'`. V1 plans have `engine_version='v1'` (default). Frontend toggle loads respective engine's latest plan from DB.
   - **Tests**: `tests/test_unit_normalizer.py`, `tests/test_meal_scorer.py`, `tests/test_pairing_validator.py`, `tests/test_ingredient_matcher.py` (46 tests).
   - **Seed scripts** (run from `backend/`):
     1. `cd ../ifct-test && node seed_ifct.js` — IFCT CSV → JSON
