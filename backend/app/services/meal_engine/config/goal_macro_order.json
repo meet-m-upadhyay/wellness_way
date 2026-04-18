@@ -1,0 +1,7 @@
+{
+  "muscle_gain": ["protein", "carbs", "fat", "fiber"],
+  "fat_loss": ["calories", "protein", "fiber", "carbs", "fat"],
+  "keto": ["fat", "protein", "net_carbs"],
+  "endurance": ["carbs", "protein", "fat"],
+  "maintenance": ["calories", "protein", "carbs", "fat", "fiber"]
+}

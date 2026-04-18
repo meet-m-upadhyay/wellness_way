@@ -1,0 +1,81 @@
+{
+  "_comment": "Default IFCT entries for ambiguous common food terms. Used by IngredientMatcher when multiple entries match.",
+
+  "rice": {
+    "default_code": "A015",
+    "default_name": "Rice, raw, milled",
+    "note": "Most common white rice in Indian cooking. 7 rice entries in IFCT.",
+    "ambiguous": false
+  },
+  "wheat": {
+    "default_code": "A019",
+    "default_name": "Wheat flour, atta",
+    "note": "Default Indian wheat usage — atta for roti/chapati. 7 wheat entries in IFCT.",
+    "ambiguous": false
+  },
+  "dal": {
+    "default_code": "B021",
+    "default_name": "Red gram, dal",
+    "note": "Toor dal — most common across India. 5 true dals in IFCT. Log ambiguous at match time.",
+    "ambiguous": true
+  },
+  "chicken": {
+    "default_code": "N003",
+    "default_name": "Chicken, poultry, breast, skinless",
+    "note": "Most common diet-plan cut. N001 (leg) has suspect macros.",
+    "ambiguous": false
+  },
+  "egg": {
+    "default_code": "M001",
+    "default_name": "Egg, poultry, whole, raw",
+    "note": "Standard poultry egg. Form context determines raw vs boiled.",
+    "ambiguous": false
+  },
+  "fish": {
+    "default_code": null,
+    "default_name": null,
+    "note": "100+ fish entries, no single default. Log ambiguous and require specific fish name.",
+    "ambiguous": true
+  },
+  "oil": {
+    "default_code": "T005",
+    "default_name": "Groundnut oil",
+    "note": "Neutral cooking oil. Cuisine-specific overrides below.",
+    "ambiguous": false,
+    "cuisine_overrides": {
+      "indian_north": {"code": "T006", "name": "Mustard oil"},
+      "indian_south": {"code": "T001", "name": "Coconut oil"},
+      "indian": {"code": "T005", "name": "Groundnut oil"}
+    }
+  },
+  "milk": {
+    "default_code": "L002",
+    "default_name": "Milk, whole, Cow",
+    "note": "More common in dietary contexts than buffalo milk.",
+    "ambiguous": false
+  },
+  "paneer": {
+    "default_code": "L003",
+    "default_name": "Paneer",
+    "note": "Only 1 entry, unambiguous.",
+    "ambiguous": false
+  },
+  "ghee": {
+    "default_code": "T013",
+    "default_name": "Ghee",
+    "note": "Only 1 entry. data_quality=energy_derived (kcal was 0, backfilled).",
+    "ambiguous": false
+  },
+  "curd": {
+    "default_code": "MAN001",
+    "default_name": "Dahi / Curd (whole milk, cow)",
+    "note": "Manual seed entry. Also matches yogurt, dahi.",
+    "ambiguous": false
+  },
+  "butter": {
+    "default_code": null,
+    "default_name": null,
+    "note": "No butter entry in IFCT. Falls back to Edamam/USDA.",
+    "ambiguous": true
+  }
+}

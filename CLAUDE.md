@@ -65,6 +65,19 @@ npm run deploy      # build + wrangler deploy (Cloudflare Workers)
   - New components: `suggestion/service.py` (LLM meal suggester), `nutrition/resolver.py` (cache + API + name simplification), `nutrition/providers/` (pluggable API providers).
 - **Models**: SQLAlchemy ORM in `models/`. Key entities: User (with health metrics), HealthGoals, DietPreferences, HealthContextDocument (immutable versioned snapshots), DietPlan (JSON content), Chat/Message.
 - **Database**: `database/connection.py` manages engine/sessions. Supabase PostgreSQL in prod, local Postgres for dev.
+- **V2 Meal Engine** (`services/meal_engine/`): Parallel meal generation system (does NOT replace v1). Feature-flagged via `ENABLE_MEAL_ENGINE_V2` env var.
+  - **Data**: 546 IFCT 2017 Indian foods in `v2_ingredients` table + 4 manual dairy entries. pgvector embeddings for semantic matching.
+  - **Pipeline**: Archetype-first LLM prompt → IngredientMatcher (exact/alias/canonical/fuzzy/embedding) → NutritionRouter (IFCT→Edamam→USDA, cuisine-aware) → UnitNormalizer → MealScorer (6 deterministic dimensions + LLM-judge) → auto-retry on low scores.
+  - **Config**: JSON files in `meal_engine/config/` for archetypes, scoring weights, unit conversions, pairing rules, canonical food defaults. Hot-reload in dev mode.
+  - **DB tables**: `v2_ingredients`, `v2_regions`, `v2_pairing_rules`, `v2_ingredient_embeddings`, `v2_external_nutrition_cache`.
+  - **API**: `POST /v2/meal-engine/generate-meal`, `POST /v2/meal-engine/generate-daily`.
+  - **Tests**: `tests/test_unit_normalizer.py`, `tests/test_meal_scorer.py`, `tests/test_pairing_validator.py`, `tests/test_ingredient_matcher.py` (46 tests).
+  - **Seed scripts** (run from `backend/`):
+    1. `cd ../ifct-test && node seed_ifct.js` — IFCT CSV → JSON
+    2. `python scripts/seed/load_ifct_seed.py --json-path ../ifct-test/ifct_seed_data.json` — JSON → PostgreSQL
+    3. `python scripts/seed/seed_pairing_rules.py` — Pairing rules → DB
+    4. `python scripts/seed/generate_embeddings.py` — sentence-transformers embeddings → pgvector
+    5. `python scripts/seed/classify_forms_groq.py` — Groq LLM form classification (optional)
 
 ### Frontend (`frontend/src/`)
 
@@ -107,6 +120,21 @@ torch, sentence_transformers, etc. are imported inline within async handlers, no
 ### Health calculations use Mifflin-St Jeor
 BMR formulas and TDEE activity multipliers are in `services/health_calculations.py`. The specific constants matter for plan accuracy — don't change them without understanding the nutritional science.
 
+### BaseHTTPMiddleware breaks Pydantic body parsing
+The SecurityMiddleware uses `BaseHTTPMiddleware` which consumes the request body as bytes. New POST endpoints **cannot** use Pydantic model parameters directly. Use `Request` + manual JSON parse instead:
+```python
+# WRONG — will 422 with "Input should be a valid dictionary"
+async def my_endpoint(request: MyModel, db: Session = Depends(get_db)): ...
+
+# CORRECT — parse body manually
+async def my_endpoint(raw_request: Request, db: Session = Depends(get_db)):
+    body = await raw_request.body()
+    request = MyModel(**json.loads(body)) if body else MyModel()
+```
+
+### V2 Meal Engine: sentence-transformers must be singleton
+The embedding model (`all-MiniLM-L6-v2`, 90MB) must be cached at class level, not loaded per request. See `IngredientMatcher._embedding_model` pattern.
+
 ### React state updates with API responses
 ```typescript
 // Create new object reference to trigger re-render
@@ -125,5 +153,7 @@ Copy `.env.example` or `.env.supabase.example` to `.env` in the repo root. Key v
 - `USDA_API_KEY` — USDA FoodData Central API key (free, primary nutrition provider)
 - `API_NINJAS_API_KEY` — API Ninjas key (free, fallback nutrition provider)
 - `GROQ_API_KEY` — Groq LLM key (used for meal suggestions and recipe naming)
+- `ENABLE_MEAL_ENGINE_V2` — `true` to enable V2 meal engine endpoints (default: `false`)
+- `EDAMAM_APP_ID`, `EDAMAM_APP_KEY` — Edamam Food Database API keys (V2 fallback nutrition provider, optional)
 
 API docs available at `http://localhost:8000/docs` when backend is running.

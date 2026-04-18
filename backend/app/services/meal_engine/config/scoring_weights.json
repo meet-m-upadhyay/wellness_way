@@ -1,0 +1,59 @@
+{
+  "macro_accuracy": {
+    "max_points": 30,
+    "full_marks_threshold_pct": 0.05,
+    "zero_marks_threshold_pct": 0.30,
+    "description": "Points based on % deviation from target macros"
+  },
+  "plate_composition": {
+    "max_points": 20,
+    "points_per_slot": 5,
+    "description": "Points for each food category present (protein + carb + fat + veg)"
+  },
+  "culinary_coherence": {
+    "max_points": 20,
+    "archetype_match_points": 10,
+    "pairing_valid_points": 10,
+    "pairing_incompatible_penalty": -10,
+    "description": "Matches archetype slots + pairings are culturally valid"
+  },
+  "micro_diversity": {
+    "max_points": 15,
+    "points_per_food_group": 3,
+    "max_food_groups": 5,
+    "description": "Count of distinct food groups in the meal"
+  },
+  "goal_alignment": {
+    "max_points": 10,
+    "description": "Priority macro for user's goal is prominent in the meal"
+  },
+  "practicality": {
+    "max_points": 5,
+    "min_portion_g": 30,
+    "max_portion_g": 400,
+    "penalty_per_violation": -2,
+    "description": "Reasonable portion sizes, common ingredients"
+  },
+  "bands": {
+    "serve": {"min_score": 85, "action": "return to user"},
+    "review": {"min_score": 70, "action": "return with quality log"},
+    "regenerate": {"min_score": 0, "action": "auto-regenerate, max 3 retries"}
+  },
+  "optional_dimensions": {
+    "sugar_penalty": {
+      "enabled_for_goals": ["fat_loss", "maintenance"],
+      "threshold_g_per_meal": 15,
+      "penalty_points": -3
+    },
+    "sodium_flag": {
+      "enabled_for_goals": ["fat_loss"],
+      "threshold_mg_per_meal": 800,
+      "penalty_points": -2
+    },
+    "sat_fat_ratio": {
+      "enabled_for_goals": ["fat_loss", "maintenance"],
+      "max_pct_of_kcal": 0.10,
+      "penalty_points": -2
+    }
+  }
+}

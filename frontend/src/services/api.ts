@@ -362,6 +362,110 @@ function calculateNutritionTotals(meals: Meal[]): {
   };
 }
 
+// ============================================================
+// V2 Meal Engine Types & Adapters
+// ============================================================
+
+export interface V2MealComponent {
+  llm_name: string;
+  resolved_code: string | null;
+  resolved_name: string;
+  match_method: string;
+  match_confidence: number;
+  grams: number;
+  role: string;
+  food_group: string;
+}
+
+export interface V2ScoreBreakdown {
+  macro_accuracy: number;
+  plate_composition: number;
+  culinary_coherence: number;
+  micro_diversity: number;
+  goal_alignment: number;
+  practicality: number;
+  total: number;
+  band: string;
+}
+
+export interface V2SingleMeal {
+  archetype: string;
+  dish_name: string;
+  components: V2MealComponent[];
+  macros: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
+  score: V2ScoreBreakdown;
+  cultural_note?: string;
+  prep_time_minutes?: number;
+  quality_warning: boolean;
+}
+
+export interface V2DailyPlanResponse {
+  meals: V2SingleMeal[];
+  daily_totals: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
+  goal: string;
+  macro_display_order: string[];
+}
+
+/** Convert a V2 meal to LegacyMeal for existing components. */
+export function adaptV2MealToLegacy(v2Meal: V2SingleMeal, mealType: string): LegacyMeal {
+  return {
+    name: v2Meal.dish_name,
+    ingredients: v2Meal.components.map(c =>
+      `${Math.round(c.grams)} g ${c.resolved_name}`
+    ),
+    instructions: v2Meal.cultural_note || `${v2Meal.archetype} meal — ${v2Meal.components.map(c => c.resolved_name).join(', ')}`,
+    nutrition: {
+      calories: v2Meal.macros.calories,
+      protein_g: v2Meal.macros.protein,
+      carbs_g: v2Meal.macros.carbs,
+      fat_g: v2Meal.macros.fat,
+      fiber_g: v2Meal.macros.fiber,
+    },
+  };
+}
+
+/** Convert a V2 daily plan response to LegacyDailyPlan for existing components. */
+export function adaptV2DailyToLegacy(v2Plan: V2DailyPlanResponse): LegacyDailyPlan {
+  const mealTypes = ['breakfast', 'lunch', 'dinner'];
+  const meals: { [key: string]: LegacyMeal } = {};
+  const snacks: LegacyMeal[] = [];
+
+  v2Plan.meals.forEach((v2Meal, i) => {
+    const mealType = mealTypes[i] || 'snack';
+    const legacy = adaptV2MealToLegacy(v2Meal, mealType);
+    if (mealType === 'snack') {
+      snacks.push(legacy);
+    } else {
+      meals[mealType] = legacy;
+    }
+  });
+
+  // Fill missing meal types with empty placeholders
+  for (const mt of mealTypes) {
+    if (!meals[mt]) {
+      meals[mt] = { name: `No ${mt}`, ingredients: [], instructions: '', nutrition: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 } };
+    }
+  }
+
+  return {
+    date: new Date().toISOString().split('T')[0],
+    meals: {
+      breakfast: meals.breakfast,
+      lunch: meals.lunch,
+      dinner: meals.dinner,
+      snacks: snacks.length > 0 ? snacks : undefined,
+    },
+    daily_nutrition: {
+      total_calories: v2Plan.daily_totals.calories,
+      total_protein_g: v2Plan.daily_totals.protein,
+      total_carbs_g: v2Plan.daily_totals.carbs,
+      total_fat_g: v2Plan.daily_totals.fat,
+    },
+    summary: `V2 Engine | Goal: ${v2Plan.goal} | Scores: ${v2Plan.meals.map(m => `${m.score.total.toFixed(0)}`).join('/')}`,
+    notes: v2Plan.macro_display_order ? `Macro priority: ${v2Plan.macro_display_order.join(' > ')}` : undefined,
+  };
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -639,6 +743,37 @@ class ApiClient {
         'X-User-Id': userId, // Pass user ID in header for authentication
       },
       body: JSON.stringify(body),
+    });
+  }
+
+  // V2 Meal Engine API
+  async generateV2DailyPlan(
+    userId: string,
+    cuisine?: string,
+  ): Promise<ApiResponse<V2DailyPlanResponse>> {
+    return this.request<V2DailyPlanResponse>('/v2/meal-engine/generate-daily', {
+      method: 'POST',
+      headers: { 'X-User-Id': userId },
+      body: JSON.stringify({
+        meal_type: 'lunch',
+        cuisine: cuisine || 'indian',
+        plan_type: 'daily',
+      }),
+    });
+  }
+
+  async generateV2SingleMeal(
+    userId: string,
+    mealType: string = 'lunch',
+    cuisine?: string,
+  ): Promise<ApiResponse<V2SingleMeal>> {
+    return this.request<V2SingleMeal>('/v2/meal-engine/generate-meal', {
+      method: 'POST',
+      headers: { 'X-User-Id': userId },
+      body: JSON.stringify({
+        meal_type: mealType,
+        cuisine: cuisine || 'indian',
+      }),
     });
   }
 

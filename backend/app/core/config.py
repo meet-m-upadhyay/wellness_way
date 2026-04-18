@@ -402,7 +402,8 @@ class Settings(BaseSettings):
     enable_plan_regeneration: bool = Field(default=True)
     enable_analytics: bool = Field(default=False)
     enable_ml_pipeline: bool = Field(default=False)
-    
+    enable_meal_engine_v2: bool = Field(default=False)
+
     # Nested settings
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)

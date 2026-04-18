@@ -29,6 +29,11 @@ if config.config_file_name is not None:
 # Import all models to ensure they are registered with Base.metadata
 from app.models import User, HealthGoals, DietPreferences, HealthContextDocument, DietPlan, Chat, Message
 from app.models.food_items import FoodItem
+from app.models.v2_regions import V2Region
+from app.models.v2_ingredients import V2Ingredient
+from app.models.v2_pairing_rules import V2PairingRule
+from app.models.v2_ingredient_embeddings import V2IngredientEmbedding
+from app.models.v2_external_nutrition_cache import V2ExternalNutritionCache
 
 target_metadata = Base.metadata
 

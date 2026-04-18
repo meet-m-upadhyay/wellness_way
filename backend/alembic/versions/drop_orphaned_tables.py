@@ -20,8 +20,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.drop_table('food_audit_log')
-    op.drop_table('registry_versions')
+    op.execute("DROP TABLE IF EXISTS food_audit_log")
+    op.execute("DROP TABLE IF EXISTS registry_versions")
 
 
 def downgrade() -> None:

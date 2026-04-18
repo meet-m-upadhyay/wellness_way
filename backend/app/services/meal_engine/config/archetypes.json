@@ -1,0 +1,162 @@
+{
+  "_slot_to_food_groups": {
+    "protein_animal": ["Animal Meat", "Poultry", "Marine Fish", "Fresh Water Fish and Shellfish", "Marine Shellfish", "Marine Mollusks", "Egg and Egg Products"],
+    "protein_dairy": ["Milk and Milk Products"],
+    "protein_legume": ["Grain Legumes"],
+    "grain": ["Cereals and Millets"],
+    "vegetable": ["Other Vegetables", "Mushrooms"],
+    "starchy_vegetable": ["Roots and Tubers"],
+    "leafy_green": ["Green Leafy Vegetables"],
+    "fruit": ["Fruits"],
+    "nuts_seeds": ["Nuts and Oil Seeds"],
+    "fat_cooking": ["Edible Oils and Fats"],
+    "spice": ["Condiments and Spices"],
+    "sweetener": ["Sugars"],
+    "misc": ["Miscellaneous Foods"]
+  },
+
+  "indian": {
+    "thali": {
+      "name": "Thali",
+      "description": "Complete Indian plate with dal, sabzi, grain, and accompaniment",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "dal", "slot_type": "protein_legume", "required": true},
+        {"role": "sabzi", "slot_type": "vegetable", "required": true},
+        {"role": "grain", "slot_type": "grain", "required": true},
+        {"role": "side", "slot_type": "protein_dairy", "required": false}
+      ]
+    },
+    "curry_bread": {
+      "name": "Curry with Bread",
+      "description": "Gravy curry served with roti/naan/paratha",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "curry_protein", "slot_type": ["protein_animal", "protein_dairy", "protein_legume"], "required": true},
+        {"role": "bread", "slot_type": "grain", "required": true},
+        {"role": "vegetable", "slot_type": ["vegetable", "leafy_green"], "required": false},
+        {"role": "fat", "slot_type": "fat_cooking", "required": false}
+      ]
+    },
+    "one_pot": {
+      "name": "One-Pot Meal",
+      "description": "Biryani, khichdi, pulao with one accompaniment",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "main_grain", "slot_type": "grain", "required": true},
+        {"role": "protein", "slot_type": ["protein_animal", "protein_legume", "vegetable"], "required": true},
+        {"role": "accompaniment", "slot_type": "protein_dairy", "required": false}
+      ]
+    },
+    "tiffin": {
+      "name": "South Indian Tiffin",
+      "description": "Idli/dosa/vada with sambar and chutney",
+      "meal_types": ["breakfast", "snack"],
+      "slots": [
+        {"role": "main", "slot_type": "grain", "required": true},
+        {"role": "sambar_dal", "slot_type": "protein_legume", "required": true},
+        {"role": "chutney_side", "slot_type": ["vegetable", "nuts_seeds"], "required": false}
+      ]
+    },
+    "savory_breakfast": {
+      "name": "Savory Breakfast",
+      "description": "Poha, upma, paratha with yogurt or chutney",
+      "meal_types": ["breakfast"],
+      "slots": [
+        {"role": "main_starch", "slot_type": "grain", "required": true},
+        {"role": "protein", "slot_type": ["protein_legume", "protein_dairy", "protein_animal"], "required": true},
+        {"role": "vegetable", "slot_type": "vegetable", "required": false},
+        {"role": "fat", "slot_type": "fat_cooking", "required": false}
+      ]
+    },
+    "sweet_porridge": {
+      "name": "Sweet Porridge / Cereal Bowl",
+      "description": "Oats, dalia, or semolina with milk and fruits/nuts",
+      "meal_types": ["breakfast", "snack"],
+      "slots": [
+        {"role": "base", "slot_type": "grain", "required": true},
+        {"role": "liquid", "slot_type": "protein_dairy", "required": true},
+        {"role": "topping", "slot_type": ["fruit", "nuts_seeds"], "required": false}
+      ]
+    },
+    "dry_sabzi_meal": {
+      "name": "Dry Sabzi with Bread and Protein",
+      "description": "Dry vegetable preparation with roti and dal/curd",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "sabzi", "slot_type": ["vegetable", "starchy_vegetable"], "required": true},
+        {"role": "bread", "slot_type": "grain", "required": true},
+        {"role": "protein_side", "slot_type": ["protein_legume", "protein_dairy"], "required": true},
+        {"role": "fat", "slot_type": "fat_cooking", "required": false}
+      ]
+    },
+    "egg_meal": {
+      "name": "Egg-Based Meal",
+      "description": "Egg preparation with bread or rice and vegetables",
+      "meal_types": ["breakfast", "lunch", "dinner"],
+      "slots": [
+        {"role": "egg", "slot_type": "protein_animal", "required": true},
+        {"role": "starch", "slot_type": "grain", "required": true},
+        {"role": "vegetable", "slot_type": ["vegetable", "leafy_green"], "required": false}
+      ]
+    }
+  },
+
+  "mediterranean": {
+    "grain_bowl": {
+      "name": "Grain Bowl",
+      "description": "Grain base with protein, vegetables, and dressing",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "grain_base", "slot_type": "grain", "required": true},
+        {"role": "protein", "slot_type": ["protein_animal", "protein_legume"], "required": true},
+        {"role": "vegetable", "slot_type": ["vegetable", "leafy_green"], "required": true},
+        {"role": "fat", "slot_type": ["fat_cooking", "nuts_seeds"], "required": false}
+      ]
+    },
+    "mezze_plate": {
+      "name": "Mezze Plate",
+      "description": "Hummus, falafel, pita, salad combination",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "dip_spread", "slot_type": "protein_legume", "required": true},
+        {"role": "bread", "slot_type": "grain", "required": true},
+        {"role": "salad", "slot_type": ["vegetable", "leafy_green"], "required": true},
+        {"role": "protein", "slot_type": ["protein_animal", "protein_dairy"], "required": false}
+      ]
+    },
+    "protein_salad_pita": {
+      "name": "Protein + Salad + Pita",
+      "description": "Grilled protein with fresh salad and pita bread",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "protein", "slot_type": "protein_animal", "required": true},
+        {"role": "salad", "slot_type": ["vegetable", "leafy_green"], "required": true},
+        {"role": "bread", "slot_type": "grain", "required": true}
+      ]
+    }
+  },
+
+  "italian": {
+    "pasta_side": {
+      "name": "Pasta with Side",
+      "description": "Pasta dish with protein or vegetable side",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "pasta", "slot_type": "grain", "required": true},
+        {"role": "protein", "slot_type": ["protein_animal", "protein_dairy"], "required": true},
+        {"role": "vegetable", "slot_type": "vegetable", "required": false}
+      ]
+    },
+    "protein_starch_veg": {
+      "name": "Protein + Starch + Vegetable",
+      "description": "Classic Italian three-component plate",
+      "meal_types": ["lunch", "dinner"],
+      "slots": [
+        {"role": "protein", "slot_type": "protein_animal", "required": true},
+        {"role": "starch", "slot_type": ["grain", "starchy_vegetable"], "required": true},
+        {"role": "vegetable", "slot_type": ["vegetable", "leafy_green"], "required": true}
+      ]
+    }
+  }
+}
