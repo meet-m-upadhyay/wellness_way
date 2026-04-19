@@ -20,9 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 COPY requirements-ml.txt .
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir uv && \
+    uv pip install --no-cache-dir --system -r requirements.txt && \
+    uv pip install --no-cache-dir --system -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Copy application code
 COPY . .
