@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
@@ -11,7 +11,6 @@ import {
   WeeklyPlanContent,
   DailyPlanContent,
   SafetyViolationError,
-  V2DailyPlanResponse,
   LegacyDailyPlan,
 } from '../services/api';
 import PlanTypeSelector from '../components/diet-plans/PlanTypeSelector';
@@ -106,7 +105,7 @@ export const DietPlans: React.FC = () => {
     }
   }, [currentUserId, loadingUser, navigate]);
 
-  const loadV1Plan = async () => {
+  const loadV1Plan = useCallback(async () => {
     if (!currentUserId) return;
     try {
       const response = await apiClient.getUserDietPlans(currentUserId, undefined, 1);
@@ -122,9 +121,9 @@ export const DietPlans: React.FC = () => {
     } catch (err) {
       console.error('Error loading V1 plan:', err);
     }
-  };
+  }, [currentUserId]);
 
-  const loadV2Plan = async () => {
+  const loadV2Plan = useCallback(async () => {
     if (!currentUserId) return;
     try {
       const response = await apiClient.getLatestV2Plan(currentUserId);
@@ -141,7 +140,7 @@ export const DietPlans: React.FC = () => {
     } catch (err) {
       console.error('Error loading V2 plan:', err);
     }
-  };
+  }, [currentUserId]);
 
   useEffect(() => {
     const loadLatestPlan = async () => {
@@ -159,7 +158,7 @@ export const DietPlans: React.FC = () => {
       }
     };
     loadLatestPlan();
-  }, [currentUserId, loadingUser]);
+  }, [currentUserId, loadingUser, useV2Engine, loadV1Plan, loadV2Plan]);
 
   const handleGeneratePlan = async (options?: { targetDate?: string; startDate?: string }) => {
     if (!selectedPlanType || !currentUserId) return;
