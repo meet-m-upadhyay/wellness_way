@@ -47,7 +47,20 @@ async def lifespan(app: FastAPI):
     from app.services.email_service import init_email_listeners
     init_email_listeners()
     logging.info("Email notification system initialized")
-    
+
+    # Warm up V2 embedding model at startup (avoids 18s cold start on first request)
+    if getattr(settings, "enable_meal_engine_v2", False):
+        try:
+            from sentence_transformers import SentenceTransformer
+            from app.services.meal_engine.matching.ingredient_matcher import IngredientMatcher
+            if IngredientMatcher._embedding_model is None:
+                IngredientMatcher._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+                logging.info("V2 embedding model warmed up at startup")
+        except ImportError:
+            logging.debug("sentence-transformers not available — skipping V2 embedding warmup")
+        except Exception as e:
+            logging.warning("V2 embedding warmup failed: %s", e)
+
     yield
     
     # Shutdown

@@ -40,6 +40,8 @@ class ConfigLoader:
             "unit_conversions.json",
             "goal_macro_order.json",
             "canonical_foods.json",
+            "composite_ingredients.json",
+            "role_validation.json",
         ]
         for f in files:
             try:
@@ -74,6 +76,14 @@ class ConfigLoader:
     @property
     def canonical_foods(self) -> dict:
         return self._get("canonical_foods.json")
+
+    @property
+    def role_validation(self) -> dict:
+        return self._get("role_validation.json")
+
+    @property
+    def composite_ingredients(self) -> dict:
+        return self._get("composite_ingredients.json")
 
     @property
     def slot_to_food_groups(self) -> dict:

@@ -6,6 +6,7 @@ Runs alongside existing v1 routes — feature-flagged via enable_meal_engine_v2.
 
 import json
 import logging
+import time
 import uuid
 from datetime import date
 from typing import Optional
@@ -21,8 +22,10 @@ from app.schemas.meal_engine_v2 import (
     V2SingleMealResponse,
     V2DailyPlanResponse,
     V2MealComponentResponse,
+    V2RecipeResponse,
     V2ScoreBreakdownResponse,
 )
+from app.services.meal_engine.diagnostics import PipelineDiagnostics
 from app.services.meal_engine.orchestrator import MealEngineV2, MealConstraints
 from app.services.meal_engine.config.loader import ConfigLoader
 
@@ -30,9 +33,51 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v2/meal-engine", tags=["Meal Engine V2"])
 
+# V2 supported cuisines — gate non-Indian cuisines until USDA provider data quality is fixed.
+# Once USDA validation is built, add "mediterranean", "italian" here.
+V2_SUPPORTED_CUISINES = {"indian", "indian_north", "indian_south"}
+
+
+def _validate_cuisine(cuisine: str):
+    """Raise 400 if cuisine is not yet supported by V2."""
+    if cuisine.lower() not in V2_SUPPORTED_CUISINES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"V2 engine currently supports Indian cuisine only. '{cuisine}' coming soon. Use V1 engine for non-Indian cuisines.",
+        )
+
 
 def _get_config() -> ConfigLoader:
     return ConfigLoader()
+
+
+# Goal-specific macro splits (percentage of calories)
+# protein is derived from g/kg targets, carbs and fat from these percentages
+GOAL_MACRO_SPLITS = {
+    "muscle_gain":  {"carbs_pct": 0.50, "fat_pct": 0.22},  # ~50% carbs, ~22% fat, rest protein
+    "maintenance":  {"carbs_pct": 0.40, "fat_pct": 0.27},  # ~40% carbs, ~27% fat, rest protein
+    "fat_loss":     {"carbs_pct": 0.30, "fat_pct": 0.25},  # ~30% carbs, ~25% fat, rest protein
+}
+
+
+def _compute_meal_macros(ctx: dict, cal_per_meal: float, protein_per_meal: float) -> dict:
+    """Compute per-meal carbs and fat targets using HCD values or goal-based splits."""
+    meals_per_day = ctx["meals_per_day"]
+
+    # Prefer actual HCD-computed targets if available
+    if ctx.get("carbs_target") and ctx.get("fat_target"):
+        return {
+            "carbs": ctx["carbs_target"] / meals_per_day,
+            "fat": ctx["fat_target"] / meals_per_day,
+        }
+
+    # Fall back to goal-specific percentages
+    goal = ctx.get("primary_goal", "maintenance")
+    split = GOAL_MACRO_SPLITS.get(goal, GOAL_MACRO_SPLITS["maintenance"])
+    return {
+        "carbs": cal_per_meal * split["carbs_pct"] / 4,  # 4 cal/g carbs
+        "fat": cal_per_meal * split["fat_pct"] / 9,      # 9 cal/g fat
+    }
 
 
 def _get_user_context(db: Session, user_id: str) -> dict:
@@ -57,20 +102,33 @@ def _get_user_context(db: Session, user_id: str) -> dict:
         raise HTTPException(status_code=404, detail="No active health context found. Complete your profile first.")
 
     json_ctx = row.json_context or {}
+    nutrition = json_ctx.get("nutrition_targets", {})
+    primary_goal = row.primary_goal or "maintenance"
+
     return {
         "diet_type": row.diet_type or "vegetarian",
         "cuisine": row.cuisine or "indian",
         "allergies": row.allergies or [],
         "foods_to_avoid": row.foods_to_avoid or [],
         "meals_per_day": row.meals_per_day or 3,
-        "primary_goal": row.primary_goal or "maintenance",
-        "calorie_target": json_ctx.get("calorie_target", 2000),
-        "protein_target": json_ctx.get("protein_target", 75),
+        "primary_goal": primary_goal,
+        "calorie_target": nutrition.get("target_calories", 2000),
+        "protein_target": nutrition.get("target_protein_g", 75),
+        "carbs_target": nutrition.get("target_carbs_g"),
+        "fat_target": nutrition.get("target_fat_g"),
     }
 
 
 def _to_response(meal, goal: str, config: ConfigLoader) -> V2SingleMealResponse:
     """Convert GeneratedMeal to API response."""
+    recipe = None
+    if meal.recipe:
+        recipe = V2RecipeResponse(
+            prep_time_min=meal.recipe.prep_time_min,
+            cook_time_min=meal.recipe.cook_time_min,
+            steps=meal.recipe.steps,
+        )
+
     return V2SingleMealResponse(
         archetype=meal.archetype,
         dish_name=meal.dish_name,
@@ -99,7 +157,9 @@ def _to_response(meal, goal: str, config: ConfigLoader) -> V2SingleMealResponse:
             band=meal.score.band,
         ),
         cultural_note=meal.cultural_note,
-        prep_time_minutes=meal.prep_time_minutes,
+        recipe=recipe,
+        cooked_serving_size_g=meal.cooked_serving_size_g,
+        serves=meal.serves,
         quality_warning=meal.quality_warning,
     )
 
@@ -173,27 +233,34 @@ async def generate_single_meal(
     request = await _parse_request(raw_request)
     user_id = x_user_id or "f53f6cb3-4b52-47ca-9cdb-bb61ece32610"
     ctx = _get_user_context(db, user_id)
+    cuisine = request.cuisine or ctx["cuisine"]
+    _validate_cuisine(cuisine)
     config = _get_config()
 
     meals_per_day = ctx["meals_per_day"]
     cal_per_meal = ctx["calorie_target"] / meals_per_day
     protein_per_meal = ctx["protein_target"] / meals_per_day
+    meal_macros = _compute_meal_macros(ctx, cal_per_meal, protein_per_meal)
 
     constraints = MealConstraints(
         meal_type=request.meal_type,
-        cuisine=request.cuisine or ctx["cuisine"],
+        cuisine=cuisine,
         diet_type=ctx["diet_type"],
         target_calories=cal_per_meal,
         target_protein=protein_per_meal,
-        target_carbs=cal_per_meal * 0.45 / 4,  # ~45% carbs
-        target_fat=cal_per_meal * 0.30 / 9,    # ~30% fat
+        target_carbs=meal_macros["carbs"],
+        target_fat=meal_macros["fat"],
         allergies=ctx["allergies"],
         foods_to_avoid=ctx["foods_to_avoid"],
         primary_goal=ctx["primary_goal"],
     )
 
-    engine = MealEngineV2(db, config)
+    pipeline_diag = PipelineDiagnostics()
+    pipeline_start = time.perf_counter()
+    engine = MealEngineV2(db, config, diagnostics=pipeline_diag)
     meal = await engine.generate_meal(constraints)
+    pipeline_diag.total_pipeline_ms = (time.perf_counter() - pipeline_start) * 1000
+    pipeline_diag.log_output()
 
     return _to_response(meal, ctx["primary_goal"], config)
 
@@ -212,16 +279,31 @@ async def generate_daily_plan(
     request = await _parse_request(raw_request)
     user_id = x_user_id or "f53f6cb3-4b52-47ca-9cdb-bb61ece32610"
     ctx = _get_user_context(db, user_id)
+    cuisine = request.cuisine or ctx["cuisine"]
+    _validate_cuisine(cuisine)
     config = _get_config()
 
     meals_per_day = ctx["meals_per_day"]
     cal_per_meal = ctx["calorie_target"] / meals_per_day
     protein_per_meal = ctx["protein_target"] / meals_per_day
-    cuisine = request.cuisine or ctx["cuisine"]
+    meal_macros = _compute_meal_macros(ctx, cal_per_meal, protein_per_meal)
+
+    logger.info(
+        "[V2_TARGETS] user=%s goal=%s | daily: %d cal, %dg protein, %dg carbs, %dg fat | per meal: %d cal, %dg protein, %dg carbs, %dg fat",
+        user_id, ctx["primary_goal"],
+        ctx["calorie_target"], ctx["protein_target"],
+        ctx.get("carbs_target") or 0, ctx.get("fat_target") or 0,
+        cal_per_meal, protein_per_meal,
+        meal_macros["carbs"], meal_macros["fat"],
+    )
 
     meal_types = ["breakfast", "lunch", "dinner"][:meals_per_day]
     generated_meals = []
     used_ingredients = []
+
+    # Shared diagnostics across all meals in this daily plan
+    pipeline_diag = PipelineDiagnostics()
+    pipeline_start = time.perf_counter()
 
     for meal_type in meal_types:
         constraints = MealConstraints(
@@ -230,15 +312,15 @@ async def generate_daily_plan(
             diet_type=ctx["diet_type"],
             target_calories=cal_per_meal,
             target_protein=protein_per_meal,
-            target_carbs=cal_per_meal * 0.45 / 4,
-            target_fat=cal_per_meal * 0.30 / 9,
+            target_carbs=meal_macros["carbs"],
+            target_fat=meal_macros["fat"],
             allergies=ctx["allergies"],
             foods_to_avoid=ctx["foods_to_avoid"],
             exclude_ingredients=used_ingredients,
             primary_goal=ctx["primary_goal"],
         )
 
-        engine = MealEngineV2(db, config)
+        engine = MealEngineV2(db, config, diagnostics=pipeline_diag)
         meal = await engine.generate_meal(constraints)
         generated_meals.append(meal)
 
@@ -246,6 +328,10 @@ async def generate_daily_plan(
         used_ingredients.extend(
             c.resolved_name for c in meal.components if c.resolved_code
         )
+
+    pipeline_diag.total_pipeline_ms = (time.perf_counter() - pipeline_start) * 1000
+    # Log full diagnostics
+    pipeline_diag.log_output()
 
     # Calculate daily totals
     daily_totals = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0}

@@ -1,10 +1,11 @@
 """
 Pydantic schemas for the V2 meal engine API.
+
+v2.1: Raw-ingredient model with recipe.
 """
 
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
-from uuid import UUID
 
 
 class V2MealRequest(BaseModel):
@@ -15,7 +16,7 @@ class V2MealRequest(BaseModel):
 
 
 class V2MealComponentResponse(BaseModel):
-    """A single ingredient in a generated meal."""
+    """A single raw ingredient in a generated meal."""
     llm_name: str
     resolved_code: Optional[str] = None
     resolved_name: str
@@ -24,6 +25,13 @@ class V2MealComponentResponse(BaseModel):
     grams: float
     role: str
     food_group: str = ""
+
+
+class V2RecipeResponse(BaseModel):
+    """Recipe instructions for a meal."""
+    prep_time_min: int = 0
+    cook_time_min: int = 0
+    steps: List[str] = []
 
 
 class V2ScoreBreakdownResponse(BaseModel):
@@ -39,22 +47,26 @@ class V2ScoreBreakdownResponse(BaseModel):
 
 
 class V2SingleMealResponse(BaseModel):
-    """A single generated meal."""
+    """A single generated meal with raw ingredients and recipe."""
     archetype: str
     dish_name: str
-    components: List[V2MealComponentResponse]
+    components: List[V2MealComponentResponse]  # kept for backward compat
     macros: Dict[str, float]
     score: V2ScoreBreakdownResponse
     cultural_note: Optional[str] = None
-    prep_time_minutes: Optional[int] = None
+    recipe: Optional[V2RecipeResponse] = None
+    cooked_serving_size_g: Optional[float] = None
+    serves: int = 1
     quality_warning: bool = False
 
 
 class V2DailyPlanResponse(BaseModel):
     """Response for daily plan generation."""
-    id: Optional[str] = None  # diet_plans.id after saving
+    id: Optional[str] = None
     meals: List[V2SingleMealResponse]
     daily_totals: Dict[str, float]
     goal: str
     macro_display_order: List[str]
     engine_version: str = "v2"
+    schema_version: str = "v2.1_raw_ingredients"
+    serving_note: str = "Weights shown are raw. Cooked serving sizes are approximate."

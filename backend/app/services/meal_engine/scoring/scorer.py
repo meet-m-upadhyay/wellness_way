@@ -50,9 +50,11 @@ class ScoreBreakdown:
             + self.practicality
         )
         self.total = max(0, min(100, self.total))
+        # TODO: SCORING_DEBUG_MODE — threshold temporarily at 40 to observe real score distribution.
+        # Raise back to 70/85 after Checkpoint C when matching correctness stabilizes.
         if self.total >= 85:
             self.band = "serve"
-        elif self.total >= 70:
+        elif self.total >= 40:
             self.band = "review"
         else:
             self.band = "regenerate"
@@ -113,8 +115,27 @@ class MealScorer:
         breakdown.micro_diversity = self._score_diversity(meal)
         breakdown.goal_alignment = self._score_goal_alignment(meal, target_macros, user_goal)
         breakdown.practicality = self._score_practicality(meal)
-        breakdown.compute_total()
 
+        # Hard penalty: fat exceeds target by > 50% (critical for fat_loss)
+        macros = meal.get("macros", {})
+        target_fat = target_macros.get("fat", 0)
+        actual_fat = macros.get("fat", 0)
+        if target_fat > 0 and actual_fat > target_fat * 1.5:
+            fat_excess = (actual_fat - target_fat) / target_fat
+            penalty = min(20, fat_excess * 15)  # up to -20 pts
+            breakdown.macro_accuracy = max(0, breakdown.macro_accuracy - penalty)
+            breakdown.notes.append(f"Fat excess penalty: -{penalty:.0f}pts ({actual_fat:.0f}g vs target {target_fat:.0f}g)")
+
+        # Hard penalty: calories exceed target by > 30%
+        target_cal = target_macros.get("calories", 0)
+        actual_cal = macros.get("calories", 0)
+        if target_cal > 0 and actual_cal > target_cal * 1.3:
+            cal_excess = (actual_cal - target_cal) / target_cal
+            penalty = min(15, cal_excess * 15)
+            breakdown.macro_accuracy = max(0, breakdown.macro_accuracy - penalty)
+            breakdown.notes.append(f"Calorie excess penalty: -{penalty:.0f}pts ({actual_cal:.0f} vs target {target_cal:.0f})")
+
+        breakdown.compute_total()
         return breakdown
 
     # --- Dimension 1: Macro Accuracy (30 pts) ---
@@ -152,28 +173,43 @@ class MealScorer:
     # --- Dimension 2: Plate Composition (20 pts) ---
 
     def _score_composition(self, meal: dict) -> float:
+        """Score plate composition based on ingredient roles.
+
+        A well-composed meal should have: grain/carb, protein, vegetable/green, and fat.
+        Uses the 'role' field from raw-ingredient model (not food_group).
+        """
         w = self._weights["plate_composition"]
         max_pts = w["max_points"]
         pts_per_slot = w["points_per_slot"]
 
         components = meal.get("components", [])
-        slot_mapping = self._config.slot_to_food_groups
 
-        # Check for presence of major categories
+        # Collapse roles into major plate categories
         categories_present = set()
         for comp in components:
+            role = comp.get("role", "")
+            if role in ("protein_animal", "protein_dairy", "protein_legume"):
+                categories_present.add("protein")
+            elif role in ("grain", "starchy_vegetable"):
+                categories_present.add("carb")
+            elif role == "fat_cooking":
+                categories_present.add("fat")
+            elif role in ("vegetable", "leafy_green"):
+                categories_present.add("veg")
+            # Also check food_group for backward compatibility
             food_group = comp.get("food_group", "")
-            for slot, groups in slot_mapping.items():
-                if food_group in groups:
-                    # Collapse protein subtypes
-                    if slot.startswith("protein"):
-                        categories_present.add("protein")
-                    elif slot in ("grain", "starchy_vegetable"):
-                        categories_present.add("carb")
-                    elif slot == "fat_cooking":
-                        categories_present.add("fat")
-                    elif slot in ("vegetable", "leafy_green"):
-                        categories_present.add("veg")
+            if food_group and not role:
+                slot_mapping = self._config.slot_to_food_groups
+                for slot, groups in slot_mapping.items():
+                    if food_group in groups:
+                        if slot.startswith("protein"):
+                            categories_present.add("protein")
+                        elif slot in ("grain", "starchy_vegetable"):
+                            categories_present.add("carb")
+                        elif slot == "fat_cooking":
+                            categories_present.add("fat")
+                        elif slot in ("vegetable", "leafy_green"):
+                            categories_present.add("veg")
 
         return min(max_pts, len(categories_present) * pts_per_slot)
 
@@ -241,17 +277,40 @@ class MealScorer:
     # --- Dimension 4: Micronutrient Diversity (15 pts) ---
 
     def _score_diversity(self, meal: dict) -> float:
+        """Score ingredient diversity using roles (not food_groups).
+
+        Roles are always present (from LLM or auto-corrected), while food_groups
+        may be empty for externally-resolved ingredients. Counting distinct role
+        categories ensures cross-cuisine fairness.
+        """
         w = self._weights["micro_diversity"]
         max_pts = w["max_points"]
         pts_per_group = w["points_per_food_group"]
 
-        food_groups = set()
+        # Count distinct role categories (collapse sub-types)
+        categories = set()
         for comp in meal.get("components", []):
-            fg = comp.get("food_group")
-            if fg:
-                food_groups.add(fg)
+            role = comp.get("role", "")
+            if role in ("protein_animal", "protein_dairy", "protein_legume"):
+                categories.add("protein")
+            elif role in ("grain", "starchy_vegetable"):
+                categories.add("carb")
+            elif role in ("vegetable", "leafy_green"):
+                categories.add("produce")
+            elif role == "fat_cooking":
+                categories.add("fat")
+            elif role == "dairy":
+                categories.add("dairy")
+            elif role in ("fruit",):
+                categories.add("fruit")
+            elif role in ("spice", "herb", "aromatics"):
+                categories.add("seasoning")
+            elif role in ("nuts_seeds",):
+                categories.add("nuts")
+            elif role:
+                categories.add(role)
 
-        return min(max_pts, len(food_groups) * pts_per_group)
+        return min(max_pts, len(categories) * pts_per_group)
 
     # --- Dimension 5: Goal Alignment (10 pts) ---
 

@@ -10,7 +10,7 @@ Skips Edamam gracefully if keys are not configured.
 
 import logging
 import os
-from typing import Optional, List
+from typing import Any, Optional, List
 
 from sqlalchemy.orm import Session
 
@@ -40,14 +40,15 @@ def _get_usda_provider():
     return _usda_provider
 
 
-# Provider chain per cuisine
+# Provider chain per cuisine — IFCT first for all cuisines.
+# IFCT has global staples (quinoa, chicken, rice, carrot, etc.) beyond Indian-specific items.
 CUISINE_CHAINS = {
     "indian": ["ifct", "edamam", "usda"],
     "indian_north": ["ifct", "edamam", "usda"],
     "indian_south": ["ifct", "edamam", "usda"],
-    "mediterranean": ["usda", "edamam"],
-    "italian": ["usda", "edamam"],
-    "default": ["usda", "edamam"],
+    "mediterranean": ["ifct", "usda", "edamam"],
+    "italian": ["ifct", "usda", "edamam"],
+    "default": ["ifct", "usda", "edamam"],
 }
 
 
@@ -74,13 +75,15 @@ class NutritionRouter:
         return cleaned.strip().rstrip(',').strip()
 
     async def lookup(
-        self, ingredient_name: str, cuisine: str = "indian"
+        self, ingredient_name: str, cuisine: str = "indian",
+        pipeline_diag: "Optional[Any]" = None,
     ) -> Optional[NutritionResult]:
         """Look up nutrition data using the cuisine-appropriate provider chain.
 
         Args:
             ingredient_name: Name of the ingredient.
             cuisine: Cuisine context (determines provider order).
+            pipeline_diag: Optional PipelineDiagnostics to record API call stats.
 
         Returns:
             NutritionResult (per-100g) or None if all providers miss.
@@ -94,14 +97,35 @@ class NutritionRouter:
                 continue
 
             try:
+                # Track the lookup attempt
+                if pipeline_diag and provider_key == "ifct":
+                    pipeline_diag.record_ifct_lookup()
+
                 result = await provider.lookup(ingredient_name)
                 if result is not None:
+                    # Record successful API calls
+                    if pipeline_diag:
+                        if provider_key == "edamam":
+                            # Check if it was cached vs API
+                            status = 200 if result.source == "edamam" else 0  # 0 = cache hit
+                            pipeline_diag.record_edamam_call(status)
+                        elif provider_key == "usda":
+                            pipeline_diag.record_usda_call(200)
                     logger.debug(
                         "Nutrition resolved: '%s' via %s (cuisine=%s)",
                         ingredient_name, result.source, cuisine,
                     )
                     return result
             except Exception as e:
+                # Record failed API calls
+                if pipeline_diag:
+                    if provider_key == "edamam":
+                        # Extract status code from error if possible
+                        status = _extract_status_code(str(e))
+                        pipeline_diag.record_edamam_call(status)
+                    elif provider_key == "usda":
+                        status = _extract_status_code(str(e))
+                        pipeline_diag.record_usda_call(status)
                 logger.warning(
                     "Provider %s failed for '%s': %s",
                     provider_key, ingredient_name, e,
@@ -110,3 +134,14 @@ class NutritionRouter:
 
         logger.warning("No nutrition data found for '%s' (cuisine=%s)", ingredient_name, cuisine)
         return None
+
+
+def _extract_status_code(error_msg: str) -> int:
+    """Try to extract HTTP status code from error message."""
+    import re
+    match = re.search(r"(\d{3})", error_msg)
+    if match:
+        code = int(match.group(1))
+        if 400 <= code <= 599:
+            return code
+    return 0  # unknown

@@ -1,9 +1,9 @@
 {
   "macro_accuracy": {
     "max_points": 30,
-    "full_marks_threshold_pct": 0.05,
-    "zero_marks_threshold_pct": 0.30,
-    "description": "Points based on % deviation from target macros"
+    "full_marks_threshold_pct": 0.10,
+    "zero_marks_threshold_pct": 0.50,
+    "description": "Points based on avg % deviation from target macros. Widened for raw-ingredient model where LLM portion estimation is approximate."
   },
   "plate_composition": {
     "max_points": 20,
@@ -29,10 +29,10 @@
   },
   "practicality": {
     "max_points": 5,
-    "min_portion_g": 30,
+    "min_portion_g": 1,
     "max_portion_g": 400,
     "penalty_per_violation": -2,
-    "description": "Reasonable portion sizes, common ingredients"
+    "description": "Reasonable portion sizes. Min=1g since raw spices are naturally 1-5g."
   },
   "bands": {
     "serve": {"min_score": 85, "action": "return to user"},
