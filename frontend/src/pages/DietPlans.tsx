@@ -7,9 +7,12 @@ import {
   DietPlan,
   adaptWeeklyPlanToLegacy,
   adaptDailyPlanToLegacy,
+  adaptV2DailyToLegacy,
   WeeklyPlanContent,
   DailyPlanContent,
-  SafetyViolationError
+  SafetyViolationError,
+  V2DailyPlanResponse,
+  LegacyDailyPlan,
 } from '../services/api';
 import PlanTypeSelector from '../components/diet-plans/PlanTypeSelector';
 import DailyPlanView from '../components/diet-plans/DailyPlanView';
@@ -35,6 +38,11 @@ export const DietPlans: React.FC = () => {
   const [safetyViolation, setSafetyViolation] = useState<SafetyViolationError | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [loadingExistingPlan, setLoadingExistingPlan] = useState(false);
+  const [useV2Engine, setUseV2Engine] = useState(() => {
+    return localStorage.getItem('wellness_v2_engine') === 'true';
+  });
+  const [v2Plan, setV2Plan] = useState<LegacyDailyPlan | null>(null);
+  const [v2ScoreInfo, setV2ScoreInfo] = useState<string | null>(null);
 
   const urlUserId = searchParams.get('userId');
   const currentUserId = user?.id || urlUserId;
@@ -98,25 +106,54 @@ export const DietPlans: React.FC = () => {
     }
   }, [currentUserId, loadingUser, navigate]);
 
+  const loadV1Plan = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await apiClient.getUserDietPlans(currentUserId, undefined, 1);
+      if (response.data && response.data.plans.length > 0) {
+        const latestPlanSummary = response.data.plans[0];
+        const planResponse = await apiClient.getDietPlan(latestPlanSummary.id, currentUserId);
+        if (planResponse.data) {
+          setCurrentPlan(planResponse.data);
+          setSelectedPlanType(planResponse.data.plan_type as 'daily' | 'weekly');
+          console.log('Loaded V1 plan:', planResponse.data.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading V1 plan:', err);
+    }
+  };
+
+  const loadV2Plan = async () => {
+    if (!currentUserId) return;
+    try {
+      const response = await apiClient.getLatestV2Plan(currentUserId);
+      if (response.data) {
+        const adapted = adaptV2DailyToLegacy(response.data);
+        setV2Plan(adapted);
+        const scores = response.data.meals.map(m =>
+          `${m.dish_name}: ${m.score.total.toFixed(0)}/100 (${m.score.band})`
+        ).join(' | ');
+        setV2ScoreInfo(scores);
+        setSelectedPlanType('daily');
+        console.log('Loaded V2 plan:', response.data.id);
+      }
+    } catch (err) {
+      console.error('Error loading V2 plan:', err);
+    }
+  };
+
   useEffect(() => {
     const loadLatestPlan = async () => {
       if (!currentUserId || loadingUser) return;
       setLoadingExistingPlan(true);
       try {
-        const response = await apiClient.getUserDietPlans(currentUserId, undefined, 1);
-        if (response.data && response.data.plans.length > 0) {
-          const latestPlanSummary = response.data.plans[0];
-          const planResponse = await apiClient.getDietPlan(latestPlanSummary.id, currentUserId);
-          if (planResponse.data) {
-            setCurrentPlan(planResponse.data);
-            setSelectedPlanType(planResponse.data.plan_type as 'daily' | 'weekly');
-            console.log('Loaded existing diet plan:', planResponse.data.id);
-          }
+        // Load both V1 and V2 plans, show the one matching current toggle
+        if (useV2Engine) {
+          await loadV2Plan();
         } else {
-          console.log('No existing diet plans found for user');
+          await loadV1Plan();
         }
-      } catch (err) {
-        console.error('Error loading existing diet plan:', err);
       } finally {
         setLoadingExistingPlan(false);
       }
@@ -129,17 +166,37 @@ export const DietPlans: React.FC = () => {
     setIsGenerating(true);
     setError(null);
     setSafetyViolation(null);
+    setV2Plan(null);
+    setV2ScoreInfo(null);
+
     try {
-      const response = await apiClient.generateDietPlan(currentUserId, selectedPlanType, options || {});
-      if (response.error) {
-        if (response.error === 'SAFETY_VIOLATION' && response.safetyViolation) {
-          setSafetyViolation(response.safetyViolation);
-          return;
+      if (useV2Engine) {
+        // V2 Engine path
+        const response = await apiClient.generateV2DailyPlan(currentUserId);
+        if (response.error) {
+          throw new Error(response.error);
         }
-        throw new Error(response.error);
-      }
-      if (response.data) {
-        setCurrentPlan(response.data);
+        if (response.data) {
+          const adapted = adaptV2DailyToLegacy(response.data);
+          setV2Plan(adapted);
+          const scores = response.data.meals.map(m =>
+            `${m.dish_name}: ${m.score.total.toFixed(0)}/100 (${m.score.band})`
+          ).join(' | ');
+          setV2ScoreInfo(scores);
+        }
+      } else {
+        // V1 Engine path (existing)
+        const response = await apiClient.generateDietPlan(currentUserId, selectedPlanType, options || {});
+        if (response.error) {
+          if (response.error === 'SAFETY_VIOLATION' && response.safetyViolation) {
+            setSafetyViolation(response.safetyViolation);
+            return;
+          }
+          throw new Error(response.error);
+        }
+        if (response.data) {
+          setCurrentPlan(response.data);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate diet plan');
@@ -233,6 +290,8 @@ export const DietPlans: React.FC = () => {
 
   const handleStartOver = () => {
     setCurrentPlan(null);
+    setV2Plan(null);
+    setV2ScoreInfo(null);
     setSelectedPlanType(null);
     setError(null);
     setSafetyViolation(null);
@@ -308,6 +367,46 @@ export const DietPlans: React.FC = () => {
           </div>
         </div>
 
+        {/* V1/V2 Engine Toggle */}
+        <div className="mb-6 flex items-center justify-end">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <span className={`text-sm font-medium ${!useV2Engine ? 'text-wellness-light-text dark:text-wellness-dark-text' : 'text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary'}`}>
+              V1 Engine
+            </span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={useV2Engine}
+                onChange={async (e) => {
+                  const isV2 = e.target.checked;
+                  setUseV2Engine(isV2);
+                  localStorage.setItem('wellness_v2_engine', String(isV2));
+                  setError(null);
+                  // Load the other engine's plan instead of resetting
+                  if (isV2) {
+                    await loadV2Plan();
+                  } else {
+                    setV2Plan(null);
+                    setV2ScoreInfo(null);
+                    await loadV1Plan();
+                  }
+                }}
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-accent-600 transition-colors duration-200"></div>
+              <div className="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform duration-200 peer-checked:translate-x-5 shadow-sm"></div>
+            </div>
+            <span className={`text-sm font-medium ${useV2Engine ? 'text-accent-600 dark:text-accent-400' : 'text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary'}`}>
+              V2 Engine
+            </span>
+            {useV2Engine && (
+              <span className="text-xs px-2 py-0.5 bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 rounded-full">
+                IFCT + Scoring
+              </span>
+            )}
+          </label>
+        </div>
+
         {error && (
           <div className="mb-8">
             <ErrorMessage message={error} />
@@ -323,7 +422,26 @@ export const DietPlans: React.FC = () => {
           />
         )}
 
-        {!currentPlan && !safetyViolation ? (
+        {/* V2 Plan Display */}
+        {v2Plan && useV2Engine ? (
+          <div>
+            {v2ScoreInfo && (
+              <div className="mb-4 p-3 bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800 rounded-xl">
+                <p className="text-xs font-medium text-accent-700 dark:text-accent-300">
+                  V2 Meal Scores: {v2ScoreInfo}
+                </p>
+              </div>
+            )}
+            <DailyPlanView
+              plan={v2Plan}
+              onRegenerateMeal={(mealType) => handleGeneratePlan()}
+              onRegenerateDay={() => handleGeneratePlan()}
+              regeneratingMeal={null}
+              isRegeneratingDay={false}
+              onStartOver={handleStartOver}
+            />
+          </div>
+        ) : !currentPlan && !v2Plan && !safetyViolation ? (
           <PlanTypeSelector
             selectedType={selectedPlanType}
             onSelect={setSelectedPlanType}

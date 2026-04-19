@@ -211,16 +211,17 @@ export interface LegacyWeeklyPlan {
 
 // Adapter functions to convert new interfaces to legacy format
 export function adaptMealToLegacy(meal: Meal): LegacyMeal {
+  const nutrition = meal.nutrition || {} as Meal['nutrition'];
   return {
     name: meal.name,
-    ingredients: meal.ingredients.map(ing => `${Math.round(ing.quantity)} ${ing.unit} ${ing.name}`),
-    instructions: meal.instructions,
+    ingredients: (meal.ingredients || []).map(ing => `${Math.round(ing.quantity)} ${ing.unit} ${ing.name}`),
+    instructions: meal.instructions || '',
     nutrition: {
-      calories: meal.nutrition.calories,
-      protein_g: meal.nutrition.protein,
-      carbs_g: meal.nutrition.carbohydrates,
-      fat_g: meal.nutrition.fat,
-      fiber_g: meal.nutrition.fiber,
+      calories: nutrition.calories || 0,
+      protein_g: nutrition.protein || 0,
+      carbs_g: nutrition.carbohydrates || 0,
+      fat_g: nutrition.fat || 0,
+      fiber_g: nutrition.fiber || 0,
     }
   };
 }
@@ -248,12 +249,14 @@ export function adaptDayPlanToLegacy(dayPlan: DayPlan): LegacyDailyPlan {
     console.warn(`Nutrition calculation mismatch detected: AI claimed ${aiProtein}g protein, actual ${actualProtein}g. Using calculated values.`);
   }
 
+  const emptyMeal: LegacyMeal = { name: 'No meal', ingredients: [], instructions: '', nutrition: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 } };
+
   return {
     date: dayPlan.date,
     meals: {
-      breakfast: adaptMealToLegacy(mealsByType.breakfast),
-      lunch: adaptMealToLegacy(mealsByType.lunch),
-      dinner: adaptMealToLegacy(mealsByType.dinner),
+      breakfast: mealsByType.breakfast ? adaptMealToLegacy(mealsByType.breakfast) : emptyMeal,
+      lunch: mealsByType.lunch ? adaptMealToLegacy(mealsByType.lunch) : emptyMeal,
+      dinner: mealsByType.dinner ? adaptMealToLegacy(mealsByType.dinner) : emptyMeal,
       snacks: snacks.length > 0 ? snacks.map(adaptMealToLegacy) : undefined,
     },
     daily_nutrition: calculatedNutrition, // Use calculated values instead of AI totals
@@ -317,12 +320,14 @@ export function adaptDailyPlanToLegacy(dailyPlan: DailyPlanContent): LegacyDaily
     console.warn(`Nutrition calculation mismatch detected: AI claimed ${aiProtein}g protein, actual ${actualProtein}g. Using calculated values.`);
   }
 
+  const emptyMeal: LegacyMeal = { name: 'No meal', ingredients: [], instructions: '', nutrition: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 } };
+
   return {
     date: dailyPlan.date,
     meals: {
-      breakfast: adaptMealToLegacy(mealsByType.breakfast),
-      lunch: adaptMealToLegacy(mealsByType.lunch),
-      dinner: adaptMealToLegacy(mealsByType.dinner),
+      breakfast: mealsByType.breakfast ? adaptMealToLegacy(mealsByType.breakfast) : emptyMeal,
+      lunch: mealsByType.lunch ? adaptMealToLegacy(mealsByType.lunch) : emptyMeal,
+      dinner: mealsByType.dinner ? adaptMealToLegacy(mealsByType.dinner) : emptyMeal,
       snacks: snacks.length > 0 ? snacks.map(adaptMealToLegacy) : undefined,
     },
     daily_nutrition: calculatedNutrition, // Use calculated values instead of AI totals
@@ -346,7 +351,7 @@ function calculateNutritionTotals(meals: Meal[]): {
   };
 
   meals.forEach(meal => {
-    const nutrition = meal.nutrition;
+    const nutrition = meal.nutrition || {} as Meal['nutrition'];
     totals.total_calories += nutrition.calories || 0;
     totals.total_protein_g += nutrition.protein || 0;
     totals.total_carbs_g += nutrition.carbohydrates || 0;
@@ -359,6 +364,135 @@ function calculateNutritionTotals(meals: Meal[]): {
     total_protein_g: Math.round(totals.total_protein_g * 10) / 10,
     total_carbs_g: Math.round(totals.total_carbs_g * 10) / 10,
     total_fat_g: Math.round(totals.total_fat_g * 10) / 10,
+  };
+}
+
+// ============================================================
+// V2 Meal Engine Types & Adapters
+// ============================================================
+
+export interface V2MealComponent {
+  llm_name: string;
+  resolved_code: string | null;
+  resolved_name: string;
+  match_method: string;
+  match_confidence: number;
+  grams: number;
+  role: string;
+  food_group: string;
+}
+
+export interface V2ScoreBreakdown {
+  macro_accuracy: number;
+  plate_composition: number;
+  culinary_coherence: number;
+  micro_diversity: number;
+  goal_alignment: number;
+  practicality: number;
+  total: number;
+  band: string;
+}
+
+export interface V2Recipe {
+  prep_time_min: number;
+  cook_time_min: number;
+  steps: string[];
+}
+
+export interface V2SingleMeal {
+  archetype: string;
+  dish_name: string;
+  components: V2MealComponent[];
+  macros: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
+  score: V2ScoreBreakdown;
+  cultural_note?: string;
+  recipe?: V2Recipe;
+  cooked_serving_size_g?: number;
+  serves?: number;
+  quality_warning: boolean;
+}
+
+export interface V2DailyPlanResponse {
+  id?: string;
+  meals: V2SingleMeal[];
+  daily_totals: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
+  goal: string;
+  macro_display_order: string[];
+  engine_version?: string;
+  schema_version?: string;
+  serving_note?: string;
+}
+
+/** Convert a V2 meal to LegacyMeal for existing components. */
+export function adaptV2MealToLegacy(v2Meal: V2SingleMeal, mealType: string): LegacyMeal {
+  // Build instructions from recipe steps if available, otherwise fallback
+  let instructions = '';
+  if (v2Meal.recipe && v2Meal.recipe.steps.length > 0) {
+    const timeInfo = `Prep: ${v2Meal.recipe.prep_time_min} min | Cook: ${v2Meal.recipe.cook_time_min} min`;
+    instructions = `${timeInfo}\n\n${v2Meal.recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+    if (v2Meal.cultural_note) {
+      instructions += `\n\n${v2Meal.cultural_note}`;
+    }
+  } else {
+    instructions = v2Meal.cultural_note || `${v2Meal.archetype} meal — ${v2Meal.components.map(c => c.resolved_name).join(', ')}`;
+  }
+
+  // TODO: Add native recipe UI rendering — currently recipe steps are shown as plain text in the instructions field
+  return {
+    name: v2Meal.dish_name,
+    ingredients: v2Meal.components.map(c =>
+      `${Math.round(c.grams)} g ${c.resolved_name} (raw)`
+    ),
+    instructions,
+    nutrition: {
+      calories: v2Meal.macros.calories || 0,
+      protein_g: v2Meal.macros.protein || 0,
+      carbs_g: v2Meal.macros.carbs || 0,
+      fat_g: v2Meal.macros.fat || 0,
+      fiber_g: v2Meal.macros.fiber || 0,
+    },
+  };
+}
+
+/** Convert a V2 daily plan response to LegacyDailyPlan for existing components. */
+export function adaptV2DailyToLegacy(v2Plan: V2DailyPlanResponse): LegacyDailyPlan {
+  const mealTypes = ['breakfast', 'lunch', 'dinner'];
+  const meals: { [key: string]: LegacyMeal } = {};
+  const snacks: LegacyMeal[] = [];
+
+  v2Plan.meals.forEach((v2Meal, i) => {
+    const mealType = mealTypes[i] || 'snack';
+    const legacy = adaptV2MealToLegacy(v2Meal, mealType);
+    if (mealType === 'snack') {
+      snacks.push(legacy);
+    } else {
+      meals[mealType] = legacy;
+    }
+  });
+
+  // Fill missing meal types with empty placeholders
+  for (const mt of mealTypes) {
+    if (!meals[mt]) {
+      meals[mt] = { name: `No ${mt}`, ingredients: [], instructions: '', nutrition: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 } };
+    }
+  }
+
+  return {
+    date: new Date().toISOString().split('T')[0],
+    meals: {
+      breakfast: meals.breakfast,
+      lunch: meals.lunch,
+      dinner: meals.dinner,
+      snacks: snacks.length > 0 ? snacks : undefined,
+    },
+    daily_nutrition: {
+      total_calories: v2Plan.daily_totals.calories,
+      total_protein_g: v2Plan.daily_totals.protein,
+      total_carbs_g: v2Plan.daily_totals.carbs,
+      total_fat_g: v2Plan.daily_totals.fat,
+    },
+    summary: `V2 Engine | Goal: ${v2Plan.goal} | Scores: ${v2Plan.meals.map(m => `${m.score.total.toFixed(0)}`).join('/')}`,
+    notes: v2Plan.macro_display_order ? `Macro priority: ${v2Plan.macro_display_order.join(' > ')}` : undefined,
   };
 }
 
@@ -639,6 +773,43 @@ class ApiClient {
         'X-User-Id': userId, // Pass user ID in header for authentication
       },
       body: JSON.stringify(body),
+    });
+  }
+
+  // V2 Meal Engine API
+  async generateV2DailyPlan(
+    userId: string,
+    cuisine?: string,
+  ): Promise<ApiResponse<V2DailyPlanResponse>> {
+    return this.request<V2DailyPlanResponse>('/v2/meal-engine/generate-daily', {
+      method: 'POST',
+      headers: { 'X-User-Id': userId },
+      body: JSON.stringify({
+        meal_type: 'lunch',
+        cuisine: cuisine || 'indian',
+        plan_type: 'daily',
+      }),
+    });
+  }
+
+  async generateV2SingleMeal(
+    userId: string,
+    mealType: string = 'lunch',
+    cuisine?: string,
+  ): Promise<ApiResponse<V2SingleMeal>> {
+    return this.request<V2SingleMeal>('/v2/meal-engine/generate-meal', {
+      method: 'POST',
+      headers: { 'X-User-Id': userId },
+      body: JSON.stringify({
+        meal_type: mealType,
+        cuisine: cuisine || 'indian',
+      }),
+    });
+  }
+
+  async getLatestV2Plan(userId: string): Promise<ApiResponse<V2DailyPlanResponse | null>> {
+    return this.request<V2DailyPlanResponse | null>('/v2/meal-engine/latest', {
+      headers: { 'X-User-Id': userId },
     });
   }
 

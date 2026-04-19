@@ -21,7 +21,7 @@ INDIAN_TEMPLATES = [
         "name": "Curry with {starch}",
         "meal_types": ["lunch", "dinner"],
         "components": {
-            "protein": ["paneer", "tofu", "chicken", "soya", "soy", "egg", "kofta", "matar", "chana", "rajma", "chickpea"],
+            "protein": ["paneer", "tofu", "chicken", "soya", "soy", "egg", "kofta", "matar", "chana", "rajma", "chickpea", "mutton", "lamb", "fish", "prawn", "keema"],
             "starch": ["roti", "chapati", "paratha", "naan", "wheat", "bajra", "jowar"],
             "vegetables": ["bell pepper", "capsicum", "onion", "tomato", "spinach", "cauliflower", "potato", "broccoli"],
             "fat": ["ghee", "butter", "oil"]
@@ -85,6 +85,36 @@ INDIAN_TEMPLATES = [
             "starch": ["rice", "roti", "chapati", "naan", "paratha"],
             "vegetables": ["onion", "tomato", "spinach", "capsicum", "cucumber", "carrot"],
             "fat": ["ghee", "oil", "butter"]
+        }
+    },
+    {
+        "name": "Grilled {protein} with {starch}",
+        "meal_types": ["lunch", "dinner"],
+        "components": {
+            "protein": ["chicken", "fish", "tikka", "tandoori", "mutton", "lamb", "prawn", "keema", "paneer"],
+            "starch": ["rice", "roti", "naan", "paratha", "quinoa", "brown rice"],
+            "vegetables": ["onion", "tomato", "capsicum", "spinach", "carrot", "broccoli", "bell pepper"],
+            "fat": ["ghee", "butter", "oil"]
+        }
+    },
+    {
+        "name": "{protein} Biryani / Pulao",
+        "meal_types": ["lunch", "dinner"],
+        "components": {
+            "protein": ["chicken", "mutton", "lamb", "keema", "prawn", "fish", "egg", "paneer", "soya"],
+            "starch": ["rice", "brown rice", "quinoa"],
+            "vegetables": ["onion", "tomato", "mint", "carrot", "peas", "potato"],
+            "fat": ["ghee", "oil", "butter"]
+        }
+    },
+    {
+        "name": "Egg Breakfast ({starch})",
+        "meal_types": ["breakfast", "snack"],
+        "components": {
+            "protein": ["egg", "omelette", "bhurji", "boiled"],
+            "starch": ["paratha", "roti", "bread", "toast", "poha", "upma"],
+            "vegetables": ["onion", "tomato", "capsicum", "chili", "spinach", "mushroom"],
+            "fat": ["butter", "oil", "ghee"]
         }
     }
 ]
@@ -251,25 +281,68 @@ class TemplateRegistry:
             
         return random.choice(valid_templates)
 
-    def select_best_ingredient(self, available_items: List[Any], template_keywords: List[str]) -> Any:
+    # Priority scores by user diet type → item diet tier.
+    _DIET_PRIORITY = {
+        "non-vegetarian": {"non-vegetarian": 4, "eggetarian": 3, "vegetarian": 2, "vegan": 1},
+        "eggetarian":     {"eggetarian": 3, "vegetarian": 2, "vegan": 1},
+        "vegetarian":     {"vegetarian": 2, "vegan": 1},
+        "vegan":          {"vegan": 1},
+    }
+
+    @staticmethod
+    def _item_diet_tier(diet_flags) -> str:
+        """Determine the diet tier of a food item from its diet_flags."""
+        flags = {f.lower() for f in (diet_flags or [])}
+        if "non-vegetarian" in flags:
+            return "non-vegetarian"
+        if "eggetarian" in flags and "vegetarian" not in flags:
+            return "eggetarian"
+        if "vegetarian" in flags and "vegan" not in flags:
+            return "vegetarian"
+        return "vegan"
+
+    def select_best_ingredient(
+        self,
+        available_items: List[Any],
+        template_keywords: List[str],
+        diet_type: str = None,
+    ) -> Any:
         """
         Selects the best matching item from a category based on the template's keywords.
-        Returns the matched item, or a random item if no match is found, ensuring the pipeline never fails.
+        Among keyword matches, picks from the highest diet-priority tier first
+        (e.g. for a non-veg user: meat > egg > dairy > plant).
+        Returns a random item if no keyword match is found.
         """
         if not available_items:
             return None
-            
-        # Shuffle for variety
+
+        # Shuffle for variety within a tier
         items = list(available_items)
         random.shuffle(items)
-        
-        for item in items:
-            item_name = item.canonical_name.lower()
-            if any(keyword in item_name for keyword in template_keywords):
-                return item
-                
-        # Fallback to random if no keyword match
-        return random.choice(available_items)
+
+        # Collect items that match at least one template keyword
+        matched = [
+            item for item in items
+            if any(kw in item.canonical_name.lower() for kw in template_keywords)
+        ]
+
+        if not matched:
+            return random.choice(available_items)
+
+        # If we have a diet_type with a priority map, pick from the
+        # highest-priority tier among the matches.
+        priority_map = self._DIET_PRIORITY.get(diet_type)
+        if priority_map:
+            tier_groups: Dict[int, List[Any]] = {}
+            for item in matched:
+                tier = self._item_diet_tier(item.diet_flags)
+                score = priority_map.get(tier, 0)
+                tier_groups.setdefault(score, []).append(item)
+            best_score = max(tier_groups)
+            return random.choice(tier_groups[best_score])
+
+        # No diet_type — return any matched item
+        return matched[0]
 
 def get_template_registry() -> TemplateRegistry:
     return TemplateRegistry()

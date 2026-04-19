@@ -1,6 +1,6 @@
 # WellnessWay Documentation Index
 
-**Last Updated**: February 22, 2026
+**Last Updated**: April 16, 2026
 
 Your central hub for all project documentation.
 
@@ -14,9 +14,10 @@ Your central hub for all project documentation.
 3. **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete guide
 
 ### For AI Agents / System Understanding
-1. **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)** - Complete system handover
-2. **[docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md)** - Quick reference
-3. **[spec.md](spec.md)** - Original specification
+1. **[CLAUDE.md](CLAUDE.md)** - Claude Code guidance
+2. **[docs/SYSTEM_INTELLIGENCE_DOCUMENT.md](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md)** - Complete system handover
+3. **[docs/SYSTEM_INTELLIGENCE_QUICK_REF.md](docs/SYSTEM_INTELLIGENCE_QUICK_REF.md)** - Quick reference
+4. **[docs/MISC/spec.md](docs/MISC/spec.md)** - Original specification
 
 ---
 
@@ -26,10 +27,9 @@ Your central hub for all project documentation.
 wellness_way/
 ├── QUICK_START.md                      ⭐ Start here!
 ├── README.md                           Project overview
-├── spec.md                             Original specification
+├── CLAUDE.md                           Claude Code guidance
 ├── DOCUMENTATION_INDEX.md              This file
-├── GOOGLE_OAUTH_SETUP.md              OAuth configuration
-├── NOTIFICATION_SYSTEM_ARCHITECTURE.md System architecture
+├── ARCHITECTURE_AND_DEPLOYMENT.md      Architecture & deployment
 └── docs/
     ├── PROJECT_DOCUMENTATION.md        Complete project guide
     ├── SYSTEM_INTELLIGENCE_DOCUMENT.md Complete system handover
@@ -37,7 +37,7 @@ wellness_way/
     ├── ENVIRONMENT_SETUP.md            Environment configuration
     ├── SUPABASE_MIGRATION.md           Database migration guide
     ├── CI_CD_SETUP.md                  Deployment guide
-    └── CLEANUP_PLAN.md                 Cleanup documentation
+    └── MISC/                           Reference docs (spec, OAuth, etc.)
 ```
 
 ---
@@ -63,14 +63,15 @@ wellness_way/
 ### Development
 - **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** - Complete development guide
 - **[docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)** - Environment configuration
-- **[GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)** - OAuth setup
-- **[NOTIFICATION_SYSTEM_ARCHITECTURE.md](NOTIFICATION_SYSTEM_ARCHITECTURE.md)** - System architecture
+- **[docs/MISC/GOOGLE_OAUTH_SETUP.md](docs/MISC/GOOGLE_OAUTH_SETUP.md)** - OAuth setup
+- **[docs/MISC/NOTIFICATION_SYSTEM_ARCHITECTURE.md](docs/MISC/NOTIFICATION_SYSTEM_ARCHITECTURE.md)** - System architecture
 
 ### Database & Infrastructure
 - **[docs/SUPABASE_MIGRATION.md](docs/SUPABASE_MIGRATION.md)** - Supabase setup and migration
 - **[QUICK_START.md#database-setup](QUICK_START.md#database-setup)** - Quick database setup
 
 ### Deployment
+- **[ARCHITECTURE_AND_DEPLOYMENT.md](ARCHITECTURE_AND_DEPLOYMENT.md)** - Architecture & deployment guide
 - **[docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)** - CI/CD configuration
 - **[QUICK_START.md#deployment](QUICK_START.md#deployment)** - Deployment overview
 
@@ -118,10 +119,9 @@ wellness_way/
 |------|---------|--------------|
 | **QUICK_START.md** | 5-minute setup guide | First time setup |
 | **README.md** | Project overview | Understanding project |
-| **spec.md** | Original specification | Understanding requirements |
+| **CLAUDE.md** | Claude Code guidance | AI-assisted development |
 | **DOCUMENTATION_INDEX.md** | This file | Finding documentation |
-| **GOOGLE_OAUTH_SETUP.md** | OAuth configuration | Setting up authentication |
-| **NOTIFICATION_SYSTEM_ARCHITECTURE.md** | System architecture | Understanding architecture |
+| **ARCHITECTURE_AND_DEPLOYMENT.md** | Architecture & deployment | System design, deploying |
 
 ---
 
@@ -135,7 +135,7 @@ wellness_way/
 | **ENVIRONMENT_SETUP.md** | Environment configuration | Detailed setup |
 | **SUPABASE_MIGRATION.md** | Database migration | Database setup |
 | **CI_CD_SETUP.md** | Deployment guide | Production deployment |
-| **CLEANUP_PLAN.md** | Cleanup documentation | Understanding cleanup |
+| **MISC/** | Reference docs | OAuth, spec, notifications |
 
 ---
 
@@ -144,7 +144,7 @@ wellness_way/
 ### By Topic
 
 **Authentication**
-- Setup: [GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)
+- Setup: [docs/MISC/GOOGLE_OAUTH_SETUP.md](docs/MISC/GOOGLE_OAUTH_SETUP.md)
 - Flow: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#authentication](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#authentication)
 
 **Database**
@@ -165,7 +165,8 @@ wellness_way/
 - State: [docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#9-state-management](docs/SYSTEM_INTELLIGENCE_DOCUMENT.md#9-state-management)
 
 **Deployment**
-- Guide: [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
+- Architecture: [ARCHITECTURE_AND_DEPLOYMENT.md](ARCHITECTURE_AND_DEPLOYMENT.md)
+- CI/CD: [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
 - Quick: [QUICK_START.md#deployment](QUICK_START.md#deployment)
 
 ---

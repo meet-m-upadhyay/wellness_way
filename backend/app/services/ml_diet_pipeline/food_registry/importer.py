@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from app.models.food_items import FoodItem
 from app.models.food_datasets import FoodDataset
-from app.models.registry_versions import RegistryVersion
 from .providers.base import FoodRegistryProvider
 
 
@@ -40,9 +39,6 @@ def import_food_dataset(
         import_batch_id=batch_id,
     )
     db.add(dataset)
-
-    registry_entry = RegistryVersion(registry_version=registry_version)
-    db.add(registry_entry)
 
     foods = provider.fetch_foods()
     for food in foods:
@@ -79,9 +75,6 @@ def import_food_dataset_in_batches(
         import_batch_id=batch_id,
     )
     db.add(dataset)
-
-    registry_entry = RegistryVersion(registry_version=registry_version)
-    db.add(registry_entry)
     db.commit()
 
     for foods in provider.iter_foods(batch_size=batch_size):  # type: ignore[attr-defined]

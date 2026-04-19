@@ -58,6 +58,8 @@ class MLPipelineOrchestrator:
             self.scaling_engine = components.get("scaling_engine")
             self.validation_engine = components.get("validation_engine")
             self.canonicalizer = components.get("canonicalizer")
+            self.meal_suggester = components.get("meal_suggester")
+            self.nutrition_resolver = components.get("nutrition_resolver")
         else:
             self.discovery_engine = get_discovery_engine()
             self.daily_assembler = get_daily_assembler()
@@ -66,6 +68,8 @@ class MLPipelineOrchestrator:
             self.scaling_engine = None
             self.validation_engine = None
             self.canonicalizer = None
+            self.meal_suggester = None
+            self.nutrition_resolver = None
 
         # self.template_registry = get_meal_template_registry() # Removed as templates are no longer directly used
         self.nutrition_db = get_nutrition_database()
@@ -104,18 +108,18 @@ class MLPipelineOrchestrator:
 
             # STEP 1: Discover Portfolio (Finding ingredients)
             logger.info(f"[ML_STEP_1] Daily Portfolio Discovery")
-            
-            # Combine variety exclusions
+
             variety_exclusions = set(exclude_templates or [])
-            
-            portfolio = self.discovery_engine.discover_daily_portfolio(
+
+            from app.core.config import get_settings
+            settings = get_settings()
+            enable_llm = settings.nutrition_api.enable_llm_meal_suggestions
+
+            portfolio = await self._get_portfolio_with_fallback(
                 db=db,
-                diet_type=constraints.diet_type.value,
-                allergies=constraints.allergies,
-                cuisine=constraints.cuisine,
-                primary_goal=constraints.primary_goal,
-                foods_to_avoid=constraints.foods_to_avoid,
-                exclude_ingredients=variety_exclusions
+                constraints=constraints,
+                exclude_ingredients=variety_exclusions,
+                enable_llm=enable_llm,
             )
             
             # STEP 2: Assemble Day (Solving portions & splitting meals)
@@ -132,7 +136,8 @@ class MLPipelineOrchestrator:
                 target_protein=constraints.protein_target,
                 primary_goal=constraints.primary_goal,
                 meals_per_day=meals_per_day,
-                cuisine=constraints.cuisine
+                cuisine=constraints.cuisine,
+                diet_type=constraints.diet_type.value,
             )
             
             # STEP 3: Creative Generation (Recipes)
@@ -271,14 +276,15 @@ class MLPipelineOrchestrator:
                 current_date = start + timedelta(days=day_offset)
                 logger.info(f"[ML_WEEKLY_DISCOVERY] day {day_offset + 1}/7: {current_date}")
                 
-                portfolio = self.discovery_engine.discover_daily_portfolio(
+                from app.core.config import get_settings
+                settings = get_settings()
+                enable_llm = settings.nutrition_api.enable_llm_meal_suggestions
+
+                portfolio = await self._get_portfolio_with_fallback(
                     db=db,
-                    diet_type=constraints.diet_type.value,
-                    allergies=constraints.allergies,
-                    cuisine=constraints.cuisine,
-                    primary_goal=constraints.primary_goal,
-                    foods_to_avoid=constraints.foods_to_avoid,
-                    exclude_ingredients=previous_day_ingredients
+                    constraints=constraints,
+                    exclude_ingredients=previous_day_ingredients,
+                    enable_llm=enable_llm,
                 )
                 
                 # Pre-assemble raw meals for this day
@@ -292,7 +298,8 @@ class MLPipelineOrchestrator:
                     target_protein=constraints.protein_target,
                     primary_goal=constraints.primary_goal,
                     meals_per_day=meals_per_day,
-                    cuisine=constraints.cuisine
+                    cuisine=constraints.cuisine,
+                    diet_type=constraints.diet_type.value,
                 )
                 
                 # Reset exclusions for the next day to ONLY include current day's ingredients
@@ -422,14 +429,15 @@ class MLPipelineOrchestrator:
         constraints = self._extract_constraints(health_context)
         
         # 2. Discover portfolio (excluding current ingredients for variety)
-        portfolio = self.discovery_engine.discover_daily_portfolio(
+        from app.core.config import get_settings
+        settings = get_settings()
+        enable_llm = settings.nutrition_api.enable_llm_meal_suggestions
+
+        portfolio = await self._get_portfolio_with_fallback(
             db=db,
-            diet_type=constraints.diet_type.value,
-            allergies=constraints.allergies,
-            cuisine=constraints.cuisine,
-            primary_goal=constraints.primary_goal,
-            foods_to_avoid=constraints.foods_to_avoid,
-            exclude_ingredients=exclude_ingredients
+            constraints=constraints,
+            exclude_ingredients=exclude_ingredients or set(),
+            enable_llm=enable_llm,
         )
         
         # 3. Assemble single meal using remaining macro targets
@@ -442,7 +450,8 @@ class MLPipelineOrchestrator:
             target_protein=meal_target_prot,
             primary_goal=constraints.primary_goal,
             meals_per_day=1,
-            cuisine=constraints.cuisine
+            cuisine=constraints.cuisine,
+            diet_type=constraints.diet_type.value,
         )
         
         target_meal = raw_meals[0]
@@ -483,6 +492,66 @@ class MLPipelineOrchestrator:
         
         return target_meal
     
+    async def _get_portfolio_with_fallback(
+        self,
+        db: Session,
+        constraints,
+        exclude_ingredients: Set[str],
+        enable_llm: bool = False,
+    ) -> Dict[str, List]:
+        """Get ingredient portfolio via LLM+API path, falling back to template-based discovery."""
+        if enable_llm and self.meal_suggester and self.nutrition_resolver:
+            try:
+                meals_per_day = constraints.meals_per_day or 3
+                if meals_per_day != 3:
+                    meals_per_day = 3
+                meal_types = ["breakfast", "lunch", "dinner"][:meals_per_day]
+
+                llm_ingredients = await self.meal_suggester.suggest_meals(
+                    diet_type=constraints.diet_type.value,
+                    cuisine=constraints.cuisine,
+                    meal_types=meal_types,
+                    allergies=constraints.allergies,
+                    foods_to_avoid=constraints.foods_to_avoid,
+                    exclude_ingredients=exclude_ingredients,
+                    primary_goal=constraints.primary_goal,
+                    budget_constraints=getattr(constraints, 'budget_constraints', None),
+                    lifestyle_constraints=getattr(constraints, 'lifestyle_constraints', None),
+                )
+
+                if not llm_ingredients:
+                    raise ValueError("LLM returned empty ingredient list")
+
+                portfolio = await self.nutrition_resolver.resolve_portfolio(
+                    ingredients=llm_ingredients,
+                    diet_type=constraints.diet_type.value,
+                    cuisine=constraints.cuisine,
+                )
+
+                total_resolved = sum(len(v) for v in portfolio.values())
+                if total_resolved < len(llm_ingredients) * 0.5:
+                    logger.warning(
+                        f"[DEBUG][NUTRITION_RESOLVE_THRESHOLD] resolved={total_resolved}/{len(llm_ingredients)}"
+                    )
+                    raise ValueError("Too many ingredients failed resolution")
+
+                logger.info(f"[DEBUG][LLM_PORTFOLIO_SUCCESS] items={total_resolved}")
+                return portfolio
+
+            except Exception as e:
+                logger.warning(f"[DEBUG][ML_PIPELINE_FALLBACK] reason=\"{e}\"")
+
+        # Fallback to template-based discovery engine
+        return self.discovery_engine.discover_daily_portfolio(
+            db=db,
+            diet_type=constraints.diet_type.value,
+            allergies=constraints.allergies,
+            cuisine=constraints.cuisine,
+            primary_goal=constraints.primary_goal,
+            foods_to_avoid=constraints.foods_to_avoid,
+            exclude_ingredients=exclude_ingredients,
+        )
+
     def _extract_constraints(self, health_context: Dict[str, Any]) -> Any:
         """Extract selection constraints from health context"""
         # Resolve nested keys from HCD JSON context if present
@@ -596,6 +665,26 @@ def get_groq_generator():
                     Respond ONLY with a JSON object:
                     {{ "note": "Note: ..." }}
                     """
+                elif action == "suggest_substitute":
+                    original = payload.get("original_ingredient", "unknown")
+                    diet = payload.get("diet_type", "any")
+                    cuisine_val = payload.get("cuisine", "any")
+                    category = payload.get("category", "protein")
+                    prompt = f"""
+                    The ingredient "{original}" could not be found in our nutrition database.
+                    Suggest ONE common substitute that:
+                    - Is a {category} item
+                    - Fits a {diet} diet
+                    - Belongs to {cuisine_val} cuisine
+                    - Has a simple, widely recognized name (e.g. "Chicken Breast" not "Amritsari Tandoori Chicken")
+
+                    Respond ONLY with a JSON object:
+                    {{ "substitute": "Simple Ingredient Name" }}
+                    """
+
+                elif action == "suggest_meals":
+                    prompt = payload.get("prompt", "")
+
                 else:
                     meal_type = payload.get("meal_type", "meal")
                     ingredients = payload.get("ingredients", [])
@@ -627,11 +716,12 @@ def get_groq_generator():
                     {json.dumps(ingredients)}
                     The user follows a {diet_type} diet.
                     {constraints_text}
-                    
+
                     IMPORTANT RULES:
                     1. Use VERY SIMPLE English. No difficult words.
                     2. Keep instructions short and clear.
-                    3. Respond ONLY with a JSON object following this schema:
+                    3. The meal_name and description MUST only reference ingredients from the list above. Do NOT mention any ingredient that is not in the provided list (e.g. do not say "Chicken" if chicken is not listed).
+                    4. Respond ONLY with a JSON object following this schema:
                     {{
                         "meal_name": "Simple Name",
                         "description": "Very simple short description",
@@ -750,7 +840,42 @@ def build_ml_pipeline_components(db):
     except Exception as e:
         logging.getLogger(__name__).error(f"Failed to load Canonicalizer: {e}")
 
-    return {
+    # Build hybrid pipeline components (LLM + nutrition API)
+    from app.core.config import get_settings
+    settings = get_settings()
+
+    meal_suggester = None
+    nutrition_resolver = None
+
+    if settings.nutrition_api.enable_llm_meal_suggestions:
+        from app.services.ml_diet_pipeline.suggestion.service import LLMMealSuggester
+        from app.services.ml_diet_pipeline.nutrition.resolver import NutritionResolver
+        from app.services.ml_diet_pipeline.nutrition.providers.calorieninjas import APINinjasProvider
+        from app.services.ml_diet_pipeline.nutrition.providers.usda import USDAProvider
+
+        meal_suggester = LLMMealSuggester(generator=get_groq_generator())
+
+        primary_provider = None
+        fallback_provider = None
+
+        # USDA is primary — fully free, all fields, lab-verified data
+        usda_key = settings.nutrition_api.usda_api_key
+        if usda_key:
+            primary_provider = USDAProvider(api_key=usda_key)
+
+        # API Ninjas as fallback (free tier has premium-gated fields)
+        api_key = settings.nutrition_api.api_ninjas_api_key
+        if api_key:
+            fallback_provider = APINinjasProvider(api_key=api_key)
+
+        nutrition_resolver = NutritionResolver(
+            db=db,
+            primary_provider=primary_provider,
+            fallback_provider=fallback_provider,
+            llm_generator=get_groq_generator(),
+        )
+
+    components = {
         "discovery_engine": get_discovery_engine(),
         "daily_assembler": get_daily_assembler(),
         "nutrition_engine": NutritionEngine(db),
@@ -759,3 +884,7 @@ def build_ml_pipeline_components(db):
         "genai_service": GenAIService(generator=get_groq_generator()),
         "canonicalizer": canonicalizer,
     }
+    components["meal_suggester"] = meal_suggester
+    components["nutrition_resolver"] = nutrition_resolver
+
+    return components
