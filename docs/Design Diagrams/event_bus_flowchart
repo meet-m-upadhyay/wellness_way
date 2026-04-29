@@ -1,0 +1,42 @@
+flowchart TD
+    subgraph "Event Publishers (Trigger Actions)"
+        Signup[Email Signup / Google Login]
+        AdminAction[Admin Approve / Decline]
+    end
+
+    subgraph "Event Bus (Decoupling Layer)"
+        Bus{Event Bus}
+        Ev1[USER_REGISTERED]
+        Ev2[ADMIN_ACTION_COMPLETED]
+    end
+
+    subgraph "Event Subscribers (Handlers)"
+        EmailSvc[Email Service]
+        Handler1[on_user_registered]
+        Handler2[on_admin_action]
+    end
+
+    subgraph "Final Recipients"
+        AdminInbox[Administrator Email]
+        UserInbox[User Email]
+    end
+
+    %% Flow for Registration
+    Signup -->|Publishes| Ev1
+    Ev1 --> Bus
+    Bus -->|Notifies| Handler1
+    Handler1 -->|SMTP| AdminInbox
+
+    %% Flow for Admin Decisions
+    AdminAction -->|Publishes| Ev2
+    Ev2 --> Bus
+    Bus -->|Notifies| Handler2
+    Handler2 -->|SMTP| UserInbox
+
+    %% Styling
+    style Bus fill:#f9f,stroke:#333,stroke-width:2px
+    style Ev1 fill:#e1f5fe,stroke:#01579b
+    style Ev2 fill:#e1f5fe,stroke:#01579b
+    style Signup fill:#ecfdf5,stroke:#059669
+    style AdminAction fill:#ecfdf5,stroke:#059669
+    style EmailSvc fill:#fff7ed,stroke:#c2410c

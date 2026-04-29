@@ -1,0 +1,21 @@
+{
+  "indian": [
+    {"item": "rajma", "preferred": ["rice", "chawal"], "acceptable": ["roti", "naan"], "incompatible": ["dosa", "idli"]},
+    {"item": "sambar", "preferred": ["rice", "idli", "dosa", "vada"], "acceptable": ["uttapam", "appam"], "incompatible": ["roti", "naan", "paratha"]},
+    {"item": "chole", "preferred": ["bhature", "rice", "roti"], "acceptable": ["naan", "kulcha"], "incompatible": ["dosa", "idli"]},
+    {"item": "palak paneer", "preferred": ["roti", "naan"], "acceptable": ["rice", "paratha"], "incompatible": ["dosa", "idli"]},
+    {"item": "dal", "preferred": ["rice", "roti"], "acceptable": ["naan", "paratha", "chapati"], "incompatible": ["dosa"]},
+    {"item": "biryani", "preferred": ["raita", "curd"], "acceptable": ["salad", "onion"], "incompatible": ["roti", "naan", "rice"]},
+    {"item": "idli", "preferred": ["sambar", "chutney"], "acceptable": ["podi", "curry"], "incompatible": ["roti", "naan", "paratha"]},
+    {"item": "dosa", "preferred": ["sambar", "chutney"], "acceptable": ["potato curry", "podi"], "incompatible": ["roti", "naan"]},
+    {"item": "poha", "preferred": ["peanut", "lemon"], "acceptable": ["chutney", "tea"], "incompatible": ["rice", "roti"]},
+    {"item": "upma", "preferred": ["chutney", "sambar"], "acceptable": ["pickle"], "incompatible": ["roti", "naan"]},
+    {"item": "khichdi", "preferred": ["curd", "ghee", "papad"], "acceptable": ["pickle", "raita"], "incompatible": ["roti", "naan"]},
+    {"item": "paratha", "preferred": ["curd", "pickle", "butter"], "acceptable": ["raita", "chutney"], "incompatible": ["rice", "dosa"]},
+    {"item": "paneer", "preferred": ["roti", "naan", "rice"], "acceptable": ["paratha", "kulcha"], "incompatible": []},
+    {"item": "fish curry", "preferred": ["rice"], "acceptable": ["roti"], "incompatible": ["dosa", "idli"]},
+    {"item": "egg curry", "preferred": ["rice", "roti"], "acceptable": ["paratha", "naan"], "incompatible": ["dosa"]},
+    {"item": "chicken curry", "preferred": ["rice", "roti", "naan"], "acceptable": ["paratha"], "incompatible": ["dosa", "idli"]},
+    {"item": "rasam", "preferred": ["rice"], "acceptable": ["idli"], "incompatible": ["roti", "naan", "paratha"]}
+  ]
+}

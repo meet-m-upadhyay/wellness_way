@@ -1,6 +1,7 @@
 """
 Security configuration and constants
 """
+from app.core.config import get_settings
 
 from typing import Dict, List
 
@@ -12,8 +13,8 @@ class SecurityHeaders:
     CSP_POLICY = {
         "production": (
             "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
             "font-src 'self' https:; "
             "connect-src 'self' https:; "
@@ -24,8 +25,8 @@ class SecurityHeaders:
         ),
         "development": (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
             "font-src 'self' https:; "
             "connect-src 'self' https: ws: wss:; "
@@ -54,17 +55,13 @@ class SecurityHeaders:
     HSTS_POLICY = "max-age=31536000; includeSubDomains; preload"
     
     # Referrer Policy
-    REFERRER_POLICY = "strict-origin-when-cross-origin"
+    REFERRER_POLICY = "no-referrer-when-downgrade"
 
 
 class CORSConfig:
     """CORS configuration for different environments"""
     
-    PRODUCTION_ALLOWED_ORIGINS = [
-        "https://wellnessway.com",
-        "https://app.wellnessway.com",
-        "https://www.wellnessway.com"
-    ]
+    # Origins are now accessed lazily in get_cors_config()
     
     DEVELOPMENT_ALLOWED_ORIGINS = [
         "http://localhost:3000",
@@ -73,17 +70,9 @@ class CORSConfig:
         "http://127.0.0.1:3001"
     ]
     
-    ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE"]
+    ALLOWED_METHODS = ["*"]
     
-    PRODUCTION_ALLOWED_HEADERS = [
-        "Accept",
-        "Accept-Language",
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "X-User-Id"  # Temporary until JWT auth is implemented
-    ]
+    PRODUCTION_ALLOWED_HEADERS = ["*"]
     
     DEVELOPMENT_ALLOWED_HEADERS = ["*"]
     
@@ -145,17 +134,13 @@ class RateLimitConfig:
 class TrustedHostConfig:
     """Trusted host configuration"""
     
-    PRODUCTION_HOSTS = [
-        "wellnessway.com",
-        "app.wellnessway.com", 
-        "api.wellnessway.com",
-        "www.wellnessway.com"
-    ]
+    PRODUCTION_HOSTS = ["*"]
     
     DEVELOPMENT_HOSTS = [
         "localhost",
         "127.0.0.1",
         "0.0.0.0",
+        "wellness-way-backend-1021198538658.us-central1.run.app",
         "*"  # Allow all in development
     ]
 
@@ -212,14 +197,13 @@ def get_security_headers(is_production: bool) -> Dict[str, str]:
         "Content-Security-Policy": SecurityHeaders.CSP_POLICY["production" if is_production else "development"],
         "Permissions-Policy": SecurityHeaders.PERMISSIONS_POLICY,
     }
-    
     if is_production:
         headers.update({
             "Strict-Transport-Security": SecurityHeaders.HSTS_POLICY,
             "Expect-CT": "max-age=86400, enforce",
-            "Cross-Origin-Embedder-Policy": "require-corp",
-            "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Resource-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "unsafe-none",
+            "Cross-Origin-Opener-Policy": "unsafe-none",
+            "Cross-Origin-Resource-Policy": "cross-origin",
             "Server": "WellnessWay"  # Hide server information
         })
     else:
@@ -239,8 +223,9 @@ def get_cors_config(is_production: bool) -> Dict:
         CORS configuration dictionary
     """
     if is_production:
+        settings = get_settings()
         return {
-            "allow_origins": CORSConfig.PRODUCTION_ALLOWED_ORIGINS,
+            "allow_origins": settings.security.cors_origins_list,
             "allow_credentials": True,
             "allow_methods": CORSConfig.ALLOWED_METHODS,
             "allow_headers": CORSConfig.PRODUCTION_ALLOWED_HEADERS,

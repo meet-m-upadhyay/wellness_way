@@ -3,8 +3,13 @@ Admin-related Pydantic schemas
 """
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
+
+
+class AdminActionRequest(BaseModel):
+    """Request body for approve/decline actions"""
+    note: Optional[str] = Field(None, max_length=500, description="Optional note to include in the notification email")
 
 
 class RegistrationRequestResponse(BaseModel):
@@ -12,8 +17,9 @@ class RegistrationRequestResponse(BaseModel):
     id: str = Field(..., description="Registration request ID")
     email: str = Field(..., description="User email")
     name: str = Field(..., description="User name")
-    google_id: str = Field(..., description="Google ID")
+    google_id: Optional[str] = Field(None, description="Google ID")
     status: str = Field(..., description="Request status (pending, approved, declined)")
+    admin_note: Optional[str] = Field(None, description="Admin note for the decision")
     created_at: datetime = Field(..., description="Request creation timestamp")
     updated_at: datetime = Field(..., description="Request last update timestamp")
 

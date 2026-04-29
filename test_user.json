@@ -1,9 +1,0 @@
-{
-  "name": "Test User",
-  "email": "test@example.com",
-  "age": 30,
-  "gender": "male",
-  "height_cm": 175,
-  "weight_kg": 70,
-  "activity_level": "moderately_active"
-}

@@ -19,18 +19,10 @@ from .health_context import (
     HealthContextDocumentCreate
 )
 
-# Diet plan schemas will be added in a later task
-# from .diet_plan_simple import (
-#     DietPlanCreate,
-#     DietPlanResponse,
-#     MealResponse,
-#     NutritionInfoResponse
-# )
-
 __all__ = [
     # User schemas
     "UserProfileCreate",
-    "UserProfileUpdate", 
+    "UserProfileUpdate",
     "UserProfileResponse",
     "HealthGoalsCreate",
     "HealthGoalsUpdate",
@@ -38,14 +30,8 @@ __all__ = [
     "DietPreferencesCreate",
     "DietPreferencesUpdate",
     "DietPreferencesResponse",
-    
+
     # Health context schemas
     "HealthContextDocumentResponse",
     "HealthContextDocumentCreate",
-    
-    # Diet plan schemas - will be added later
-    # "DietPlanCreate",
-    # "DietPlanResponse",
-    # "MealResponse",
-    # "NutritionInfoResponse"
 ]

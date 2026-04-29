@@ -1,31 +1,68 @@
 #!/usr/bin/env python3
-"""
-Start FastAPI backend with explicit environment configuration
-"""
-import os
 import sys
+import os
+import traceback
 
-def start_backend():
-    # Set environment variables before importing anything
-    os.environ["DATABASE_URL"] = "postgresql+psycopg://wellnessway:password@localhost:5432/wellnessway_db"
-    os.environ["REDIS_URL"] = "redis://localhost:6379/0"
-    os.environ["ENVIRONMENT"] = "development"
-    os.environ["DEBUG"] = "true"
+# --- LEVEL 0 DIAGNOSTIC ---
+print("🚦 [BOOT] Level 0: Script execution started", flush=True)
+
+try:
+    print("🚦 [BOOT] Level 1: Initializing paths", flush=True)
+    # Ensure app directory is in path for imports
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    if app_dir not in sys.path:
+        sys.path.insert(0, app_dir)
+
+    print("🚦 [BOOT] Level 2: Loading environment logic", flush=True)
+    # Don't load dotenv in production (Cloud Run handles it)
+    is_cloud_run = os.environ.get("K_SERVICE") or os.environ.get("PORT") == "8080"
+    if not is_cloud_run:
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            print("⚠️ [BOOT] python-dotenv not found, skipping...", flush=True)
+
+    print(f"🚦 [BOOT] Level 3: Port detection (PORT={os.environ.get('PORT')})", flush=True)
+    port = int(os.environ.get("PORT", 8080))
+
+    print(f"🚦 [BOOT] Level 4: Environment detection (ENVIRONMENT={os.environ.get('ENVIRONMENT')})", flush=True)
+    # Print secret lengths to debug truncation/corruption
+    print(f"🚦 [DEBUG] DB_URL len: {len(os.environ.get('DATABASE_URL', ''))}", flush=True)
+    print(f"🚦 [DEBUG] CORS len: {len(os.environ.get('CORS_ORIGINS', ''))}", flush=True)
+
+    print("🚦 [BOOT] Level 5: Importing app.main (The Critical Phase)", flush=True)
+    import app.main
     
-    print("🚀 Starting WellnessWay Backend...")
-    print(f"Database URL: {os.environ['DATABASE_URL']}")
-    print(f"Redis URL: {os.environ['REDIS_URL']}")
+    # Checkpoint 5.5: main.py loaded
+    print(f"🚦 [BOOT] Level 5.5: app.main imported (App ID: {id(app.main.app)})", flush=True)
     
-    # Now import and start uvicorn
+    print("🚦 [BOOT] Level 6: Launching Uvicorn", flush=True)
     import uvicorn
     
+    # Checkpoint 6.5: uvicorn loaded
+    print("🚦 [BOOT] Level 6.5: uvicorn imported", flush=True)
+    
+    # Nuclear check for ENV before launch
+    settings = app.main.get_settings()
+    print(f"🚦 [BOOT] Level 7: Settings loaded (ENV={settings.environment})", flush=True)
+    
     uvicorn.run(
-        "app.main:app",
+        "app.main:app", # Use string import for better process management
         host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        port=port,
+        log_level="info",
+        workers=1,
+        loop="auto",
+        proxy_headers=True
     )
 
-if __name__ == "__main__":
-    start_backend()
+except Exception as e:
+    print(f"❌ [FATAL] BOOT ERROR: {str(e)}", file=sys.stderr, flush=True)
+    traceback.print_exc(file=sys.stderr)
+    sys.exit(1)
+except BaseException as e:
+    # Catch everything including SystemExit, KeyboardInterrupt
+    print(f"❌ [FATAL] CRITICAL EXIT: {type(e).__name__}", file=sys.stderr, flush=True)
+    traceback.print_exc(file=sys.stderr)
+    sys.exit(1)

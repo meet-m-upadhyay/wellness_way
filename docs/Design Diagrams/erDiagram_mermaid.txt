@@ -1,0 +1,98 @@
+erDiagram
+    users ||--o{ health_goals : "has"
+    users ||--|| diet_preferences : "has"
+    users ||--o{ health_context_documents : "has versions of"
+    users ||--o{ diet_plans : "owns"
+    health_context_documents ||--o{ diet_plans : "generated from"
+    
+    users {
+        UUID id PK
+        string email UK
+        string google_id UK
+        string password_hash
+        boolean is_active
+        boolean is_admin
+        string approval_status
+        string name
+        int age
+        string gender
+        float height_cm
+        float weight_kg
+        float body_fat_percentage
+        float muscle_mass_kg
+        string activity_level
+        boolean profile_completed
+        datetime created_at
+        datetime updated_at
+    }
+
+    health_goals {
+        UUID id PK
+        UUID user_id FK
+        string primary_goal
+        float target_weight_kg
+        int timeline_weeks
+        datetime created_at
+    }
+
+    diet_preferences {
+        UUID id PK
+        UUID user_id FK
+        string diet_type
+        json allergies
+        json foods_to_avoid
+        int meals_per_day
+        text budget_constraints
+        text lifestyle_constraints
+        datetime created_at
+    }
+
+    health_context_documents {
+        UUID id PK
+        UUID user_id FK
+        int version
+        text content
+        jsonb json_context
+        float bmr_calories
+        float tdee_calories
+        float min_daily_calories
+        float max_calorie_deficit
+        float min_protein_grams
+        datetime created_at
+        boolean is_active
+    }
+
+    diet_plans {
+        UUID id PK
+        UUID user_id FK
+        UUID hcd_id FK
+        string plan_type
+        date start_date
+        json content
+        datetime created_at
+    }
+
+    food_items {
+        UUID id PK
+        string canonical_name
+        string food_group
+        json diet_flags
+        json allergen_flags
+        json macros
+        datetime created_at
+        datetime updated_at
+        boolean is_deprecated
+        string unit_type
+        float default_serving_size
+    }
+
+    registration_requests {
+        UUID id PK
+        string email UK
+        string name
+        string google_id
+        string password_hash
+        string status
+        datetime created_at
+        datetime updated_at
+    }

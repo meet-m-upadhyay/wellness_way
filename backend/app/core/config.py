@@ -3,9 +3,10 @@ Configuration settings for WellnessWay Diet Planner
 """
 
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict, Field, validator, SecretStr
-from typing import Optional, Literal, List
+from pydantic import ConfigDict, Field, field_validator, model_validator, SecretStr
+from typing import Optional, Literal, List, Any
 import os
+import sys
 import secrets
 from pathlib import Path
 
@@ -20,13 +21,12 @@ repo_root = backend_dir.parent
 load_dotenv(repo_root / '.env')
 load_dotenv(backend_dir / '.env')
 
-# Import secure key manager
-try:
-    from app.core.secrets import get_secure_api_key
-except ImportError:
-    # Fallback if secrets module not available
-    def get_secure_api_key(provider: str, encoded_key: Optional[str] = None) -> Optional[str]:
-        return os.getenv(f"{provider.upper()}_API_KEY")
+# --- NUCLEAR DIAGNOSTIC BLOCK REMOVED ---
+# All diagnostics moved to runtime to ensure clean import
+
+# Define secure key fallback at module level to avoid imports
+def get_secure_api_key(provider: str, encoded_key: Optional[str] = None) -> Optional[str]:
+    return os.getenv(f"{provider.upper()}_API_KEY")
 
 
 class DatabaseSettings(BaseSettings):
@@ -57,10 +57,13 @@ class DatabaseSettings(BaseSettings):
             kwargs['url'] = os.getenv('DATABASE_URL')
         super().__init__(**kwargs)
     
-    @validator('url')
-    def validate_database_url(cls, v):
-        if not v.startswith(('postgresql://', 'postgresql+psycopg://')):
-            raise ValueError('Database URL must be a PostgreSQL connection string')
+    @field_validator('url', mode='after')
+    @classmethod
+    def validate_database_url_lenient(cls, v: str) -> str:
+        if not v or not v.startswith(('postgresql', 'postgres')):
+            import logging
+            logging.error(f"❌ INVALID DATABASE_URL: {v[:10]}... (truncated)")
+            # Return original to allow diagnostic startup, app will fail at DB use instead of boot
         return v
 
 
@@ -105,28 +108,73 @@ class SecuritySettings(BaseSettings):
     password_min_length: int = Field(default=8, ge=6)
     bcrypt_rounds: int = Field(default=12, ge=10, le=15)
     
-    # CORS settings
-    # cors_origins: List[str] = Field(
-    #     default=["http://localhost:3000", "http://127.0.0.1:3000"],
-    #     description="Allowed CORS origins",
-    #     env="CORS_ORIGINS"
-    # )
+    # CORS and Host settings — stored as semicolon-separated strings to
+    # prevent pydantic-settings from JSON-parsing the env var (which fails
+    # when gcloud corrupts commas in --set-env-vars).
+    cors_origins: str = Field(
+        default="http://localhost:3000;http://127.0.0.1:3000;https://wellness-way.meetupadhyaykgp.workers.dev;https://dev-wellness-way.meetupadhyaykgp.workers.dev",
+        description="Allowed CORS origins (semicolon-separated)",
+        validation_alias="CORS_ORIGINS"
+    )
+    trusted_hosts: str = Field(
+        default="localhost;127.0.0.1;0.0.0.0;wellness-way-backend-1021198538658.us-central1.run.app",
+        description="Trusted hosts for middleware (semicolon-separated)",
+        validation_alias="TRUSTED_HOSTS"
+    )
     cors_allow_credentials: bool = Field(default=True)
     
     # Rate limiting
     rate_limit_requests: int = Field(default=100, ge=1)
     rate_limit_window: int = Field(default=60, ge=1)
     
-    @validator('secret_key')
-    def validate_secret_key(cls, v):
-        if isinstance(v, str) and len(v) < 32:
-            raise ValueError('Secret key must be at least 32 characters long')
-        return v
+    def __init__(self, **kwargs):
+        # Explicitly load environment variables for nested settings
+        import os
+        if 'google_client_id' not in kwargs and os.getenv('GOOGLE_CLIENT_ID'):
+            kwargs['google_client_id'] = os.getenv('GOOGLE_CLIENT_ID')
+        if 'google_client_secret' not in kwargs and os.getenv('GOOGLE_CLIENT_SECRET'):
+            kwargs['google_client_secret'] = os.getenv('GOOGLE_CLIENT_SECRET')
+        if 'jwt_secret_key' not in kwargs and os.getenv('JWT_SECRET_KEY'):
+            kwargs['jwt_secret_key'] = os.getenv('JWT_SECRET_KEY')
+        super().__init__(**kwargs)
     
-    @validator('jwt_secret_key')
-    def validate_jwt_secret_key(cls, v):
-        if isinstance(v, str) and len(v) < 32:
-            raise ValueError('JWT secret key must be at least 32 characters long')
+    @staticmethod
+    def _parse_origins_string(raw: str) -> List[str]:
+        """Parse a semicolon/comma-separated string (or JSON array) into a list."""
+        raw = raw.strip()
+        if not raw:
+            return []
+        # Try JSON array first
+        if raw.startswith('[') and raw.endswith(']'):
+            try:
+                import json
+                return json.loads(raw)
+            except Exception:
+                raw = raw.strip('[]"\' ')
+        # Split by semicolon (preferred) then comma
+        for sep in [';', ',']:
+            if sep in raw:
+                return [item.strip().strip('"\'') for item in raw.split(sep) if item.strip()]
+        return [raw]
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Get CORS origins as a parsed list."""
+        return self._parse_origins_string(self.cors_origins)
+    
+    @property
+    def trusted_hosts_list(self) -> List[str]:
+        """Get trusted hosts as a parsed list."""
+        return self._parse_origins_string(self.trusted_hosts)
+
+    @field_validator('secret_key', 'jwt_secret_key', mode='after')
+    @classmethod
+    def validate_keys_lenient(cls, v: Any) -> Any:
+        # Non-fatal validation
+        val = v.get_secret_value() if isinstance(v, SecretStr) else v
+        if not val or len(str(val)) < 8:
+            import logging
+            logging.error(f"⚠️ DANGER: Cryptographic key is too short or missing ({type(v)}). Application may be insecure!")
         return v
 
 
@@ -194,12 +242,45 @@ class AISettings(BaseSettings):
     enable_content_filtering: bool = Field(default=True)
 
 
+class NutritionAPISettings(BaseSettings):
+    """Nutrition API configuration for macro verification"""
+
+    model_config = ConfigDict(
+        case_sensitive=False,
+        extra="ignore",
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
+
+    # Primary provider
+    provider: str = Field(default="api_ninjas", description="Primary nutrition API provider")
+    api_ninjas_api_key: Optional[str] = Field(default=None, description="API Ninjas API key")
+
+    # Fallback provider
+    fallback_provider: str = Field(default="usda", description="Fallback nutrition API provider")
+    usda_api_key: Optional[str] = Field(default=None, description="USDA FoodData Central API key")
+
+    # Feature flag
+    enable_llm_meal_suggestions: bool = Field(default=False, description="Enable LLM-based meal suggestions")
+
+    def __init__(self, **kwargs):
+        import os
+        if 'api_ninjas_api_key' not in kwargs and os.getenv('API_NINJAS_API_KEY'):
+            kwargs['api_ninjas_api_key'] = os.getenv('API_NINJAS_API_KEY')
+        if 'usda_api_key' not in kwargs and os.getenv('USDA_API_KEY'):
+            kwargs['usda_api_key'] = os.getenv('USDA_API_KEY')
+        if 'enable_llm_meal_suggestions' not in kwargs and os.getenv('ENABLE_LLM_MEAL_SUGGESTIONS'):
+            kwargs['enable_llm_meal_suggestions'] = os.getenv('ENABLE_LLM_MEAL_SUGGESTIONS', '').lower() == 'true'
+        super().__init__(**kwargs)
+
+
 class LoggingSettings(BaseSettings):
     """Logging configuration settings"""
     
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
     format: Literal["json", "text"] = Field(default="json")
-    enable_file_logging: bool = Field(default=True)
+    # Disable file logging in production to prevent buffering/permission issues
+    enable_file_logging: bool = Field(default=os.getenv("ENVIRONMENT") != "production")
     log_file_path: str = Field(default="logs/app.log")
     max_file_size_mb: int = Field(default=10, ge=1, le=100)
     backup_count: int = Field(default=5, ge=1, le=20)
@@ -249,6 +330,36 @@ class CacheSettings(BaseSettings):
     health_context_ttl: int = Field(default=7200, ge=600)  # 2 hours
 
 
+class EmailSettings(BaseSettings):
+    """Email / SMTP configuration for notifications"""
+
+    model_config = ConfigDict(
+        case_sensitive=False,
+        extra="ignore",
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
+
+    smtp_host: str = Field(default="smtp.gmail.com", description="SMTP server host", env="SMTP_HOST")
+    smtp_port: int = Field(default=587, ge=1, le=65535, description="SMTP server port", env="SMTP_PORT")
+    smtp_user: Optional[str] = Field(default=None, description="SMTP username (email)", env="SMTP_USER")
+    smtp_password: Optional[SecretStr] = Field(default=None, description="SMTP password or app-password", env="SMTP_PASSWORD")
+    from_email: Optional[str] = Field(default=None, description="Sender email address", env="FROM_EMAIL")
+    admin_email: Optional[str] = Field(default=None, description="Admin email to receive notifications", env="ADMIN_EMAIL")
+    enable_notifications: bool = Field(default=False, description="Master switch for email notifications", env="ENABLE_EMAIL_NOTIFICATIONS")
+    app_base_url: str = Field(default="http://localhost:3000", description="Frontend base URL for links in emails", env="APP_BASE_URL")
+
+    def __init__(self, **kwargs):
+        import os
+        for key in ('smtp_user', 'smtp_password', 'from_email', 'admin_email', 'app_base_url'):
+            env_key = key.upper()
+            if key not in kwargs and os.getenv(env_key):
+                kwargs[key] = os.getenv(env_key)
+        if 'enable_notifications' not in kwargs and os.getenv('ENABLE_EMAIL_NOTIFICATIONS'):
+            kwargs['enable_notifications'] = os.getenv('ENABLE_EMAIL_NOTIFICATIONS', 'false').lower() in ('true', '1', 'yes')
+        super().__init__(**kwargs)
+
+
 class Settings(BaseSettings):
     """Main application settings"""
     
@@ -261,13 +372,23 @@ class Settings(BaseSettings):
     )
     
     # Environment
-    environment: Literal["development", "staging", "production"] = Field(default="development")
-    debug: bool = Field(default=True)
+    environment: Literal["development", "staging", "production"] = Field(
+        default="production", # Default to production for safety
+        validation_alias="ENVIRONMENT"
+    )
+    debug: bool = Field(default=False, validation_alias="DEBUG")
     testing: bool = Field(default=False)
     
     # API Configuration
     api_host: str = Field(default="0.0.0.0")
-    api_port: int = Field(default=8000, ge=1024, le=65535)
+    # Cloud Run expects PORT=8080. Alias ensures it takes precedence.
+    api_port: int = Field(
+        default=8080, 
+        ge=1, 
+        le=65535, 
+        alias="PORT",
+        validation_alias="PORT"
+    )
     api_prefix: str = Field(default="/api/v1")
     
     # Application metadata
@@ -280,16 +401,21 @@ class Settings(BaseSettings):
     enable_ai_generation: bool = Field(default=True)
     enable_plan_regeneration: bool = Field(default=True)
     enable_analytics: bool = Field(default=False)
-    
+    enable_ml_pipeline: bool = Field(default=False)
+    enable_meal_engine_v2: bool = Field(default=False)
+
     # Nested settings
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     ai: AISettings = Field(default_factory=AISettings)
+    nutrition_api: NutritionAPISettings = Field(default_factory=NutritionAPISettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     cache: CacheSettings = Field(default_factory=CacheSettings)
+    email: EmailSettings = Field(default_factory=EmailSettings)
     
-    @validator('environment')
+    @field_validator('environment')
+    @classmethod
     def validate_environment(cls, v):
         if v == "production":
             # Additional production validations can be added here
@@ -374,20 +500,28 @@ class Settings(BaseSettings):
             return self.security.google_client_secret.get_secret_value()
         return None
     
-    def setup_logging_directory(self) -> None:
-        """Ensure logging directory exists"""
-        if self.logging.enable_file_logging:
-            log_path = Path(self.logging.log_file_path)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-
-
-# Global settings instance
-settings = Settings()
-
-# Ensure logging directory exists on import
-settings.setup_logging_directory()
-
+# Global settings instance (Lazy)
+_settings: Optional[Settings] = None
 
 def get_settings() -> Settings:
-    """Get global settings instance"""
-    return settings
+    """Get global settings instance (Lazy singleton with thread safety)"""
+    global _settings
+    if _settings is None:
+        try:
+            # Instantiate settings (triggers Pydantic validation)
+            _settings = Settings()
+            
+            # Ensure logging directory exists
+            if _settings.logging.enable_file_logging:
+                from pathlib import Path # Import Path here to avoid circular dependency if Settings is imported early
+                log_path = Path(_settings.logging.log_file_path)
+                try:
+                    log_path.parent.mkdir(parents=True, exist_ok=True)
+                except Exception as e:
+                    # Don't crash on directory creation failure in production
+                    print(f"⚠️ [CONFIG] Failed to create logging directory: {e}", file=sys.stderr)
+        except Exception as e:
+            print(f"❌ [CONFIG] Critical error during Settings instantiation: {e}", file=sys.stderr)
+            raise
+            
+    return _settings

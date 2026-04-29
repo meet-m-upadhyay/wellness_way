@@ -25,15 +25,13 @@ export const NutritionSummary: React.FC<NutritionSummaryProps> = ({
   showPercentages = true,
   targetCalories,
 }) => {
-  // Determine if this is daily or weekly data
   const isWeekly = nutrition.avg_daily_calories !== undefined;
-  
+
   const calories = isWeekly ? nutrition.avg_daily_calories! : nutrition.total_calories!;
   const protein = isWeekly ? nutrition.avg_daily_protein_g! : nutrition.total_protein_g!;
   const carbs = isWeekly ? nutrition.avg_daily_carbs_g! : nutrition.total_carbs_g!;
   const fat = isWeekly ? nutrition.avg_daily_fat_g! : nutrition.total_fat_g!;
 
-  // Calculate macronutrient percentages
   const proteinCalories = protein * 4;
   const carbCalories = carbs * 4;
   const fatCalories = fat * 9;
@@ -43,7 +41,6 @@ export const NutritionSummary: React.FC<NutritionSummaryProps> = ({
   const carbPercentage = totalMacroCalories > 0 ? (carbCalories / totalMacroCalories) * 100 : 0;
   const fatPercentage = totalMacroCalories > 0 ? (fatCalories / totalMacroCalories) * 100 : 0;
 
-  // Calculate progress towards target calories if provided
   const calorieProgress = targetCalories ? (calories / targetCalories) * 100 : null;
 
   const macronutrients = [
@@ -52,84 +49,85 @@ export const NutritionSummary: React.FC<NutritionSummaryProps> = ({
       amount: Math.round(protein),
       unit: 'g',
       percentage: Math.round(proteinPercentage),
-      color: 'bg-green-500',
-      lightColor: 'bg-green-100 dark:bg-green-900/30',
-      textColor: 'text-green-800 dark:text-green-200',
+      gradient: 'from-primary-400 to-primary-600',
+      bg: 'bg-primary-50 dark:bg-primary-900/15',
+      text: 'text-primary-700 dark:text-primary-300',
+      dot: 'bg-primary-500',
     },
     {
       name: 'Carbs',
       amount: Math.round(carbs),
       unit: 'g',
       percentage: Math.round(carbPercentage),
-      color: 'bg-yellow-500',
-      lightColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-      textColor: 'text-yellow-800 dark:text-yellow-200',
+      gradient: 'from-amber-400 to-amber-600',
+      bg: 'bg-amber-50 dark:bg-amber-900/15',
+      text: 'text-amber-700 dark:text-amber-300',
+      dot: 'bg-amber-500',
     },
     {
       name: 'Fat',
       amount: Math.round(fat),
       unit: 'g',
       percentage: Math.round(fatPercentage),
-      color: 'bg-red-500',
-      lightColor: 'bg-red-100 dark:bg-red-900/30',
-      textColor: 'text-red-800 dark:text-red-200',
+      gradient: 'from-rose-400 to-rose-600',
+      bg: 'bg-rose-50 dark:bg-rose-900/15',
+      text: 'text-rose-700 dark:text-rose-300',
+      dot: 'bg-rose-500',
     },
   ];
 
   return (
     <Card>
-      <div className="p-4 sm:p-6">
-        <div className="text-center sm:text-left mb-4 sm:mb-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center justify-center sm:justify-start">
-            <span className="text-xl mr-2">📊</span>
+      <div className="p-5 sm:p-6">
+        <div className="text-center sm:text-left mb-5">
+          <h3 className="text-base sm:text-lg font-semibold text-wellness-light-text dark:text-wellness-dark-text flex items-center justify-center sm:justify-start gap-2">
+            <span className="text-lg">📊</span>
             {title}
           </h3>
         </div>
-        
+
         {/* Calories Section */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 sm:mb-0">
+            <h4 className="text-sm font-medium text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary mb-1 sm:mb-0">
               {isWeekly ? 'Average Daily Calories' : 'Total Calories'}
             </h4>
             {targetCalories && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Target: {targetCalories}
+              <span className="text-xs text-wellness-light-textMuted dark:text-wellness-dark-textMuted">
+                Target: {targetCalories} kcal
               </span>
             )}
           </div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start">
-              <span className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 mr-2">
+
+          <div className="flex flex-col sm:flex-row sm:items-center text-center sm:text-left gap-2">
+            <div className="flex items-baseline justify-center sm:justify-start gap-1">
+              <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {Math.round(calories)}
               </span>
-              <span className="text-gray-500 dark:text-gray-400">kcal</span>
+              <span className="text-sm text-wellness-light-textMuted dark:text-wellness-dark-textMuted">kcal</span>
             </div>
             {calorieProgress && (
-              <span className={`mt-2 sm:mt-0 sm:ml-3 text-sm font-medium ${
-                calorieProgress >= 95 && calorieProgress <= 105 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : calorieProgress < 95 
-                    ? 'text-yellow-600 dark:text-yellow-400' 
-                    : 'text-red-600 dark:text-red-400'
-              }`}>
-                ({Math.round(calorieProgress)}% of target)
+              <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${calorieProgress >= 95 && calorieProgress <= 105
+                  ? 'bg-primary-50 dark:bg-primary-900/15 text-primary-700 dark:text-primary-300'
+                  : calorieProgress < 95
+                    ? 'bg-amber-50 dark:bg-amber-900/15 text-amber-700 dark:text-amber-300'
+                    : 'bg-rose-50 dark:bg-rose-900/15 text-rose-700 dark:text-rose-300'
+                }`}>
+                {Math.round(calorieProgress)}% of target
               </span>
             )}
           </div>
-          
+
           {targetCalories && (
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div className="mt-3">
+              <div className="w-full bg-wellness-light-elevated dark:bg-wellness-dark-elevated rounded-full h-2">
                 <div
-                  className={`h-2 rounded-full ${
-                    calorieProgress! >= 95 && calorieProgress! <= 105
-                      ? 'bg-green-500'
+                  className={`h-2 rounded-full transition-all duration-500 bg-gradient-to-r ${calorieProgress! >= 95 && calorieProgress! <= 105
+                      ? 'from-primary-400 to-primary-600'
                       : calorieProgress! < 95
-                        ? 'bg-yellow-500'
-                        : 'bg-red-500'
-                  }`}
+                        ? 'from-amber-400 to-amber-600'
+                        : 'from-rose-400 to-rose-600'
+                    }`}
                   style={{ width: `${Math.min(calorieProgress!, 100)}%` }}
                 ></div>
               </div>
@@ -139,29 +137,29 @@ export const NutritionSummary: React.FC<NutritionSummaryProps> = ({
 
         {/* Macronutrients Section */}
         <div>
-          <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-4">Macronutrient Breakdown</h4>
-          
+          <h4 className="text-sm font-medium text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary mb-4">Macronutrient Breakdown</h4>
+
           <div className="space-y-4">
             {macronutrients.map((macro) => (
               <div key={macro.name}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{macro.name}</span>
-                  <div className="flex items-center">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white mr-2">
+                  <span className="text-sm font-medium text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary">{macro.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-wellness-light-text dark:text-wellness-dark-text">
                       {macro.amount}{macro.unit}
                     </span>
                     {showPercentages && (
-                      <span className={`text-xs px-2 py-1 rounded-full ${macro.lightColor} ${macro.textColor}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${macro.bg} ${macro.text}`}>
                         {macro.percentage}%
                       </span>
                     )}
                   </div>
                 </div>
-                
+
                 {showPercentages && (
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-wellness-light-elevated dark:bg-wellness-dark-elevated rounded-full h-2">
                     <div
-                      className={`h-2 rounded-full ${macro.color}`}
+                      className={`h-2 rounded-full bg-gradient-to-r ${macro.gradient} transition-all duration-500`}
                       style={{ width: `${macro.percentage}%` }}
                     ></div>
                   </div>
@@ -171,15 +169,15 @@ export const NutritionSummary: React.FC<NutritionSummaryProps> = ({
           </div>
         </div>
 
-        {/* Macro Distribution Pie Chart Representation */}
+        {/* Distribution Legend */}
         {showPercentages && (
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Distribution</h4>
-            <div className="flex items-center space-x-4 text-sm">
+          <div className="mt-6 pt-5 border-t border-wellness-light-border dark:border-wellness-dark-border">
+            <h4 className="text-xs font-medium text-wellness-light-textMuted dark:text-wellness-dark-textMuted mb-3 uppercase tracking-wider">Distribution</h4>
+            <div className="flex items-center flex-wrap gap-4 text-sm">
               {macronutrients.map((macro) => (
-                <div key={macro.name} className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full ${macro.color} mr-2`}></div>
-                  <span className="text-gray-600 dark:text-gray-300">
+                <div key={macro.name} className="flex items-center gap-1.5">
+                  <div className={`w-2.5 h-2.5 rounded-full ${macro.dot}`}></div>
+                  <span className="text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary text-xs">
                     {macro.name}: {macro.percentage}%
                   </span>
                 </div>
@@ -188,10 +186,9 @@ export const NutritionSummary: React.FC<NutritionSummaryProps> = ({
           </div>
         )}
 
-        {/* Additional Info for Weekly Plans */}
         {isWeekly && (
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-5 pt-5 border-t border-wellness-light-border dark:border-wellness-dark-border">
+            <p className="text-xs text-wellness-light-textMuted dark:text-wellness-dark-textMuted">
               * Values shown are daily averages across the 7-day plan
             </p>
           </div>

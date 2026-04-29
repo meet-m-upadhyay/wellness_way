@@ -1,0 +1,41 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+
+interface PageLayoutProps {
+    children: React.ReactNode;
+}
+
+const pageVariants = {
+    initial: {
+        opacity: 0,
+        x: 20,
+    },
+    in: {
+        opacity: 1,
+        x: 0,
+    },
+    out: {
+        opacity: 0,
+        x: -20,
+    },
+};
+
+const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
+    return (
+        <motion.div
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={{
+                duration: 0.4,
+                ease: [0.43, 0.13, 0.23, 0.96],
+            }}
+            className="w-full"
+        >
+            {children}
+        </motion.div>
+    );
+};
+
+export default PageLayout;

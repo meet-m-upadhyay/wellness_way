@@ -9,67 +9,75 @@ from typing import Generator
 import logging
 import time
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Database engine configuration
-engine_kwargs = {
-    "pool_size": settings.database.pool_size,
-    "max_overflow": settings.database.max_overflow,
-    "pool_timeout": settings.database.pool_timeout,
-    "pool_recycle": settings.database.pool_recycle,
-    "pool_pre_ping": True,  # Verify connections before use
-    "echo": settings.database.echo,  # Log SQL queries when enabled
-}
+# Internal state for lazy initialization
+_engine = None
+_SessionLocal = None
 
-# Use QueuePool for production, StaticPool for testing
-if settings.is_testing:
-    engine_kwargs["poolclass"] = StaticPool
-    engine_kwargs["connect_args"] = {"check_same_thread": False}
-else:
-    engine_kwargs["poolclass"] = QueuePool
+def get_engine():
+    global _engine
+    if _engine is None:
+        settings = get_settings()
+        engine_kwargs = {
+            "pool_size": settings.database.pool_size,
+            "max_overflow": settings.database.max_overflow,
+            "pool_timeout": settings.database.pool_timeout,
+            "pool_recycle": settings.database.pool_recycle,
+            "pool_pre_ping": True,
+            "echo": settings.database.echo,
+        }
+        if settings.is_testing:
+            engine_kwargs["poolclass"] = StaticPool
+            engine_kwargs["connect_args"] = {"check_same_thread": False}
+        else:
+            engine_kwargs["poolclass"] = QueuePool
+            
+        _engine = create_engine(settings.get_database_url(), **engine_kwargs)
+        
+        # Add connection event listeners for monitoring (Bound to specific engine)
+        @event.listens_for(_engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            """Set SQLite pragmas for better performance (if using SQLite)"""
+            if "sqlite" in get_settings().get_database_url():
+                cursor = dbapi_connection.cursor()
+                cursor.execute("PRAGMA foreign_keys=ON")
+                cursor.close()
 
-# Create SQLAlchemy engine
-engine = create_engine(
-    settings.get_database_url(),
-    **engine_kwargs
-)
+        @event.listens_for(_engine, "checkout")
+        def receive_checkout(dbapi_connection, connection_record, connection_proxy):
+            """Log database connection checkout"""
+            if get_settings().logging.level == "DEBUG":
+                logger.debug("Database connection checked out")
 
-# Add connection event listeners for monitoring
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """Set SQLite pragmas for better performance (if using SQLite)"""
-    if "sqlite" in settings.get_database_url():
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+        @event.listens_for(_engine, "checkin")
+        def receive_checkin(dbapi_connection, connection_record):
+            """Log database connection checkin"""
+            if get_settings().logging.level == "DEBUG":
+                logger.debug("Database connection checked in")
 
-
-@event.listens_for(engine, "checkout")
-def receive_checkout(dbapi_connection, connection_record, connection_proxy):
-    """Log database connection checkout"""
-    if settings.logging.level == "DEBUG":
-        logger.debug("Database connection checked out")
+    return _engine
 
 
-@event.listens_for(engine, "checkin")
-def receive_checkin(dbapi_connection, connection_record):
-    """Log database connection checkin"""
-    if settings.logging.level == "DEBUG":
-        logger.debug("Database connection checked in")
+# Create SessionLocal class (Lazy)
+_SessionLocal = None
 
-
-# Create SessionLocal class
-SessionLocal = sessionmaker(
-    autocommit=False, 
-    autoflush=False, 
-    bind=engine,
-    expire_on_commit=False  # Keep objects accessible after commit
-)
+def get_session_local():
+    global _SessionLocal
+    if _SessionLocal is None:
+        _SessionLocal = sessionmaker(
+            autocommit=False, 
+            autoflush=False, 
+            bind=get_engine(),
+            expire_on_commit=False
+        )
+    return _SessionLocal
 
 # Create Base class for ORM models
 Base = declarative_base()
+
 
 
 class DatabaseManager:
@@ -81,7 +89,7 @@ class DatabaseManager:
         Dependency function to get database session.
         Used with FastAPI's dependency injection system.
         """
-        db = SessionLocal()
+        db = get_session_local()()
         start_time = time.time()
         
         try:
@@ -100,22 +108,23 @@ class DatabaseManager:
     def create_tables():
         """Create all tables in the database"""
         logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=get_engine())
         logger.info("Database tables created successfully")
     
     @staticmethod
     def drop_tables():
         """Drop all tables in the database (for testing)"""
         logger.warning("Dropping all database tables...")
-        Base.metadata.drop_all(bind=engine)
+        Base.metadata.drop_all(bind=get_engine())
         logger.info("Database tables dropped successfully")
     
     @staticmethod
     def check_connection() -> bool:
         """Check if database connection is working"""
         try:
-            with engine.connect() as connection:
-                connection.execute("SELECT 1")
+            with get_engine().connect() as connection:
+                from sqlalchemy import text
+                connection.execute(text("SELECT 1"))
             return True
         except Exception as e:
             logger.error(f"Database connection check failed: {e}")
@@ -124,6 +133,7 @@ class DatabaseManager:
     @staticmethod
     def get_connection_info() -> dict:
         """Get database connection information"""
+        settings = get_settings()
         return {
             "url": settings.get_database_url().split("@")[-1] if "@" in settings.get_database_url() else "hidden",
             "pool_size": settings.database.pool_size,
@@ -151,4 +161,4 @@ def drop_tables():
 
 
 # Initialize database manager
-db_manager = DatabaseManager()
+db_manager = DatabaseManager()

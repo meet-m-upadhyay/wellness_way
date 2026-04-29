@@ -1,0 +1,24 @@
+{
+  "_comment": "Valid roles per IFCT food_group. Used to auto-correct LLM role assignments after ingredient matching.",
+
+  "Animal Meat": ["protein_animal"],
+  "Poultry": ["protein_animal"],
+  "Marine Fish": ["protein_animal"],
+  "Fresh Water Fish and Shellfish": ["protein_animal"],
+  "Marine Shellfish": ["protein_animal"],
+  "Marine Mollusks": ["protein_animal"],
+  "Egg and Egg Products": ["protein_animal"],
+  "Milk and Milk Products": ["protein_dairy", "dairy"],
+  "Grain Legumes": ["protein_legume", "grain"],
+  "Cereals and Millets": ["grain"],
+  "Edible Oils and Fats": ["fat_cooking"],
+  "Other Vegetables": ["vegetable", "starchy_vegetable", "aromatics"],
+  "Mushrooms": ["vegetable"],
+  "Roots and Tubers": ["starchy_vegetable", "vegetable"],
+  "Green Leafy Vegetables": ["leafy_green"],
+  "Fruits": ["fruit"],
+  "Nuts and Oil Seeds": ["nuts_seeds", "fat_cooking"],
+  "Condiments and Spices": ["spice", "herb", "aromatics"],
+  "Sugars": ["sweetener"],
+  "Miscellaneous Foods": ["spice", "herb", "aromatics"]
+}

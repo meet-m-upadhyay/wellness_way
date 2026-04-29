@@ -28,7 +28,7 @@ const UserActions: React.FC<UserActionsProps> = ({
   // Don't show actions for admin users
   if (isAdmin) {
     return (
-      <span className="text-xs text-wellness-light-textMuted dark:text-slate-400 italic">
+      <span className="text-xs text-wellness-light-textMuted dark:text-wellness-dark-textMuted italic">
         Admin Account
       </span>
     );
@@ -65,7 +65,7 @@ const UserActions: React.FC<UserActionsProps> = ({
           <button
             onClick={() => setShowEnableConfirm(true)}
             disabled={disabled}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             title="Enable this user's access to the application"
           >
             <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@ const UserActions: React.FC<UserActionsProps> = ({
           <button
             onClick={() => setShowDisableConfirm(true)}
             disabled={disabled}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-xl text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             title="Disable this user's access to the application"
           >
             <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,8 +93,8 @@ const UserActions: React.FC<UserActionsProps> = ({
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
-            <div 
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+            <div
+              className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
               aria-hidden="true"
               onClick={() => !loading && setShowEnableConfirm(false)}
             ></div>
@@ -103,7 +103,7 @@ const UserActions: React.FC<UserActionsProps> = ({
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             {/* Modal content */}
-            <div className="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div className="inline-block align-bottom bg-white dark:bg-wellness-dark-card rounded-2xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-card-hover dark:shadow-card-dark-hover border border-wellness-light-border dark:border-wellness-dark-border transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
               <div className="sm:flex sm:items-start">
                 <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 sm:mx-0 sm:h-10 sm:w-10">
                   <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,11 +111,11 @@ const UserActions: React.FC<UserActionsProps> = ({
                   </svg>
                 </div>
                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-slate-100" id="modal-title">
+                  <h3 className="text-lg leading-6 font-semibold text-wellness-light-text dark:text-wellness-dark-text" id="modal-title">
                     Enable User Access
                   </h3>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500 dark:text-slate-400">
+                    <p className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary">
                       Are you sure you want to enable <strong>{userName}</strong>? This will allow <strong>{userEmail}</strong> to access the WellnessWay application again.
                     </p>
                   </div>
@@ -126,7 +126,7 @@ const UserActions: React.FC<UserActionsProps> = ({
                   type="button"
                   onClick={handleEnable}
                   disabled={loading}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-semibold text-white hover:bg-primary-700 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                   {loading ? (
                     <div className="flex items-center">
@@ -141,7 +141,7 @@ const UserActions: React.FC<UserActionsProps> = ({
                   type="button"
                   onClick={() => setShowEnableConfirm(false)}
                   disabled={loading}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="mt-3 w-full inline-flex justify-center rounded-xl border border-wellness-light-border dark:border-wellness-dark-border shadow-sm px-4 py-2 bg-white dark:bg-wellness-dark-elevated text-base font-medium text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary hover:bg-wellness-light-elevated dark:hover:bg-wellness-dark-card sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50 transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -156,8 +156,8 @@ const UserActions: React.FC<UserActionsProps> = ({
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
-            <div 
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+            <div
+              className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
               aria-hidden="true"
               onClick={() => !loading && setShowDisableConfirm(false)}
             ></div>
@@ -166,7 +166,7 @@ const UserActions: React.FC<UserActionsProps> = ({
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             {/* Modal content */}
-            <div className="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div className="inline-block align-bottom bg-white dark:bg-wellness-dark-card rounded-2xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-card-hover dark:shadow-card-dark-hover border border-wellness-light-border dark:border-wellness-dark-border transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
               <div className="sm:flex sm:items-start">
                 <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
                   <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,11 +174,11 @@ const UserActions: React.FC<UserActionsProps> = ({
                   </svg>
                 </div>
                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-slate-100" id="modal-title">
+                  <h3 className="text-lg leading-6 font-semibold text-wellness-light-text dark:text-wellness-dark-text" id="modal-title">
                     Disable User Access
                   </h3>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500 dark:text-slate-400">
+                    <p className="text-sm text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary">
                       Are you sure you want to disable <strong>{userName}</strong>? This will prevent <strong>{userEmail}</strong> from accessing the WellnessWay application. They can be re-enabled later.
                     </p>
                   </div>
@@ -189,7 +189,7 @@ const UserActions: React.FC<UserActionsProps> = ({
                   type="button"
                   onClick={handleDisable}
                   disabled={loading}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-semibold text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                   {loading ? (
                     <div className="flex items-center">
@@ -204,7 +204,7 @@ const UserActions: React.FC<UserActionsProps> = ({
                   type="button"
                   onClick={() => setShowDisableConfirm(false)}
                   disabled={loading}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-700 text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="mt-3 w-full inline-flex justify-center rounded-xl border border-wellness-light-border dark:border-wellness-dark-border shadow-sm px-4 py-2 bg-white dark:bg-wellness-dark-elevated text-base font-medium text-wellness-light-textSecondary dark:text-wellness-dark-textSecondary hover:bg-wellness-light-elevated dark:hover:bg-wellness-dark-card sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50 transition-colors duration-200"
                 >
                   Cancel
                 </button>

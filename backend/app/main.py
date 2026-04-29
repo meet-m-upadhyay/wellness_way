@@ -12,11 +12,11 @@ import logging
 from contextlib import asynccontextmanager
 
 # Import configuration
-from app.core.config import settings
+from app.core.config import get_settings
 from app.core.security_config import get_security_headers, get_cors_config, get_trusted_hosts
 
 # Import database configuration
-from app.database.connection import engine, Base
+from app.database.connection import get_engine, Base
 
 # Import security middleware
 from app.middleware.security import SecurityMiddleware, RateLimitMiddleware, AdvancedRateLimitMiddleware
@@ -25,20 +25,42 @@ from app.middleware.security import SecurityMiddleware, RateLimitMiddleware, Adv
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
+    settings = get_settings()
     # Startup
     logging.info(f"Starting WellnessWay Diet Planner API in {settings.environment} mode")
     
     # Import models to ensure they are registered
     from app.models import user, health_context, diet_plan
     
-    # Create tables if in development mode
-    if settings.is_development:
-        Base.metadata.create_all(bind=engine)
-        logging.info("Database tables created/verified")
+    # Create tables if in development mode (DO NOT block startup in production)
+    if get_settings().is_development:
+        try:
+            Base.metadata.create_all(bind=get_engine())
+            logging.info("Database tables created/verified")
+        except Exception as e:
+            logging.error(f"Failed to create tables: {e}")
     
     # Setup logging
     setup_logging()
     
+    # Initialize email notification listeners
+    from app.services.email_service import init_email_listeners
+    init_email_listeners()
+    logging.info("Email notification system initialized")
+
+    # Warm up V2 embedding model at startup (avoids 18s cold start on first request)
+    if getattr(settings, "enable_meal_engine_v2", False):
+        try:
+            from sentence_transformers import SentenceTransformer
+            from app.services.meal_engine.matching.ingredient_matcher import IngredientMatcher
+            if IngredientMatcher._embedding_model is None:
+                IngredientMatcher._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+                logging.info("V2 embedding model warmed up at startup")
+        except ImportError:
+            logging.debug("sentence-transformers not available — skipping V2 embedding warmup")
+        except Exception as e:
+            logging.warning("V2 embedding warmup failed: %s", e)
+
     yield
     
     # Shutdown
@@ -47,6 +69,7 @@ async def lifespan(app: FastAPI):
 
 def setup_logging():
     """Configure application logging"""
+    settings = get_settings()
     log_level = getattr(logging, settings.logging.level.upper())
     
     # Configure root logger
@@ -74,38 +97,41 @@ def setup_logging():
         logging.getLogger().addHandler(file_handler)
 
 
-# Create FastAPI application
-app = FastAPI(
-    title=settings.app_name,
-    description=settings.app_description,
-    version=settings.app_version,
-    docs_url="/docs" if not settings.is_production else None,  # Disable docs in production
-    redoc_url="/redoc" if not settings.is_production else None,
-    lifespan=lifespan
-)
+# Create FastAPI application (Factory-like instantiation)
+def create_app() -> FastAPI:
+    settings = get_settings()
+    app = FastAPI(
+        title=settings.app_name,
+        description=settings.app_description,
+        version=settings.app_version,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=lifespan
+    )
+    
+    # CORS middleware with enhanced security
+    cors_config = get_cors_config(settings.is_production)
+    app.add_middleware(CORSMiddleware, **cors_config)
+    
+    # Security middleware for input sanitization
+    app.add_middleware(
+        SecurityMiddleware,
+        skip_paths=["/docs", "/redoc", "/openapi.json", "/health", "/db-health", "/", "/config-info", "/api/v1/auth"]
+    )
+    
+    # Rate limiting middleware - use basic rate limiting for now
+    app.add_middleware(
+        RateLimitMiddleware,
+        default_requests_per_minute=60  # Default limit, with per-endpoint customization
+    )
+    
+    # Security middleware
+    trusted_hosts = get_trusted_hosts(settings.is_production)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
+    
+    return app
 
-# CORS middleware with enhanced security
-cors_config = get_cors_config(settings.is_production)
-app.add_middleware(CORSMiddleware, **cors_config)
-
-# Security middleware for input sanitization
-app.add_middleware(
-    SecurityMiddleware,
-    skip_paths=["/docs", "/redoc", "/openapi.json", "/health", "/db-health", "/", "/config-info"]
-)
-
-# Rate limiting middleware - use basic rate limiting for now
-app.add_middleware(
-    RateLimitMiddleware,
-    default_requests_per_minute=60  # Default limit, with per-endpoint customization
-)
-
-# Advanced rate limiting (can be enabled instead of basic rate limiting)
-# app.add_middleware(AdvancedRateLimitMiddleware)
-
-# Security middleware
-trusted_hosts = get_trusted_hosts(settings.is_production)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
+app = create_app()
 
 
 @app.middleware("http")
@@ -113,6 +139,7 @@ async def add_comprehensive_security_headers(request: Request, call_next):
     """Add comprehensive security headers to all responses"""
     response = await call_next(request)
     
+    settings = get_settings()
     # Get security headers based on environment
     security_headers = get_security_headers(settings.is_production)
     
@@ -126,7 +153,8 @@ async def add_comprehensive_security_headers(request: Request, call_next):
 @app.middleware("http")
 async def enforce_https_in_production(request: Request, call_next):
     """Enforce HTTPS in production environment"""
-    if settings.is_production:
+    settings = get_settings()
+    if settings.is_production and request.url.hostname not in ["localhost", "127.0.0.1"]:
         # Check if request is using HTTPS
         if request.url.scheme != "https":
             # Check for forwarded protocol headers (when behind a proxy)
@@ -150,6 +178,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler"""
     logging.error(f"Unhandled exception: {exc}", exc_info=True)
     
+    settings = get_settings()
     if settings.is_production:
         return JSONResponse(
             status_code=500,
@@ -165,6 +194,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/")
 async def root():
     """Root endpoint for health checks"""
+    settings = get_settings()
     return {
         "message": settings.app_name,
         "version": settings.app_version,
@@ -176,6 +206,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
+    settings = get_settings()
     return {
         "status": "healthy", 
         "service": "health-buddy-api",
@@ -188,8 +219,8 @@ async def health_check():
 async def database_health_check():
     """Database health check endpoint"""
     try:
-        from app.database.connection import SessionLocal
-        db = SessionLocal()
+        from app.database.connection import get_session_local
+        db = get_session_local()()
         # Simple query to test database connection
         from sqlalchemy import text
         db.execute(text("SELECT 1"))
@@ -197,7 +228,7 @@ async def database_health_check():
         return {
             "status": "healthy", 
             "database": "connected",
-            "environment": settings.environment
+            "environment": get_settings().environment
         }
     except Exception as e:
         logging.error(f"Database health check failed: {e}")
@@ -214,6 +245,7 @@ async def database_health_check():
 @app.get("/config-info")
 async def config_info():
     """Configuration information endpoint (development only)"""
+    settings = get_settings()
     if settings.is_production:
         return JSONResponse(
             status_code=404,
@@ -235,7 +267,7 @@ async def config_info():
             "max_overflow": settings.database.max_overflow
         },
         "security": {
-            "cors_origins": settings.security.cors_origins,
+            "cors_origins": settings.security.cors_origins_list,
             "token_expire_minutes": settings.security.access_token_expire_minutes
         }
     }
@@ -243,10 +275,11 @@ async def config_info():
 
 # Include API routers
 from app.api.router import api_router
-app.include_router(api_router, prefix=settings.api_prefix)
+app.include_router(api_router, prefix=get_settings().api_prefix)
 
 
 if __name__ == "__main__":
+    settings = get_settings()
     uvicorn.run(
         "app.main:app",
         host=settings.api_host,

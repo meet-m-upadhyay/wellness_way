@@ -12,7 +12,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Import our models and configuration
 from app.database.connection import Base
-from app.core.config import settings
+from app.core.config import get_settings
+settings = get_settings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,7 +27,13 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # Import all models to ensure they are registered with Base.metadata
-from app.models import User, HealthGoals, DietPreferences, HealthContextDocument, DietPlan
+from app.models import User, HealthGoals, DietPreferences, HealthContextDocument, DietPlan, Chat, Message
+from app.models.food_items import FoodItem
+from app.models.v2_regions import V2Region
+from app.models.v2_ingredients import V2Ingredient
+from app.models.v2_pairing_rules import V2PairingRule
+from app.models.v2_ingredient_embeddings import V2IngredientEmbedding
+from app.models.v2_external_nutrition_cache import V2ExternalNutritionCache
 
 target_metadata = Base.metadata
 

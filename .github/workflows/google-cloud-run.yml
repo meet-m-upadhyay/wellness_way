@@ -1,0 +1,99 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ dev ]
+  workflow_dispatch: # Manual trigger as requested
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1 # Change to your preferred region
+  SERVICE_NAME: wellness-way-backend
+  REPOSITORY: wellness-way-repo
+  # Map secrets to env for better troubleshooting and safe expansion
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  REDIS_URL: ${{ secrets.REDIS_URL }}
+  ENABLE_ML_PIPELINE: ${{ secrets.ENABLE_ML_PIPELINE }}
+  ENABLE_MEAL_ENGINE_V2: ${{ secrets.ENABLE_MEAL_ENGINE_V2 }}
+  ENABLE_LLM_MEAL_SUGGESTIONS: ${{ secrets.ENABLE_LLM_MEAL_SUGGESTIONS }}
+  USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
+  API_NINJAS_API_KEY: ${{ secrets.API_NINJAS_API_KEY }}
+  EDAMAM_APP_ID: ${{ secrets.EDAMAM_APP_ID }}
+  EDAMAM_APP_KEY: ${{ secrets.EDAMAM_APP_KEY }}
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  ENABLE_EMAIL_NOTIFICATIONS: ${{ secrets.ENABLE_EMAIL_NOTIFICATIONS }}
+  SMTP_HOST: ${{ secrets.SMTP_HOST }}
+  SMTP_PORT: ${{ secrets.SMTP_PORT }}
+  SMTP_USER: ${{ secrets.SMTP_USER }}
+  SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+  FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+  ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+  APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+  CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+  TRUSTED_HOSTS: ${{ secrets.TRUSTED_HOSTS }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build Docker Image
+        run: |
+          IMAGE=us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker build -t $IMAGE -f backend/Dockerfile backend
+          docker push $IMAGE
+
+      - name: Deploy to Cloud Run
+        run: |
+          # NOTE: If "Check Deployment Logs" fails with permissions, ensure your service account 
+          # has the "Logs Viewer" (roles/logging.viewer) role in Google Cloud Console.
+          
+          # Use single delimited flag for robustness against commas in secrets
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --timeout 3600 \
+            --memory 2Gi \
+            --cpu 1 \
+            --cpu-boost \
+            --set-env-vars "^|^ENVIRONMENT=production|DEBUG=false|DATABASE_URL=$DATABASE_URL|SUPABASE_URL=$SUPABASE_URL|SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY|GROQ_API_KEY=$GROQ_API_KEY|OPENAI_API_KEY=$OPENAI_API_KEY|AI_PROVIDER=$AI_PROVIDER|SECRET_KEY=$SECRET_KEY|JWT_SECRET_KEY=$JWT_SECRET_KEY|GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET|REDIS_URL=$REDIS_URL|ENABLE_ML_PIPELINE=$ENABLE_ML_PIPELINE|ENABLE_MEAL_ENGINE_V2=$ENABLE_MEAL_ENGINE_V2|ENABLE_LLM_MEAL_SUGGESTIONS=$ENABLE_LLM_MEAL_SUGGESTIONS|USDA_API_KEY=$USDA_API_KEY|API_NINJAS_API_KEY=$API_NINJAS_API_KEY|EDAMAM_APP_ID=$EDAMAM_APP_ID|EDAMAM_APP_KEY=$EDAMAM_APP_KEY|HF_TOKEN=$HF_TOKEN|ENABLE_EMAIL_NOTIFICATIONS=$ENABLE_EMAIL_NOTIFICATIONS|SMTP_HOST=$SMTP_HOST|SMTP_PORT=$SMTP_PORT|SMTP_USER=$SMTP_USER|SMTP_PASSWORD=$SMTP_PASSWORD|FROM_EMAIL=$FROM_EMAIL|ADMIN_EMAIL=$ADMIN_EMAIL|APP_BASE_URL=$APP_BASE_URL|CORS_ORIGINS=$CORS_ORIGINS|TRUSTED_HOSTS=$TRUSTED_HOSTS"
+
+      - name: Check Deployment Logs
+        if: failure()
+        run: |
+          echo "🔎 Deployment failed or timed out. Fetching ALL startup logs for diagnosis..."
+          REVISION=$(gcloud run revisions list --service=${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=1 --format='value(name)')
+          echo "📍 Revision: $REVISION"
+          
+          # Fetch all logs for this revision (stdout, stderr, and system)
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.revision_name=$REVISION" --limit 100 --format="table(timestamp,textPayload)" || echo "❌ Failed to fetch logs."
+
+      - name: Output Deployment Info
+        run: |
+          gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format 'value(status.url)'

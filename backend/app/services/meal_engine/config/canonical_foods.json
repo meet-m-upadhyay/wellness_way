@@ -1,0 +1,184 @@
+{
+  "_comment": "Default IFCT entries for ambiguous common food terms. Used by IngredientMatcher stage 3. All defaults must point to raw/as-purchased IFCT entries.",
+
+  "rice": {
+    "default_code": "A015",
+    "default_name": "Rice, raw, milled",
+    "note": "Most common white rice. 7 rice entries in IFCT.",
+    "ambiguous": false
+  },
+  "basmati rice": {
+    "default_code": "A015",
+    "default_name": "Rice, raw, milled",
+    "note": "IFCT has no basmati-specific entry. Maps to generic milled rice.",
+    "ambiguous": false
+  },
+  "brown rice": {
+    "default_code": "A015",
+    "default_name": "Rice, raw, milled",
+    "note": "No brown rice in IFCT. Falls back to white rice — similar macros at raw weight. Slightly underestimates fiber.",
+    "ambiguous": false
+  },
+  "wheat": {
+    "default_code": "A019",
+    "default_name": "Wheat flour, atta",
+    "note": "Default Indian wheat usage — atta for roti/chapati.",
+    "ambiguous": false
+  },
+  "whole wheat flour": {
+    "default_code": "A019",
+    "default_name": "Wheat flour, atta",
+    "note": "Atta = whole wheat flour in Indian context.",
+    "ambiguous": false
+  },
+  "refined wheat flour": {
+    "default_code": null,
+    "default_name": null,
+    "note": "No maida in IFCT. Falls back to Edamam/USDA. Prompt now decomposes naan to flour+fat anyway.",
+    "ambiguous": true
+  },
+  "dal": {
+    "default_code": "B021",
+    "default_name": "Red gram, dal",
+    "note": "Toor dal — most common across India. Log ambiguous at match time.",
+    "ambiguous": true
+  },
+  "lentil": {
+    "default_code": "B013",
+    "default_name": "Lentil dal",
+    "note": "Generic lentil maps to masoor dal (most common in Indian cooking).",
+    "ambiguous": true
+  },
+  "chicken": {
+    "default_code": "N003",
+    "default_name": "Chicken, poultry, breast, skinless",
+    "note": "Most common diet-plan cut.",
+    "ambiguous": false
+  },
+  "egg": {
+    "default_code": "M001",
+    "default_name": "Egg, poultry, whole, raw",
+    "note": "Standard poultry egg.",
+    "ambiguous": false
+  },
+  "fish": {
+    "default_code": null,
+    "default_name": null,
+    "note": "100+ fish entries, no single default. Require specific fish name.",
+    "ambiguous": true
+  },
+  "oil": {
+    "default_code": "T005",
+    "default_name": "Groundnut oil",
+    "note": "Neutral cooking oil.",
+    "ambiguous": false
+  },
+  "milk": {
+    "default_code": "L002",
+    "default_name": "Milk, whole, Cow",
+    "note": "More common in dietary contexts than buffalo milk.",
+    "ambiguous": false
+  },
+  "paneer": {
+    "default_code": "L003",
+    "default_name": "Paneer",
+    "note": "Only 1 entry, unambiguous.",
+    "ambiguous": false
+  },
+  "ghee": {
+    "default_code": "T013",
+    "default_name": "Ghee",
+    "note": "Clarified butter. Only 1 entry.",
+    "ambiguous": false
+  },
+  "clarified butter": {
+    "default_code": "T013",
+    "default_name": "Ghee",
+    "note": "Clarified butter = ghee.",
+    "ambiguous": false
+  },
+  "curd": {
+    "default_code": "MAN001",
+    "default_name": "Dahi / Curd (whole milk, cow)",
+    "note": "Manual seed entry. Also matches yogurt, dahi.",
+    "ambiguous": false
+  },
+  "yogurt": {
+    "default_code": "MAN001",
+    "default_name": "Dahi / Curd (whole milk, cow)",
+    "note": "Yogurt = curd in Indian context.",
+    "ambiguous": false
+  },
+  "butter": {
+    "default_code": "MAN011",
+    "default_name": "Butter, unsalted",
+    "note": "Manual seed from USDA FDC #173430. 717 kcal, 81g fat per 100g.",
+    "ambiguous": false
+  },
+  "cucumber": {
+    "default_code": "D043",
+    "default_name": "Cucumber, green, elongate",
+    "note": "Most common cucumber variety in India.",
+    "ambiguous": false
+  },
+  "potato": {
+    "default_code": "F007",
+    "default_name": "Potato, brown skin, small",
+    "note": "Generic potato. Multiple varieties in IFCT.",
+    "ambiguous": false
+  },
+  "peas": {
+    "default_code": "D061",
+    "default_name": "Peas, fresh",
+    "note": "Fresh green peas (matar). B017 is dried peas.",
+    "ambiguous": false
+  },
+  "green peas": {
+    "default_code": "D061",
+    "default_name": "Peas, fresh",
+    "note": "Same as peas.",
+    "ambiguous": false
+  },
+  "cabbage": {
+    "default_code": "C015",
+    "default_name": "Cabbage, green",
+    "note": "Common green cabbage.",
+    "ambiguous": false
+  },
+  "carrot": {
+    "default_code": "F003",
+    "default_name": "Carrot, red",
+    "note": "Red carrot (most common in India).",
+    "ambiguous": false
+  },
+  "prawn": {
+    "default_code": "S008",
+    "default_name": "Prawns, big",
+    "note": "Generic prawn. Multiple prawn entries in IFCT.",
+    "ambiguous": false
+  },
+  "shrimp": {
+    "default_code": "S008",
+    "default_name": "Prawns, big",
+    "note": "Shrimp = prawn in Indian context.",
+    "ambiguous": false
+  },
+  "mutton": {
+    "default_code": "O001",
+    "default_name": "Goat, shoulder, meat",
+    "note": "Mutton = goat in India. Shoulder is most common cut.",
+    "ambiguous": false
+  },
+  "lamb": {
+    "default_code": "O001",
+    "default_name": "Goat, shoulder, meat",
+    "note": "Lamb = goat in Indian context.",
+    "ambiguous": false
+  },
+  "olive oil": {
+    "default_code": "T005",
+    "default_name": "Groundnut oil",
+    "note": "No olive oil in IFCT. Groundnut oil as fallback — similar calorie density. Lower confidence.",
+    "ambiguous": true
+  }
+}

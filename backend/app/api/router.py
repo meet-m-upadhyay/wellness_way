@@ -6,10 +6,13 @@ from fastapi import APIRouter
 
 from app.api.endpoints.users import router as users_router
 from app.api.endpoints.health_context import router as health_context_router
-from app.api.endpoints.diet_plans import router as diet_plans_router
-from app.api.endpoints.monitoring import router as monitoring_router
+# from app.api.endpoints.diet_plans import router as diet_plans_router # DELETED
+from app.api.endpoints.diet_plans_ml import router as diet_plans_ml_router  # NEW ML PIPELINE
+# from app.api.endpoints.monitoring import router as monitoring_router # DELETED
 from app.api.endpoints.auth import router as auth_router
 from app.api.endpoints.admin import router as admin_router
+from app.api.endpoints.chat import router as chat_router
+from app.api.endpoints.meal_engine_v2 import router as meal_engine_v2_router
 
 # Create main API router
 api_router = APIRouter()
@@ -18,9 +21,12 @@ api_router = APIRouter()
 api_router.include_router(auth_router)
 api_router.include_router(users_router)
 api_router.include_router(health_context_router)
-api_router.include_router(diet_plans_router)
-api_router.include_router(monitoring_router)
+# api_router.include_router(diet_plans_router) # DELETED
+api_router.include_router(diet_plans_ml_router)  # NEW ML PIPELINE
+# api_router.include_router(monitoring_router) # DELETED
 api_router.include_router(admin_router)
+api_router.include_router(chat_router)
+api_router.include_router(meal_engine_v2_router)  # V2 MEAL ENGINE
 
 # Health check endpoint at API level
 @api_router.get("/health")
@@ -33,8 +39,9 @@ async def api_health_check():
             "/auth",
             "/users",
             "/health-context",
-            "/diet-plans",
-            "/monitoring",
-            "/admin"
+            "/diet-plans-ml",
+            "/admin",
+            "/chats",
+            "/v2/meal-engine",
         ]
     }

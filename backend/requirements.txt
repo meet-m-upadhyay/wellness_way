@@ -7,6 +7,8 @@ python-multipart==0.0.6
 sqlalchemy==2.0.36
 psycopg[binary]==3.3.2
 alembic==1.13.1
+psycopg2==2.9.11
+pgvector==0.3.6
 
 # Data validation and serialization
 pydantic==2.10.4
@@ -16,6 +18,7 @@ email-validator==2.1.0
 # Authentication and security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==3.2.2
 python-multipart==0.0.6
 cryptography==46.0.3
 bleach==6.1.0
@@ -45,6 +48,7 @@ sentry-sdk[fastapi]==1.38.0
 
 # String matching and fuzzy search
 rapidfuzz==3.6.1
+sentence-transformers==5.4.1
 
 # Testing
 pytest==7.4.3
@@ -63,7 +67,9 @@ mypy==1.7.1
 python-dateutil==2.8.2
 
 # Utilities
-uuid==1.30
 
 # Security and secrets management
 keyring==24.3.0
+
+# MISC
+uv==0.10.4

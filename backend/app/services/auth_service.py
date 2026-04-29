@@ -11,12 +11,14 @@ from jose import JWTError, jwt
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from google.auth import exceptions as google_exceptions
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.core.config import get_settings
 from app.models.user import User, RegistrationRequest
 from app.schemas.user import UserProfileCreate, UserProfileResponse
+from app.core.events import event_bus, USER_REGISTERED
 
 
 class AuthService:
@@ -27,6 +29,7 @@ class AuthService:
         self.algorithm = "HS256"
         self.access_token_expire_minutes = self.settings.security.access_token_expire_minutes
         self.refresh_token_expire_days = self.settings.security.refresh_token_expire_days
+        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create JWT access token"""
@@ -53,6 +56,14 @@ class AuthService:
             algorithm=self.algorithm
         )
         return encoded_jwt
+
+    def hash_password(self, password: str) -> str:
+        """Hash a plaintext password"""
+        return self.pwd_context.hash(password)
+
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify a plaintext password against a hash"""
+        return self.pwd_context.verify(plain_password, hashed_password)
     
     def verify_token(self, token: str, token_type: str = "access") -> Dict[str, Any]:
         """Verify JWT token and return payload"""
@@ -142,11 +153,11 @@ class AuthService:
                 detail=f"Token verification failed: {str(e)}"
             )
     
-    def get_or_create_user_from_google(
+    async def get_or_create_user_from_google(
         self, 
         google_user_info: Dict[str, Any], 
         db: Session
-    ) -> tuple[User, bool]:
+    ) -> tuple[Optional[User], bool]:
         """Get existing user or create registration request from Google OAuth info
         
         Returns:
@@ -246,9 +257,16 @@ class AuthService:
             elif existing_request.status == 'declined':
                 # Allow them to create a new request
                 existing_request.status = 'pending'
-                existing_request.name = google_user_info['name'] or existing_request.name
                 existing_request.google_id = google_user_info['google_id']
                 db.commit()
+                
+                # Publish event to notify admin
+                await event_bus.publish(
+                    USER_REGISTERED,
+                    user_email=google_user_info['email'],
+                    user_name=google_user_info['name'] or existing_request.name
+                )
+                
                 return None, True
         else:
             # Create new registration request
@@ -264,6 +282,13 @@ class AuthService:
             db.commit()
             db.refresh(new_request)
             
+            # Publish event to notify admin
+            await event_bus.publish(
+                USER_REGISTERED,
+                user_email=google_user_info['email'],
+                user_name=google_user_info['name'] or 'User'
+            )
+            
             return None, True
     
     def get_user_by_id(self, user_id: str, db: Session) -> Optional[User]:
@@ -273,6 +298,25 @@ class AuthService:
             return db.query(User).filter(User.id == user_uuid).first()
         except ValueError:
             return None
+
+    def get_user_by_email(self, email: str, db: Session) -> Optional[User]:
+        """Get user by email"""
+        return db.query(User).filter(User.email == email).first()
+
+    def authenticate_user(self, email: str, password: str, db: Session) -> User:
+        """Authenticate a user with email and password"""
+        user = self.get_user_by_email(email, db)
+        if not user or not user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        if not self.verify_password(password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        return user
     
     def create_tokens_for_user(self, user: User) -> Dict[str, str]:
         """Create access and refresh tokens for user"""

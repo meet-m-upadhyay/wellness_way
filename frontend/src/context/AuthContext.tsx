@@ -30,6 +30,8 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (credential: string) => Promise<void>;
+  emailLogin: (email: string, password: string) => Promise<void>;
+  emailSignup: (name: string, email: string, password: string, confirmPassword: string) => Promise<void>;
   logout: () => void;
   refreshToken: () => Promise<void>;
   clearError: () => void;
@@ -384,6 +386,110 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const emailLogin = async (email: string, password: string): Promise<void> => {
+    dispatch({ type: 'AUTH_START' });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.status === 202) {
+        const errorData = await response.json();
+        dispatch({ type: 'AUTH_ERROR', payload: 'User approval pending' });
+        throw new Error(`HTTP 202: ${JSON.stringify(errorData.detail)}`);
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Authentication failed');
+      }
+
+      const data = await response.json();
+      const { user, tokens } = data;
+
+      if (!user.is_active) {
+        dispatch({ type: 'USER_DISABLED' });
+        throw new Error('User account is disabled');
+      }
+
+      storeAuth(user, tokens);
+
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user, tokens },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      dispatch({
+        type: 'AUTH_ERROR',
+        payload: errorMessage,
+      });
+      throw error;
+    }
+  };
+
+  const emailSignup = async (
+    name: string,
+    email: string,
+    password: string,
+    confirmPassword: string
+  ): Promise<void> => {
+    dispatch({ type: 'AUTH_START' });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      if (response.status === 202) {
+        const errorData = await response.json();
+        dispatch({ type: 'AUTH_ERROR', payload: 'User approval pending' });
+        throw new Error(`HTTP 202: ${JSON.stringify(errorData.detail)}`);
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Signup failed');
+      }
+
+      const data = await response.json();
+      const { user, tokens } = data;
+
+      if (!user.is_active) {
+        dispatch({ type: 'USER_DISABLED' });
+        throw new Error('User account is disabled');
+      }
+
+      storeAuth(user, tokens);
+
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user, tokens },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Signup failed';
+      dispatch({
+        type: 'AUTH_ERROR',
+        payload: errorMessage,
+      });
+      throw error;
+    }
+  };
+
   // Refresh token function for external use
   const refreshToken = async (): Promise<void> => {
     if (state.tokens?.refresh_token) {
@@ -461,6 +567,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const contextValue: AuthContextType = {
     ...state,
     login,
+    emailLogin,
+    emailSignup,
     logout,
     refreshToken,
     clearError,

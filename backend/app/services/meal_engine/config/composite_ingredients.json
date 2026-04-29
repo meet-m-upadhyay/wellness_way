@@ -1,0 +1,63 @@
+{
+  "_comment": "Safety-net decomposition for composite/cooked items the LLM might output despite prompt rules. Matcher checks this after IFCT cascade, before external providers. Each composite expands to raw components with gram ratios (per 100g of the composite).",
+
+  "roti": {
+    "components": [
+      {"name": "wheat flour, atta", "grams_per_100g": 75, "role": "grain"},
+      {"name": "groundnut oil", "grams_per_100g": 5, "role": "fat_cooking"}
+    ],
+    "note": "1 roti ≈ 30g atta + 2g oil. Water excluded."
+  },
+  "chapati": {
+    "components": [
+      {"name": "wheat flour, atta", "grams_per_100g": 75, "role": "grain"},
+      {"name": "groundnut oil", "grams_per_100g": 5, "role": "fat_cooking"}
+    ],
+    "note": "Same as roti."
+  },
+  "phulka": {
+    "components": [
+      {"name": "wheat flour, atta", "grams_per_100g": 80, "role": "grain"}
+    ],
+    "note": "Phulka uses no oil — dry roasted."
+  },
+  "naan": {
+    "components": [
+      {"name": "refined wheat flour", "grams_per_100g": 55, "role": "grain"},
+      {"name": "yogurt", "grams_per_100g": 10, "role": "dairy"},
+      {"name": "ghee", "grams_per_100g": 8, "role": "fat_cooking"}
+    ],
+    "note": "Naan uses maida, yogurt for leavening, ghee for richness."
+  },
+  "garlic naan": {
+    "components": [
+      {"name": "refined wheat flour", "grams_per_100g": 50, "role": "grain"},
+      {"name": "yogurt", "grams_per_100g": 10, "role": "dairy"},
+      {"name": "ghee", "grams_per_100g": 8, "role": "fat_cooking"},
+      {"name": "garlic", "grams_per_100g": 5, "role": "aromatics"}
+    ],
+    "note": "Garlic naan with extra garlic."
+  },
+  "paratha": {
+    "components": [
+      {"name": "wheat flour, atta", "grams_per_100g": 60, "role": "grain"},
+      {"name": "ghee", "grams_per_100g": 15, "role": "fat_cooking"}
+    ],
+    "note": "Paratha is layered with ghee/oil — higher fat than roti."
+  },
+  "dosa": {
+    "components": [
+      {"name": "rice, raw, milled", "grams_per_100g": 45, "role": "grain"},
+      {"name": "black gram, dal", "grams_per_100g": 15, "role": "protein_legume"},
+      {"name": "groundnut oil", "grams_per_100g": 5, "role": "fat_cooking"}
+    ],
+    "note": "Dosa batter is rice + urad dal fermented. Oil for frying."
+  },
+  "idli": {
+    "components": [
+      {"name": "rice, raw, milled", "grams_per_100g": 50, "role": "grain"},
+      {"name": "black gram, dal", "grams_per_100g": 17, "role": "protein_legume"}
+    ],
+    "note": "Idli batter is rice + urad dal. Steamed — no oil."
+  }
+}

@@ -1,73 +1,77 @@
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 interface ThemeToggleProps {
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;
 }
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ 
-  className = '', 
-  size = 'md' 
+const ThemeToggle: React.FC<ThemeToggleProps> = ({
+  className = '',
+  showLabel = false,
 }) => {
   const { theme, toggleTheme, isLoading } = useTheme();
-
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-sm',
-    md: 'w-10 h-10 text-base',
-    lg: 'w-12 h-12 text-lg'
-  };
-
-  const iconSizes = {
-    sm: 'sm',
-    md: '1x',
-    lg: 'lg'
-  } as const;
+  const isDark = theme === 'dark';
 
   if (isLoading) {
     return (
-      <div 
-        className={`${sizeClasses[size]} rounded-full bg-gray-200 dark:bg-slate-700 animate-pulse ${className}`}
-        aria-label="Loading theme toggle"
-      />
+      <div className={`w-14 h-7 rounded-full bg-neutral-100 dark:bg-neutral-800 animate-pulse ${className}`} />
     );
   }
 
   return (
-    <button
-      onClick={toggleTheme}
-      className={`
-        ${sizeClasses[size]} 
-        rounded-full 
-        flex items-center justify-center 
-        transition-all duration-200 ease-in-out
-        bg-gray-100 hover:bg-gray-200 
-        dark:bg-slate-700 dark:hover:bg-slate-600
-        text-gray-700 hover:text-gray-900
-        dark:text-slate-300 dark:hover:text-slate-100
-        border border-gray-300 dark:border-slate-600
-        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-        dark:focus:ring-blue-400 dark:focus:ring-offset-slate-800
-        transform hover:scale-105 active:scale-95
-        ${className}
-      `}
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
-    >
-      <FontAwesomeIcon
-        icon={theme === 'light' ? faMoon : faSun}
-        size={iconSizes[size]}
-        className={`
-          transition-all duration-200 ease-in-out
-          ${theme === 'light' 
-            ? 'text-slate-600 dark:text-slate-400' 
-            : 'text-yellow-500 dark:text-yellow-400'
-          }
-        `}
-      />
-    </button>
+    <div className={`flex items-center justify-between gap-3 ${className}`}>
+      {showLabel && (
+        <span className="text-sm font-bold text-neutral-600 dark:text-neutral-400">
+          {isDark ? 'Dark Mode' : 'Light Mode'}
+        </span>
+      )}
+      <button
+        onClick={toggleTheme}
+        className="relative flex h-7 w-14 items-center rounded-full bg-neutral-100 dark:bg-neutral-800 p-1 transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        aria-label="Toggle theme"
+      >
+        <motion.div
+          className="flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-neutral-900 shadow-sm"
+          animate={{
+            x: isDark ? 28 : 0,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 30,
+          }}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {isDark ? (
+              <motion.div
+                key="moon"
+                initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+                className="text-primary-400"
+              >
+                <Moon size={12} fill="currentColor" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="sun"
+                initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+                className="text-amber-500"
+              >
+                <Sun size={12} fill="currentColor" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </button>
+    </div>
   );
 };
 

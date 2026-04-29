@@ -19,6 +19,7 @@ class User(Base):
     # Authentication fields
     email = Column(String(255), unique=True, nullable=False, index=True)
     google_id = Column(String(255), unique=True, nullable=True, index=True)
+    password_hash = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)  # Admin privileges
     approval_status = Column(String(20), default='approved', nullable=False)  # 'pending', 'approved', 'declined'
@@ -91,6 +92,8 @@ class DietPreferences(Base):
     allergies = Column(JSON, nullable=False, default=list)  # List of allergens
     foods_to_avoid = Column(JSON, nullable=False, default=list)  # List of foods to avoid
     meals_per_day = Column(Integer, nullable=False, default=3)
+    cuisine = Column(String(50), nullable=False, default='indian')
+    reuse_ingredients = Column(Boolean, nullable=False, default=False)
     budget_constraints = Column(Text, nullable=True)
     lifestyle_constraints = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -108,8 +111,10 @@ class RegistrationRequest(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    google_id = Column(String(255), nullable=False)
+    google_id = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     status = Column(String(20), default='pending', nullable=False, index=True)  # 'pending', 'approved', 'declined'
+    admin_note = Column(String(500), nullable=True)  # Optional note from admin when approving/declining
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     

@@ -13,8 +13,8 @@ interface RegistrationRequest {
 }
 
 interface PendingRequestsListProps {
-  onApprove: (requestId: string) => Promise<void>;
-  onDecline: (requestId: string) => Promise<void>;
+  onApprove: (requestId: string, note?: string) => Promise<void>;
+  onDecline: (requestId: string, note?: string) => Promise<void>;
   refreshTrigger?: number; // Used to trigger refresh from parent
 }
 
@@ -27,6 +27,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
 
@@ -70,9 +71,13 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   const handleApprove = async (requestId: string) => {
     try {
       setActionLoading(requestId);
-      await onApprove(requestId);
+      await onApprove(requestId, notes[requestId]);
       // Refresh the list after successful approval
       await loadPendingRequests();
+      // Clear note
+      const newNotes = { ...notes };
+      delete newNotes[requestId];
+      setNotes(newNotes);
     } catch (err) {
       console.error('Error approving request:', err);
     } finally {
@@ -83,9 +88,13 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   const handleDecline = async (requestId: string) => {
     try {
       setActionLoading(requestId);
-      await onDecline(requestId);
+      await onDecline(requestId, notes[requestId]);
       // Refresh the list after successful decline
       await loadPendingRequests();
+      // Clear note
+      const newNotes = { ...notes };
+      delete newNotes[requestId];
+      setNotes(newNotes);
     } catch (err) {
       console.error('Error declining request:', err);
     } finally {
@@ -110,7 +119,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <LoadingSpinner message=''/>
+        <LoadingSpinner message='' />
       </div>
     );
   }
@@ -121,7 +130,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
         <ErrorMessage message={error} />
         <button
           onClick={loadPendingRequests}
-          className="mt-4 bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded transition-colors"
+          className="mt-4 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 px-4 text-sm font-semibold transition-all duration-200"
         >
           Retry
         </button>
@@ -131,7 +140,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
 
   if (requests.length === 0) {
     return (
-      <div className="bg-wellness-light-card dark:bg-wellness-dark-card shadow rounded-lg p-6">
+      <div className="bg-white dark:bg-wellness-dark-card shadow-card dark:shadow-card-dark rounded-2xl border border-wellness-light-border dark:border-wellness-dark-border p-6">
         <div className="text-center py-8">
           <svg
             className="mx-auto h-12 w-12 text-wellness-light-textMuted dark:text-wellness-dark-textMuted"
@@ -152,7 +161,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
           </p>
           <button
             onClick={loadPendingRequests}
-            className="mt-4 bg-secondary-500 hover:bg-secondary-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
+            className="mt-4 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 px-4 text-sm font-semibold transition-all duration-200"
           >
             Refresh
           </button>
@@ -162,7 +171,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
   }
 
   return (
-    <div className="bg-wellness-light-card dark:bg-wellness-dark-card shadow rounded-lg">
+    <div className="bg-white dark:bg-wellness-dark-card shadow-card dark:shadow-card-dark rounded-2xl border border-wellness-light-border dark:border-wellness-dark-border">
       <div className="px-4 py-5 sm:px-6 border-b border-wellness-light-border dark:border-wellness-dark-border">
         <div className="flex items-center justify-between">
           <div>
@@ -175,7 +184,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
           </div>
           <button
             onClick={loadPendingRequests}
-            className="bg-secondary-500 hover:bg-secondary-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
+            className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 px-4 text-sm font-semibold transition-all duration-200"
           >
             Refresh
           </button>
@@ -188,7 +197,7 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
                       {request.name?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
@@ -204,19 +213,28 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
                   <div className="text-xs text-wellness-light-textMuted dark:text-wellness-dark-textMuted">
                     Requested: {formatDate(request.created_at)}
                   </div>
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      placeholder="Add an optional note (sent to user)..."
+                      value={notes[request.id] || ''}
+                      onChange={(e) => setNotes({ ...notes, [request.id]: e.target.value })}
+                      className="block w-full sm:w-64 px-3 py-1.5 text-xs rounded-lg border border-wellness-light-border dark:border-wellness-dark-border bg-white dark:bg-wellness-dark-bg text-wellness-light-text dark:text-wellness-dark-text placeholder-wellness-light-textMuted dark:placeholder-wellness-dark-textMuted focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                    />
+                  </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
                   Pending
                 </span>
-                
+
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleApprove(request.id)}
                     disabled={actionLoading === request.id}
-                    className="bg-secondary-500 hover:bg-secondary-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-1 px-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {actionLoading === request.id ? (
                       <div className="flex items-center">
@@ -227,11 +245,11 @@ const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
                       'Approve'
                     )}
                   </button>
-                  
+
                   <button
                     onClick={() => handleDecline(request.id)}
                     disabled={actionLoading === request.id}
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-xl bg-red-500 hover:bg-red-600 text-white py-1 px-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {actionLoading === request.id ? (
                       <div className="flex items-center">

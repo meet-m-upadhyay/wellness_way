@@ -5,8 +5,8 @@ Database initialization script for WellnessWay Diet Planner
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.database.connection import engine, Base, SessionLocal
-from app.core.config import settings
+from app.database.connection import get_engine, Base, get_session_local
+from app.core.config import get_settings
 
 # Import all models to ensure they are registered
 from app.models import User, HealthGoals, DietPreferences, HealthContextDocument, DietPlan
@@ -18,7 +18,7 @@ def init_db() -> None:
     """Initialize the database with tables"""
     try:
         # Create all tables
-        Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=get_engine())
         logger.info("Database tables created successfully")
     except SQLAlchemyError as e:
         logger.error(f"Error creating database tables: {e}")
@@ -28,7 +28,7 @@ def init_db() -> None:
 def check_db_connection() -> bool:
     """Check if database connection is working"""
     try:
-        db = SessionLocal()
+        db = get_session_local()()
         # Simple query to test connection
         db.execute("SELECT 1")
         db.close()
@@ -42,7 +42,7 @@ def check_db_connection() -> bool:
 def create_sample_data() -> None:
     """Create sample data for development (optional)"""
     try:
-        db = SessionLocal()
+        db = get_session_local()()
         
         # Check if sample user already exists
         existing_user = db.query(User).first()
@@ -115,7 +115,8 @@ if __name__ == "__main__":
     init_db()
     
     # Create sample data if in debug mode
-    if settings.debug:
+    # Create sample data if in debug mode
+    if get_settings().debug:
         create_sample_data()
     
     print("Database initialization completed successfully!")

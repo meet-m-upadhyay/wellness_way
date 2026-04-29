@@ -20,7 +20,9 @@ class DietPlan(Base):
     plan_type = Column(String(20), nullable=False)  # 'weekly' or 'daily'
     start_date = Column(Date, nullable=False)
     content = Column(JSON, nullable=False)  # JSON structure with meals and nutrition
+    engine_version = Column(String(10), nullable=False, server_default="v1")  # 'v1' or 'v2'
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     __table_args__ = (
         # Plan type constraints

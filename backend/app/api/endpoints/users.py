@@ -430,7 +430,8 @@ async def get_complete_user_profile(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"[GET_COMPLETE_PROFILE_ERROR] user_id={user_id} error={str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve complete user profile"
+            detail=f"Failed to retrieve complete user profile: {str(e)}" if logger.isEnabledFor(logging.DEBUG) else "Failed to retrieve complete user profile"
         )

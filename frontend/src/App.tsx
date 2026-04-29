@@ -1,7 +1,16 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AnimatePresence } from 'framer-motion';
+import PageLayout from './components/layout/PageLayout';
+import {
+  Salad,
+  User,
+  Sparkles,
+  TrendingUp,
+  History as HistoryIcon
+} from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import ProfileSetup from './components/ProfileSetup';
@@ -10,6 +19,8 @@ import UserDashboard from './components/UserDashboard';
 import LoginPage from './components/auth/LoginPage';
 import AccountDisabledPage from './components/auth/AccountDisabledPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminPage from './pages/AdminPage';
+import HistoryView from './pages/HistoryView';
 import { useUserStatusCheck } from './hooks/useUserStatusCheck';
 import './App.css';
 
@@ -31,14 +42,15 @@ function App() {
 
 function AppContent() {
   const { isDisabled, user } = useAuth();
-  
+  const location = useLocation();
+
   // Periodically check if user is still active (every 5 minutes to avoid rate limits)
   useUserStatusCheck(300000); // 5 minutes = 300,000ms
 
   // Show disabled page if user is disabled
   if (isDisabled) {
     return (
-      <AccountDisabledPage 
+      <AccountDisabledPage
         userEmail={user?.email}
         userName={user?.name}
       />
@@ -46,36 +58,62 @@ function AppContent() {
   }
 
   return (
-    <div className="App min-h-screen bg-wellness-light-bg dark:bg-slate-900 transition-colors duration-200">
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* Protected routes */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Header />
-            <HomePage />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/profile-setup" element={
-          <ProtectedRoute>
-            <Header />
-            <ProfileSetupWrapper />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/diet-plans" element={
-          <ProtectedRoute requireProfileComplete={true}>
-            <Header />
-            <DietPlans />
-          </ProtectedRoute>
-        } />
-        
-        {/* Redirect unknown routes to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+    <div className="App min-h-screen bg-wellness-light-bg dark:bg-wellness-dark-bg transition-colors duration-200">
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Public routes */}
+          <Route path="/login" element={<PageLayout><LoginPage /></PageLayout>} />
+
+          {/* Protected routes */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Header />
+              <PageLayout>
+                <HomePage />
+              </PageLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/profile-setup" element={
+            <ProtectedRoute>
+              <Header />
+              <PageLayout>
+                <ProfileSetupWrapper />
+              </PageLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/diet-plans" element={
+            <ProtectedRoute requireProfileComplete={true}>
+              <Header />
+              <PageLayout>
+                <DietPlans />
+              </PageLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin" element={
+            <ProtectedRoute requireAdmin={true}>
+              <Header />
+              <PageLayout>
+                <AdminPage />
+              </PageLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/history" element={
+            <ProtectedRoute requireProfileComplete={true}>
+              <Header />
+              <PageLayout>
+                <HistoryView />
+              </PageLayout>
+            </ProtectedRoute>
+          } />
+
+          {/* Redirect unknown routes to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AnimatePresence>
     </div>
   );
 }
@@ -89,89 +127,89 @@ function ProfileSetupWrapper() {
 // Home page component
 function HomePage() {
   const { user } = useAuth();
-  
+
   return (
-    <main>
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Debug Info - Temporary */}
-        {/* {user && (
-          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-            <strong>Debug User Info:</strong>
-            <pre className="mt-2 text-xs">
-              {JSON.stringify({
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                is_admin: user.is_admin,
-                profile_completed: user.profile_completed,
-                created_at: user.created_at
-              }, null, 2)}
-            </pre>
-          </div>
-        )} */}
-        
-        {/* Welcome Section */}
-        <div className="text-center mb-8">
-          <div className="max-w-md mx-auto bg-wellness-light-card dark:bg-slate-800 rounded-xl shadow-md overflow-hidden md:max-w-2xl transition-colors duration-200 border border-wellness-light-border dark:border-slate-600">
-            <div className="p-8">
-              <div className="uppercase tracking-wide text-sm text-indigo-500 dark:text-blue-400 font-semibold transition-colors duration-200">
-                Welcome to
+    <main className="animate-page-enter">
+      <div className="max-w-7xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        {/* Greeting Section */}
+        <div className="text-left space-y-2">
+          <h1 className="text-4xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            Hello {user?.name?.split(' ')[0] || 'there'} 👋
+          </h1>
+          <p className="text-lg text-neutral-500 dark:text-neutral-400">
+            Welcome back to WellnessWay. Your precision nutrition journey continues here.
+          </p>
+        </div>
+
+        {/* Quick Actions Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {user && !user.profile_completed ? (
+            <Link
+              to="/profile-setup"
+              className="group p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 flex items-center gap-4"
+            >
+              <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                <Sparkles size={24} />
               </div>
-              <h2 className="block mt-1 text-lg leading-tight font-medium text-wellness-light-text dark:text-slate-100 transition-colors duration-200">
-                WellnessWay Diet Planner
-              </h2>
-              <p className="mt-2 text-wellness-light-textSecondary dark:text-slate-400 transition-colors duration-200">
-                AI-powered personalized diet planning to help you achieve your health goals.
-              </p>
-              <div className="mt-6">
-                {user && !user.profile_completed ? (
-                  // Show only profile setup button if profile is incomplete
-                  <Link 
-                    to="/profile-setup"
-                    className="bg-indigo-500 hover:bg-indigo-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
-                  >
-                    Complete Profile Setup
-                  </Link>
-                ) : user && user.profile_completed ? (
-                  // Show both buttons if profile is complete
-                  <>
-                    <Link 
-                      to="/profile-setup"
-                      className="bg-indigo-500 hover:bg-indigo-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200 mr-4"
-                    >
-                      Edit Profile
-                    </Link>
-                    <Link 
-                      to="/diet-plans"
-                      className="bg-green-500 hover:bg-green-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
-                    >
-                      View Diet Plans
-                    </Link>
-                  </>
-                ) : (
-                  // Show generic buttons if user status is unknown
-                  <>
-                    <Link 
-                      to="/profile-setup"
-                      className="bg-indigo-500 hover:bg-indigo-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200 mr-4"
-                    >
-                      Complete Profile Setup
-                    </Link>
-                    <span 
-                      className="bg-wellness-light-textMuted dark:bg-slate-600 text-white font-bold py-2 px-4 rounded cursor-not-allowed transition-colors duration-200"
-                      title="Complete your profile first"
-                    >
-                      View Diet Plans
-                    </span>
-                  </>
-                )}
+              <div className="text-left">
+                <h3 className="font-bold text-neutral-900 dark:text-white">Complete Profile</h3>
+                <p className="text-xs text-neutral-500">Unlock your AI diet plan</p>
               </div>
+            </Link>
+          ) : user?.profile_completed ? (
+            <>
+              <Link
+                to="/diet-plans"
+                className="group p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 flex items-center gap-4"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                  <Salad size={24} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-neutral-900 dark:text-white">View Diet Plans</h3>
+                  <p className="text-xs text-neutral-500">Check your latest meals</p>
+                </div>
+              </Link>
+              <Link
+                to="/profile-setup"
+                className="group p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all duration-300 flex items-center gap-4"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                  <User size={24} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-neutral-900 dark:text-white">Edit Profile</h3>
+                  <p className="text-xs text-neutral-500">Update health metrics</p>
+                </div>
+              </Link>
+              <Link
+                to="/history"
+                className="group p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-purple-500/30 transition-all duration-300 flex items-center gap-4"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                  <HistoryIcon size={24} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-neutral-900 dark:text-white">History</h3>
+                  <p className="text-xs text-neutral-500">View past consultations</p>
+                </div>
+              </Link>
+            </>
+          ) : null}
+
+          <div className="p-6 bg-neutral-50 dark:bg-neutral-800/50 rounded-3xl border border-neutral-100 dark:border-neutral-800 flex items-center gap-4 opacity-60">
+            <div className="h-12 w-12 rounded-2xl bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-400">
+              <TrendingUp size={24} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-neutral-400 dark:text-neutral-500">Insights</h3>
+              <p className="text-xs text-neutral-400">Coming soon</p>
             </div>
           </div>
         </div>
 
         {/* User Dashboard Section */}
-        <div className="max-w-4xl mx-auto">
+        <div className="pt-4">
           <UserDashboard />
         </div>
       </div>
