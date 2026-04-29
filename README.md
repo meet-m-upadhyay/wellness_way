@@ -365,4 +365,4 @@ npm run deploy      # Cloudflare Workers
 
 ## License
 
-[Add your license here]
+https://dev-wellness-way.meetupadhyaykgp.workers.dev/diet-plans
